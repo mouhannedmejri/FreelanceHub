@@ -31,6 +31,14 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'publish-offer',
+    loadChildren: () =>
+      import('./pages/publish-offer/publish-offer.module').then(
+        (m) => m.PublishOfferPageModule
+      ),
+    canActivate: [AuthGuard],
+  },
+  {
     path: '',
     redirectTo: 'auth',
     pathMatch: 'full',

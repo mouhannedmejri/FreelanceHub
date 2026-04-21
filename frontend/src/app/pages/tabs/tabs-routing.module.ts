@@ -32,6 +32,11 @@ const routes: Routes = [
           import('../store/store.module').then((m) => m.StorePageModule),
       },
       {
+        path: 'digital-store',
+        loadChildren: () =>
+          import('../digital-store/digital-store.module').then((m) => m.DigitalStorePageModule),
+      },
+      {
         path: 'profile',
         loadChildren: () =>
           import('../profile/profile.module').then(

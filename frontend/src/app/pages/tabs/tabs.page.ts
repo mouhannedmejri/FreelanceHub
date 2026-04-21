@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { ConversationService } from '../../services/conversation.service';
 import { User } from '../../models/user.model';
 import { Subscription } from 'rxjs';
 
@@ -14,12 +15,14 @@ import { Subscription } from 'rxjs';
 export class TabsPage implements OnInit, OnDestroy {
   user: User | null = null;
   unreadCount = 0;
+  unreadMessagesCount = 0;
   drawerOpen = false;
   private subs: Subscription[] = [];
 
   constructor(
     private authService: AuthService,
     private notificationService: NotificationService,
+    private conversationService: ConversationService,
     private router: Router
   ) {}
 
@@ -36,8 +39,15 @@ export class TabsPage implements OnInit, OnDestroy {
       })
     );
 
-    // Load notifications to get unread count
+    this.subs.push(
+      this.conversationService.unreadCount$.subscribe((count) => {
+        this.unreadMessagesCount = count;
+      })
+    );
+
+    // Load notifications and conversations to get unread counts
     this.notificationService.loadNotifications().subscribe();
+    this.conversationService.getConversations().subscribe();
   }
 
   ngOnDestroy() {

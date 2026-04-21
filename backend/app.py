@@ -4,6 +4,7 @@ from config import Config
 from models import (
     db, bcrypt, User, RoleEnum, Notification, NotificationTypeEnum,
     FreelancerProfile, Service, CategoryEnum, LevelEnum,
+    Offer, OfferStatusEnum, LocationEnum, Conversation, Message,
 )
 
 
@@ -22,12 +23,24 @@ def create_app():
     from routes.notifications import notifications_bp
     from routes.services import services_bp
     from routes.users import users_bp
+    from routes.offers import offers_bp
+    from routes.conversations import conversations_bp
+    from routes.store import store_bp
+    from routes.proposals import proposals_bp
+    from routes.reviews import reviews_bp
+    from routes.admin import admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)
     app.register_blueprint(notifications_bp)
     app.register_blueprint(services_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(offers_bp)
+    app.register_blueprint(conversations_bp)
+    app.register_blueprint(store_bp)
+    app.register_blueprint(proposals_bp)
+    app.register_blueprint(reviews_bp)
+    app.register_blueprint(admin_bp)
 
     # Health check
     @app.route('/api/health')
@@ -43,11 +56,14 @@ def create_app():
 
 
 def seed_data():
-    """Seed users, freelancer profiles, services, and notifications for demo / testing."""
+    """Seed users, freelancer profiles, services, offers, notifications and conversations for demo / testing."""
     _seed_users()
     _seed_profiles()
     _seed_services()
+    _seed_offers()
     _seed_notifications()
+    _seed_conversations()
+    _seed_products()
 
 
 # ── Users ────────────────────────────────────────────────────────────────
@@ -234,6 +250,7 @@ def _seed_profiles():
         if FreelancerProfile.query.filter_by(user_id=user.id).first():
             continue  # already seeded
 
+        from models import Certification, PortfolioItem
         profile = FreelancerProfile(
             user_id=user.id,
             title=data['title'],
@@ -242,10 +259,17 @@ def _seed_profiles():
             location=data['location'],
             phone=data['phone'],
             skills=data['skills'],
-            portfolio=data['portfolio'],
-            certifications=data['certifications'],
         )
         db.session.add(profile)
+        db.session.commit()
+
+        for c in data.get('certifications', []):
+            cert = Certification(user_id=user.id, name=c['name'], issuer=c['issuer'], year=str(c['year']))
+            db.session.add(cert)
+            
+        for p in data.get('portfolio', []):
+            item = PortfolioItem(user_id=user.id, title=p['title'], description=p['description'], skills=p.get('tags', []), image_url=p['image_url'])
+            db.session.add(item)
 
     db.session.commit()
     print('[OK] Seed freelancer profiles created (or already exist).')
@@ -372,6 +396,115 @@ def _seed_services():
     print('[OK] Seed services created.')
 
 
+# ── Offers ───────────────────────────────────────────────────────────────
+
+def _seed_offers():
+    if Offer.query.first():
+        print('[OK] Seed offers already exist — skipping.')
+        return
+
+    client = User.query.filter_by(email='client@demo.com').first()
+    if not client:
+        print('[WARN] Client user not found — skipping offer seeding.')
+        return
+
+    offers = [
+        {
+            'client_id': client.id,
+            'title': 'Développement d\'une Application Mobile React Native',
+            'description': (
+                'Nous recherchons un développeur React Native expérimenté pour créer '
+                'une application mobile cross-platform (iOS & Android). '
+                'L\'application doit inclure une authentification, un chat en temps réel '
+                'et une intégration de paiement Stripe.'
+            ),
+            'category': CategoryEnum.developpement,
+            'skills': ['React Native', 'TypeScript', 'Firebase', 'Stripe'],
+            'budget_min': 2000,
+            'budget_max': 5000,
+            'duration': '1-3 mois',
+            'location': LocationEnum.remote,
+            'proposals_count': 8,
+            'status': OfferStatusEnum.active,
+        },
+        {
+            'client_id': client.id,
+            'title': 'Refonte UI/UX d\'une Plateforme SaaS',
+            'description': (
+                'Notre plateforme SaaS B2B a besoin d\'une refonte complète de son interface. '
+                'Nous cherchons un designer UI/UX senior capable de créer une expérience '
+                'moderne, intuitive et accessible. Livraison de maquettes Figma et design system.'
+            ),
+            'category': CategoryEnum.design,
+            'skills': ['Figma', 'UI Design', 'UX Research', 'Design System'],
+            'budget_min': 1500,
+            'budget_max': 3500,
+            'duration': '1-4 semaines',
+            'location': LocationEnum.hybrid,
+            'proposals_count': 12,
+            'status': OfferStatusEnum.active,
+        },
+        {
+            'client_id': client.id,
+            'title': 'Stratégie SEO & Content Marketing pour E-commerce',
+            'description': (
+                'Notre boutique en ligne cherche un expert SEO pour augmenter notre '
+                'trafic organique. Mission : audit SEO complet, stratégie de contenu, '
+                'optimisation on-page et création de 20 articles de blog optimisés par mois.'
+            ),
+            'category': CategoryEnum.marketing,
+            'skills': ['SEO', 'Content Marketing', 'Google Analytics', 'Semrush'],
+            'budget_min': 800,
+            'budget_max': 1500,
+            'duration': '3-6 mois',
+            'location': LocationEnum.remote,
+            'proposals_count': 5,
+            'status': OfferStatusEnum.active,
+        },
+        {
+            'client_id': client.id,
+            'title': 'Rédaction de 50 Articles de Blog Tech',
+            'description': (
+                'Startup tech cherche un rédacteur web spécialisé pour produire '
+                '50 articles de blog sur les thèmes de l\'IA, du cloud et de la cybersécurité. '
+                'Articles de 1500 à 2000 mots, optimisés SEO, ton expert et accessible.'
+            ),
+            'category': CategoryEnum.redaction,
+            'skills': ['Rédaction Web', 'SEO', 'Tech', 'Blog'],
+            'budget_min': 1000,
+            'budget_max': 2500,
+            'duration': '1-3 mois',
+            'location': LocationEnum.remote,
+            'proposals_count': 3,
+            'status': OfferStatusEnum.active,
+        },
+        {
+            'client_id': client.id,
+            'title': 'Développement Backend API Python/FastAPI',
+            'description': (
+                'Nous avons besoin d\'un développeur backend Python pour construire '
+                'une API REST haute performance avec FastAPI, PostgreSQL et Redis. '
+                'L\'API devra gérer 10k+ requêtes par seconde et inclure des tests complets.'
+            ),
+            'category': CategoryEnum.developpement,
+            'skills': ['Python', 'FastAPI', 'PostgreSQL', 'Redis', 'Docker'],
+            'budget_min': 3000,
+            'budget_max': 7000,
+            'duration': '1-3 mois',
+            'location': LocationEnum.onsite,
+            'proposals_count': 15,
+            'status': OfferStatusEnum.active,
+        },
+    ]
+
+    for data in offers:
+        offer = Offer(**data)
+        db.session.add(offer)
+
+    db.session.commit()
+    print('[OK] Seed offers created.')
+
+
 # ── Notifications ────────────────────────────────────────────────────────
 
 def _seed_notifications():
@@ -427,6 +560,131 @@ def _seed_notifications():
     db.session.commit()
     print(f'[OK] Seed notifications created for {len(users)} users.')
 
+# ── Conversations ────────────────────────────────────────────────────────
+
+def _seed_conversations():
+    import datetime as _dt
+
+    if Conversation.query.first():
+        print('[OK] Seed conversations already exist — skipping.')
+        return
+
+    # Let's seed for 'freelancer@demo.com' as they are the demo user often
+    user1 = User.query.filter_by(email='freelancer@demo.com').first()
+    client = User.query.filter_by(email='client@demo.com').first()
+    designer = User.query.filter_by(email='designer@demo.com').first()
+    marketing = User.query.filter_by(email='marketing@demo.com').first()
+    admin = User.query.filter_by(email='admin@demo.com').first()
+
+    if not all([user1, client, designer, marketing, admin]):
+        print('[WARN] Not all users found for conversations — skipping.')
+        return
+
+    now = _dt.datetime.now(_dt.timezone.utc)
+
+    # 1. With Client
+    conv1 = Conversation(
+        participant_1_id=user1.id,
+        participant_2_id=client.id,
+        last_message='Parfait, je commence dès demain.',
+        last_message_at=now - _dt.timedelta(minutes=10),
+        unread_count_p1=0,
+        unread_count_p2=1
+    )
+    db.session.add(conv1)
+    db.session.commit()
+
+    m1_1 = Message(conversation_id=conv1.id, sender_id=client.id, content='Bonjour, êtes-vous disponible pour une mission ?', created_at=now - _dt.timedelta(days=1), is_read=True)
+    m1_2 = Message(conversation_id=conv1.id, sender_id=user1.id, content='Bonjour, oui tout à fait ! Quel est votre besoin ?', created_at=now - _dt.timedelta(hours=23), is_read=True)
+    m1_3 = Message(conversation_id=conv1.id, sender_id=client.id, content='Nous voulons créer une app mobile. Avez-vous vu l\'offre ?', created_at=now - _dt.timedelta(hours=1), is_read=True)
+    m1_4 = Message(conversation_id=conv1.id, sender_id=user1.id, content='Oui, je vous ai envoyé une proposition. Les délais me conviennent.', created_at=now - _dt.timedelta(minutes=30), is_read=True)
+    m1_5 = Message(conversation_id=conv1.id, sender_id=client.id, content='Très bien, validé de notre côté.', created_at=now - _dt.timedelta(minutes=15), is_read=True)
+    m1_6 = Message(conversation_id=conv1.id, sender_id=user1.id, content='Parfait, je commence dès demain.', created_at=now - _dt.timedelta(minutes=10), is_read=False)
+    db.session.add_all([m1_1, m1_2, m1_3, m1_4, m1_5, m1_6])
+
+    # 2. With Designer
+    conv2 = Conversation(
+        participant_1_id=designer.id,
+        participant_2_id=user1.id,
+        last_message='Peux-tu m\'envoyer les assets de la page d\'accueil ?',
+        last_message_at=now - _dt.timedelta(hours=2),
+        unread_count_p1=0,
+        unread_count_p2=2
+    )
+    db.session.add(conv2)
+    db.session.commit()
+
+    m2_1 = Message(conversation_id=conv2.id, sender_id=user1.id, content='Salut ! Tu as pu avancer sur la maquette ?', created_at=now - _dt.timedelta(days=2), is_read=True)
+    m2_2 = Message(conversation_id=conv2.id, sender_id=designer.id, content='Oui, je viens de finir. Je t\'envoie le lien Figma.', created_at=now - _dt.timedelta(days=2, hours=-1), is_read=True)
+    m2_3 = Message(conversation_id=conv2.id, sender_id=designer.id, content='Dis-moi ce que tu en penses.', created_at=now - _dt.timedelta(days=2, hours=-1, minutes=-5), is_read=False)
+    m2_4 = Message(conversation_id=conv2.id, sender_id=designer.id, content='Peux-tu m\'envoyer les assets de la page d\'accueil ?', created_at=now - _dt.timedelta(hours=2), is_read=False)
+    db.session.add_all([m2_1, m2_2, m2_3, m2_4])
+
+    # 3. With Marketing
+    conv3 = Conversation(
+        participant_1_id=user1.id,
+        participant_2_id=marketing.id,
+        last_message='Merci pour ces infos !',
+        last_message_at=now - _dt.timedelta(days=5),
+        unread_count_p1=0,
+        unread_count_p2=0
+    )
+    db.session.add(conv3)
+    db.session.commit()
+
+    m3_1 = Message(conversation_id=conv3.id, sender_id=marketing.id, content='Hello, as-tu pu intégrer le script Google Analytics ?', created_at=now - _dt.timedelta(days=6), is_read=True)
+    m3_2 = Message(conversation_id=conv3.id, sender_id=user1.id, content='Oui c\'est en prod depuis hier.', created_at=now - _dt.timedelta(days=5, hours=2), is_read=True)
+    m3_3 = Message(conversation_id=conv3.id, sender_id=marketing.id, content='Super je vois les données remonter.', created_at=now - _dt.timedelta(days=5, hours=1), is_read=True)
+    m3_4 = Message(conversation_id=conv3.id, sender_id=user1.id, content='Merci pour ces infos !', created_at=now - _dt.timedelta(days=5), is_read=True)
+    db.session.add_all([m3_1, m3_2, m3_3, m3_4])
+
+    # 4. With Admin
+    conv4 = Conversation(
+        participant_1_id=admin.id,
+        participant_2_id=user1.id,
+        last_message='Votre profil a été validé.',
+        last_message_at=now - _dt.timedelta(days=10),
+        unread_count_p1=0,
+        unread_count_p2=0
+    )
+    db.session.add(conv4)
+    db.session.commit()
+
+    m4_1 = Message(conversation_id=conv4.id, sender_id=admin.id, content='Bienvenue sur FreelanceHub !', created_at=now - _dt.timedelta(days=10, hours=1), is_read=True)
+    m4_2 = Message(conversation_id=conv4.id, sender_id=admin.id, content='Votre profil a été validé.', created_at=now - _dt.timedelta(days=10), is_read=True)
+    db.session.add_all([m4_1, m4_2])
+
+    db.session.commit()
+    print('[OK] Seed conversations created.')
+
+# ── Products ─────────────────────────────────────────────────────────────
+
+def _seed_products():
+    from models import Product, ProductCategoryEnum
+    
+    if Product.query.first():
+        print('[OK] Seed products already exist — skipping.')
+        return
+
+    freelancer = User.query.filter_by(email='freelancer@demo.com').first()
+    designer = User.query.filter_by(email='designer@demo.com').first()
+    
+    if not freelancer or not designer:
+        print('[WARN] Users not found for products seeding — skipping.')
+        return
+
+    products = [
+        Product(seller_id=freelancer.id, title="Angular Starter Kit Enterprise", description="Template complet avec auth, dashboard et composants.", category=ProductCategoryEnum.starter_kit, price=49.0, skills=["Angular", "TypeScript"], rating=4.8, sales_count=120, version="2.1.0", image_url="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=600"),
+        Product(seller_id=freelancer.id, title="Flask API Boilerplate", description="Structure RESTful complète avec JWT, SQLAlchemy et migrations.", category=ProductCategoryEnum.starter_kit, price=29.0, skills=["Python", "Flask", "SQL"], rating=4.9, sales_count=85, version="1.0.0", image_url="https://images.unsplash.com/photo-1526379095098-d400fd0bfce8?auto=format&fit=crop&q=80&w=600"),
+        Product(seller_id=designer.id, title="Premium UI Kit Dark Mode", description="Composants Figma modernes pour dashboards SaaS.", category=ProductCategoryEnum.ui_kit, price=39.0, skills=["Figma", "UI/UX"], rating=5.0, sales_count=210, version="3.0.0", image_url="https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=600"),
+        Product(seller_id=designer.id, title="E-commerce App Template", description="Design complet d'app mobile E-commerce prêt à l'emploi.", category=ProductCategoryEnum.template, price=59.0, skills=["Figma", "Mobile App"], rating=4.7, sales_count=45, version="1.2.0", image_url="https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&q=80&w=600"),
+        Product(seller_id=designer.id, title="Architecture Plan Modulaire", description="Plans de base pour maisons modulaires écologiques.", category=ProductCategoryEnum.plan_archi, price=149.0, skills=["Architecture", "AutoCAD"], rating=4.5, sales_count=12, version="1.0.0", image_url="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=600"),
+        Product(seller_id=freelancer.id, title="Vue.js Admin Dashboard", description="Template d'administration réactif avec Vuetify.", category=ProductCategoryEnum.template, price=35.0, skills=["Vue.js", "JavaScript"], rating=4.6, sales_count=60, version="2.0.0", image_url="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600"),
+    ]
+
+    db.session.add_all(products)
+    db.session.commit()
+    print('[OK] Seed products created.')
 
 if __name__ == '__main__':
     app = create_app()

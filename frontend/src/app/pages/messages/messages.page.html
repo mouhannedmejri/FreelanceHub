@@ -1,7 +1,151 @@
-<ion-content class="messages-content">
-  <div class="placeholder">
-    <ion-icon name="chatbubbles-outline"></ion-icon>
-    <h2>Messages</h2>
-    <p>Vos conversations apparaîtront ici.</p>
+<ion-content [fullscreen]="true" class="messages-content">
+  <div class="chat-layout">
+    
+    <!-- ── LEFT PANEL: Conversation List ────────────────────────────── -->
+    <div class="left-panel" [class.mobile-hidden]="isMobileRightPanelOpen">
+      <div class="panel-header">
+        <h2 class="panel-title">Messages</h2>
+      </div>
+
+      <div class="search-wrapper">
+        <div class="search-box">
+          <ion-icon name="search-outline"></ion-icon>
+          <input
+            type="text"
+            placeholder="Rechercher une conversation..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            id="chat-search-input"
+          />
+        </div>
+      </div>
+
+      <div class="conversations-list">
+        <!-- Loading state -->
+        <div class="loading-state" *ngIf="isLoadingConversations && conversations.length === 0">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" *ngIf="!isLoadingConversations && conversations.length === 0">
+          <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+          <p>Aucune conversation trouvée.</p>
+        </div>
+
+        <!-- Items -->
+        <div
+          class="conv-item"
+          *ngFor="let conv of conversations"
+          [class.active]="selectedConversation?.id === conv.id"
+          (click)="selectConversation(conv)"
+          [id]="'conv-item-' + conv.id"
+        >
+          <div class="avatar-wrapper">
+            <div class="avatar">{{ getInitials(conv.other_user.full_name) }}</div>
+            <div class="online-dot"></div>
+          </div>
+          <div class="conv-info">
+            <div class="conv-header">
+              <span class="conv-name">{{ conv.other_user.full_name }}</span>
+              <span class="conv-time">{{ formatTime(conv.last_message_at) }}</span>
+            </div>
+            <div class="conv-footer">
+              <span class="conv-last-msg" [class.unread-text]="conv.unread_count > 0">
+                {{ conv.last_message | slice:0:30 }}{{ conv.last_message.length > 30 ? '...' : '' }}
+              </span>
+              <span class="unread-badge" *ngIf="conv.unread_count > 0">{{ conv.unread_count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT PANEL: Message Thread ────────────────────────────── -->
+    <div class="right-panel" [class.mobile-visible]="isMobileRightPanelOpen">
+      
+      <!-- No selection state -->
+      <div class="no-selection" *ngIf="!selectedConversation">
+        <div class="empty-icon-wrapper">
+          <ion-icon name="chatbubbles-outline"></ion-icon>
+        </div>
+        <h3>Vos Messages</h3>
+        <p>Sélectionnez une conversation pour commencer à discuter.</p>
+      </div>
+
+      <!-- Active Conversation -->
+      <ng-container *ngIf="selectedConversation">
+        
+        <!-- Chat Header -->
+        <div class="chat-header">
+          <button class="back-btn" (click)="backToList()">
+            <ion-icon name="chevron-back-outline"></ion-icon>
+          </button>
+          
+          <div class="chat-user-info">
+            <div class="avatar">{{ getInitials(selectedConversation.other_user.full_name) }}</div>
+            <div class="user-details">
+              <span class="user-name">{{ selectedConversation.other_user.full_name }}</span>
+              <span class="user-status">En ligne</span>
+            </div>
+          </div>
+          
+          <button class="menu-btn">
+            <ion-icon name="ellipsis-vertical"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-messages" #messagesContainer>
+          <div class="loading-messages" *ngIf="isLoadingMessages">
+            <ion-spinner name="dots"></ion-spinner>
+          </div>
+
+          <div class="message-group" *ngFor="let group of groupedMessages">
+            <div class="date-divider">
+              <span>{{ group.date }}</span>
+            </div>
+            
+            <div 
+              class="message-bubble-wrapper"
+              *ngFor="let msg of group.messages"
+              [class.sent]="msg.sender_id === currentUser?.id"
+              [class.received]="msg.sender_id !== currentUser?.id"
+            >
+              <div class="message-bubble">
+                <p>{{ msg.content }}</p>
+              </div>
+              <span class="message-time">{{ formatTime(msg.created_at) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-area">
+          <button class="attach-btn">
+            <ion-icon name="attach-outline"></ion-icon>
+          </button>
+          
+          <div class="input-box">
+            <textarea 
+              placeholder="Écrivez votre message..." 
+              rows="1"
+              [(ngModel)]="newMessageContent"
+              (keydown)="onKeydown($event)"
+              id="message-input"
+            ></textarea>
+          </div>
+          
+          <button 
+            class="send-btn" 
+            [disabled]="!newMessageContent.trim() || isSending"
+            (click)="sendMessage()"
+            id="send-message-btn"
+          >
+            <ion-icon name="send"></ion-icon>
+          </button>
+        </div>
+      </ng-container>
+      
+    </div>
   </div>
 </ion-content>

@@ -1,35 +1,297 @@
-<ion-content class="store-content">
-    <div class="store-container">
-        <div class="store-hero">
-            <div class="store-icon-wrap">
-                <ion-icon name="bag-outline"></ion-icon>
-            </div>
-            <h1 class="store-title">Store</h1>
-            <p class="store-sub">La marketplace FreelanceHub arrive bientôt.</p>
-            <p class="store-desc">
-                Achetez et vendez des ressources, templates, formations et outils
-                pour freelances — tout au même endroit.
-            </p>
-            <div class="coming-soon-badge">Bientôt disponible</div>
-        </div>
+<!-- ══════════════════════════════════════════
+     OFFRES PAGE  (Store tab re-purposed)
+══════════════════════════════════════════ -->
 
-        <div class="store-features">
-            <div class="feature-item">
-                <ion-icon name="document-text-outline"></ion-icon>
-                <span>Templates professionnels</span>
-            </div>
-            <div class="feature-item">
-                <ion-icon name="school-outline"></ion-icon>
-                <span>Formations en ligne</span>
-            </div>
-            <div class="feature-item">
-                <ion-icon name="brush-outline"></ion-icon>
-                <span>Ressources créatives</span>
-            </div>
-            <div class="feature-item">
-                <ion-icon name="extension-puzzle-outline"></ion-icon>
-                <span>Outils & plugins</span>
-            </div>
+<ion-content class="offers-content" [fullscreen]="true">
+  <div class="offers-container">
+
+    <!-- ── FREELANCER VIEW ──────────────────── -->
+    <ng-container *ngIf="!isClient">
+
+      <!-- Search -->
+      <div class="search-wrapper">
+        <div class="search-box">
+          <ion-icon name="search-outline"></ion-icon>
+          <input
+            type="text"
+            placeholder="Rechercher une offre..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            id="offer-search-input"
+          />
         </div>
-    </div>
+      </div>
+
+      <!-- Header -->
+      <div class="section-header">
+        <h2 class="section-title">Offres disponibles</h2>
+        <span class="count-badge" id="offers-count">{{ totalOffers }}</span>
+      </div>
+
+      <!-- Loading -->
+      <div class="offers-list" *ngIf="isLoading && offers.length === 0">
+        <div class="skeleton-card" *ngFor="let i of [1, 2, 3]">
+          <div class="skeleton-body">
+            <div class="skeleton-line wide"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-tags">
+              <div class="skeleton-tag" *ngFor="let t of [1,2,3]"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Offer Cards - Freelancer -->
+      <div class="offers-list" *ngIf="offers.length > 0">
+        <div
+          class="offer-card"
+          *ngFor="let offer of offers; let idx = index"
+          [id]="'offer-card-' + offer.id"
+          [style.animation-delay]="idx * 0.07 + 's'"
+        >
+          <!-- Card Top -->
+          <div class="card-top">
+            <div class="card-meta">
+              <span class="category-pill" [ngClass]="getCategoryColor(offer.category)">
+                {{ offer.category }}
+              </span>
+              <span class="client-label">par {{ offer.client_name }}</span>
+            </div>
+          </div>
+
+          <h3 class="offer-title">{{ offer.title }}</h3>
+          <p class="offer-desc">{{ offer.description | slice:0:140 }}{{ offer.description.length > 140 ? '…' : '' }}</p>
+
+          <!-- Skills -->
+          <div class="skills-row">
+            <span class="skill-tag" *ngFor="let skill of offer.skills.slice(0, 4)">{{ skill }}</span>
+          </div>
+
+          <!-- Info Row -->
+          <div class="info-row">
+            <div class="info-chip">
+              <ion-icon name="cash-outline"></ion-icon>
+              <span>{{ getBudgetLabel(offer) }}</span>
+            </div>
+            <div class="info-chip">
+              <ion-icon name="time-outline"></ion-icon>
+              <span>{{ offer.duration }}</span>
+            </div>
+            <div class="info-chip">
+              <ion-icon [name]="getLocationIcon(offer.location)"></ion-icon>
+              <span>{{ getLocationLabel(offer.location) }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="proposals-count">
+              <ion-icon name="people-outline"></ion-icon>
+              <span>{{ offer.proposals_count }} proposition{{ offer.proposals_count !== 1 ? 's' : '' }}</span>
+            </div>
+            <button class="apply-btn" [id]="'apply-btn-' + offer.id" (click)="applyForOffer(offer)">
+              Postuler
+              <ion-icon name="arrow-forward-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!isLoading && offers.length === 0">
+        <ion-icon name="document-text-outline"></ion-icon>
+        <h3>Aucune offre disponible</h3>
+        <p>Revenez bientôt pour découvrir de nouvelles missions.</p>
+      </div>
+
+    </ng-container>
+
+    <!-- ── CLIENT VIEW ──────────────────────── -->
+    <ng-container *ngIf="isClient">
+
+      <!-- Header with FAB -->
+      <div class="client-header">
+        <div>
+          <h2 class="section-title">Mes offres</h2>
+          <span class="count-badge" id="my-offers-count">{{ totalOffers }}</span>
+        </div>
+        <button class="fab-btn" (click)="navigateToPublish()" id="publish-offer-fab">
+          <ion-icon name="add-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div class="offers-list" *ngIf="isLoading && offers.length === 0">
+        <div class="skeleton-card" *ngFor="let i of [1, 2]">
+          <div class="skeleton-body">
+            <div class="skeleton-line wide"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-tags">
+              <div class="skeleton-tag" *ngFor="let t of [1,2,3]"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Offer Cards - Client -->
+      <div class="offers-list" *ngIf="offers.length > 0">
+        <div
+          class="offer-card"
+          *ngFor="let offer of offers; let idx = index"
+          [id]="'my-offer-card-' + offer.id"
+          [style.animation-delay]="idx * 0.07 + 's'"
+        >
+          <div class="card-top">
+            <span class="category-pill" [ngClass]="getCategoryColor(offer.category)">
+              {{ offer.category }}
+            </span>
+            <span class="status-badge" [class.closed]="offer.status === 'closed'">
+              {{ offer.status === 'active' ? 'Active' : 'Fermée' }}
+            </span>
+          </div>
+
+          <h3 class="offer-title">{{ offer.title }}</h3>
+          <p class="offer-desc">{{ offer.description | slice:0:120 }}{{ offer.description.length > 120 ? '…' : '' }}</p>
+
+          <div class="skills-row">
+            <span class="skill-tag" *ngFor="let skill of offer.skills.slice(0, 4)">{{ skill }}</span>
+          </div>
+
+          <div class="info-row">
+            <div class="info-chip">
+              <ion-icon name="cash-outline"></ion-icon>
+              <span>{{ getBudgetLabel(offer) }}</span>
+            </div>
+            <div class="info-chip">
+              <ion-icon name="time-outline"></ion-icon>
+              <span>{{ offer.duration }}</span>
+            </div>
+            <div class="info-chip">
+              <ion-icon [name]="getLocationIcon(offer.location)"></ion-icon>
+              <span>{{ getLocationLabel(offer.location) }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="proposals-count">
+              <ion-icon name="people-outline"></ion-icon>
+              <span>{{ offer.proposals_count }} proposition{{ offer.proposals_count !== 1 ? 's' : '' }}</span>
+            </div>
+            <button class="view-proposals-btn" [id]="'proposals-btn-' + offer.id" (click)="viewProposals(offer)">
+              Voir propositions
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State - Client -->
+      <div class="empty-state" *ngIf="!isLoading && offers.length === 0">
+        <ion-icon name="document-text-outline"></ion-icon>
+        <h3>Aucune offre publiée</h3>
+        <p>Publiez votre première offre pour trouver le freelancer idéal.</p>
+        <button class="publish-cta-btn" (click)="navigateToPublish()" id="publish-cta-btn">
+          <ion-icon name="add-outline"></ion-icon>
+          Publier une offre
+        </button>
+      </div>
+
+    </ng-container>
+
+  </div>
+
+  <!-- Apply Modal -->
+  <ion-modal [isOpen]="isApplyModalOpen" (didDismiss)="isApplyModalOpen = false">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="dark">
+          <ion-title>Postuler</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="isApplyModalOpen = false">Fermer</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="modal-content dark-bg">
+        <div class="apply-form" *ngIf="selectedOffer">
+          <h3 class="offer-title-header">{{ selectedOffer.title }}</h3>
+          
+          <div class="form-group">
+            <label>Lettre de motivation</label>
+            <textarea [(ngModel)]="proposalData.cover_letter" rows="5" placeholder="Expliquez pourquoi vous êtes le candidat idéal..."></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Prix proposé (€)</label>
+            <input type="number" [(ngModel)]="proposalData.proposed_price" placeholder="Ex: 500" />
+          </div>
+          
+          <div class="form-group">
+            <label>Durée estimée</label>
+            <select [(ngModel)]="proposalData.estimated_duration">
+              <option value="Moins d'une semaine">Moins d'une semaine</option>
+              <option value="1 à 2 semaines">1 à 2 semaines</option>
+              <option value="1 mois">1 mois</option>
+              <option value="Plus d'un mois">Plus d'un mois</option>
+            </select>
+          </div>
+          
+          <button class="submit-btn purple-btn" (click)="submitProposal()">
+            Envoyer ma proposition
+          </button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- View Proposals Modal -->
+  <ion-modal [isOpen]="isProposalsModalOpen" (didDismiss)="isProposalsModalOpen = false">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="dark">
+          <ion-title>Propositions reçues</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="isProposalsModalOpen = false">Fermer</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="modal-content dark-bg">
+        <div class="loading-state" *ngIf="isLoadingProposals">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+        
+        <div class="proposals-list" *ngIf="!isLoadingProposals && proposals.length > 0">
+          <div class="proposal-card" *ngFor="let p of proposals">
+            <div class="proposal-header">
+              <div class="freelancer-info">
+                <div class="avatar">{{ p.freelancer?.full_name?.charAt(0) || '?' }}</div>
+                <div>
+                  <strong>{{ p.freelancer?.full_name }}</strong>
+                  <span class="freelancer-badge" *ngIf="p.freelancer?.is_approved">Approuvé</span>
+                </div>
+              </div>
+              <div class="status-badge" [ngClass]="p.status">{{ p.status }}</div>
+            </div>
+            
+            <div class="proposal-details">
+              <p class="price">{{ p.proposed_price }}€</p>
+              <p class="duration"><ion-icon name="time-outline"></ion-icon> {{ p.estimated_duration }}</p>
+            </div>
+            
+            <p class="cover-letter">{{ p.cover_letter }}</p>
+            
+            <div class="proposal-actions" *ngIf="p.status === 'pending'">
+              <button class="accept-btn" (click)="updateProposal(p, 'accepted')">Accepter</button>
+              <button class="reject-btn" (click)="updateProposal(p, 'rejected')">Refuser</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="empty-state" *ngIf="!isLoadingProposals && proposals.length === 0">
+          <ion-icon name="document-text-outline"></ion-icon>
+          <p>Aucune proposition pour le moment.</p>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
 </ion-content>

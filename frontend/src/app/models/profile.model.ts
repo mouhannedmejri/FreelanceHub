@@ -10,19 +10,22 @@ export interface FreelancerProfile {
   portfolio: PortfolioItem[];
   certifications: Certification[];
   cv_filename: string;
+  cv_size: number;
 }
 
 export interface PortfolioItem {
+  id?: number;
   title: string;
   description: string;
   image_url: string;
-  tags: string[];
+  skills: string[];
 }
 
 export interface Certification {
+  id?: number;
   name: string;
   issuer: string;
-  year: number;
+  year: string;
 }
 
 export interface FullProfile {

@@ -1,0 +1,181 @@
+<!-- ══════════════════════════════════════════
+     PUBLIER UNE OFFRE
+══════════════════════════════════════════ -->
+
+<div class="publish-shell">
+
+  <!-- ── Top Bar ──────────────────────────── -->
+  <div class="top-bar">
+    <button class="back-btn" (click)="goBack()" id="back-btn">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
+    <div class="top-bar-titles">
+      <h1 class="page-title">Publier une offre</h1>
+      <p class="page-subtitle">Trouvez le freelancer idéal</p>
+    </div>
+  </div>
+
+  <!-- ── Success State ────────────────────── -->
+  <div class="success-overlay" *ngIf="submitSuccess">
+    <div class="success-icon">
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+    </div>
+    <h2>Offre publiée !</h2>
+    <p>Votre offre est maintenant visible par les freelancers.</p>
+  </div>
+
+  <!-- ── Form ─────────────────────────────── -->
+  <ion-content class="form-content" *ngIf="!submitSuccess">
+    <div class="form-container">
+
+      <!-- Titre -->
+      <div class="field-group">
+        <label class="field-label" for="offer-title">Titre du projet</label>
+        <div class="input-wrapper">
+          <ion-icon name="briefcase-outline"></ion-icon>
+          <input
+            id="offer-title"
+            type="text"
+            placeholder="Ex: Développement d'une app mobile..."
+            [(ngModel)]="title"
+          />
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="field-group">
+        <label class="field-label" for="offer-description">Description du projet</label>
+        <textarea
+          id="offer-description"
+          class="textarea-field"
+          rows="5"
+          placeholder="Décrivez votre projet en détail..."
+          [(ngModel)]="description"
+        ></textarea>
+        <span class="field-hint">Soyez précis pour attirer les bons freelancers</span>
+      </div>
+
+      <!-- Catégorie -->
+      <div class="field-group">
+        <label class="field-label">Catégorie</label>
+        <div class="toggle-grid">
+          <button
+            *ngFor="let cat of categories"
+            class="toggle-btn"
+            [class.active]="selectedCategory === cat.value"
+            (click)="selectCategory(cat.value)"
+            [id]="'cat-toggle-' + cat.value.toLowerCase()"
+          >
+            <ion-icon [name]="cat.icon"></ion-icon>
+            <span>{{ cat.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Compétences -->
+      <div class="field-group">
+        <label class="field-label" for="skill-input">Compétences requises</label>
+        <div class="tags-input-wrapper">
+          <div class="tags-chips">
+            <span class="skill-chip" *ngFor="let skill of skills">
+              {{ skill }}
+              <button class="remove-chip" (click)="removeSkill(skill)" [id]="'remove-' + skill">
+                <ion-icon name="close-outline"></ion-icon>
+              </button>
+            </span>
+          </div>
+          <div class="skill-input-row">
+            <input
+              id="skill-input"
+              type="text"
+              placeholder="Ajouter une compétence (Entrée ou virgule)"
+              [(ngModel)]="skillInput"
+              (keydown)="onSkillKeydown($event)"
+              (input)="onSkillInput($event)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Budget -->
+      <div class="field-group">
+        <label class="field-label">Budget (€)</label>
+        <div class="budget-row">
+          <div class="budget-input">
+            <span class="budget-label">Min</span>
+            <input
+              id="budget-min"
+              type="number"
+              placeholder="0"
+              [(ngModel)]="budgetMin"
+              min="0"
+            />
+          </div>
+          <div class="budget-separator">–</div>
+          <div class="budget-input">
+            <span class="budget-label">Max</span>
+            <input
+              id="budget-max"
+              type="number"
+              placeholder="0"
+              [(ngModel)]="budgetMax"
+              min="0"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Durée -->
+      <div class="field-group">
+        <label class="field-label" for="offer-duration">Durée</label>
+        <div class="select-wrapper">
+          <ion-icon name="time-outline"></ion-icon>
+          <select id="offer-duration" [(ngModel)]="duration">
+            <option value="" disabled>Sélectionner une durée</option>
+            <option *ngFor="let d of durations" [value]="d">{{ d }}</option>
+          </select>
+          <ion-icon name="chevron-down-outline" class="select-chevron"></ion-icon>
+        </div>
+      </div>
+
+      <!-- Localisation -->
+      <div class="field-group">
+        <label class="field-label">Localisation</label>
+        <div class="location-toggle">
+          <button
+            *ngFor="let loc of locations"
+            class="loc-btn"
+            [class.active]="selectedLocation === loc.value"
+            (click)="selectLocation(loc.value)"
+            [id]="'loc-' + loc.value.toLowerCase()"
+          >
+            <ion-icon [name]="loc.icon"></ion-icon>
+            <span>{{ loc.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="error-box" *ngIf="submitError">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>{{ submitError }}</span>
+      </div>
+
+      <!-- Submit -->
+      <button
+        class="submit-btn"
+        id="submit-offer-btn"
+        [disabled]="!isFormValid || isSubmitting"
+        (click)="submit()"
+      >
+        <span *ngIf="!isSubmitting">
+          <ion-icon name="send-outline"></ion-icon>
+          Publier l'offre
+        </span>
+        <ion-spinner *ngIf="isSubmitting" name="crescent"></ion-spinner>
+      </button>
+
+    </div>
+  </ion-content>
+
+</div>

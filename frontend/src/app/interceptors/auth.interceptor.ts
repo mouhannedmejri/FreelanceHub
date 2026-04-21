@@ -10,7 +10,7 @@ import { AuthService } from '../services/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   intercept(
     req: HttpRequest<any>,
@@ -18,7 +18,6 @@ export class AuthInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<any>> {
     const token = this.authService.token;
 
-    // Only attach token to API requests
     if (token && req.url.includes('/api/')) {
       const cloned = req.clone({
         setHeaders: {

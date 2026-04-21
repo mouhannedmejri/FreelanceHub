@@ -21,17 +21,17 @@
         </div>
         <h1 id="profile-name">{{ profile.user.full_name }}</h1>
         <p class="job-title" *ngIf="profile.profile?.title">
-          {{ profile.profile.title }}
+          {{ profile.profile?.title }}
         </p>
 
         <div class="meta-row">
           <span *ngIf="profile.profile?.location">
             <ion-icon name="location-outline"></ion-icon>
-            {{ profile.profile.location }}
+            {{ profile.profile?.location }}
           </span>
           <span *ngIf="profile.profile?.hourly_rate">
             <ion-icon name="cash-outline"></ion-icon>
-            {{ profile.profile.hourly_rate }}€/h
+            {{ profile.profile?.hourly_rate }}€/h
           </span>
         </div>
 
@@ -58,7 +58,7 @@
           <ion-icon name="information-circle-outline"></ion-icon>
           À propos
         </h3>
-        <p>{{ profile.profile.bio }}</p>
+        <p>{{ profile.profile?.bio }}</p>
       </div>
 
       <!-- Contact -->
@@ -84,7 +84,7 @@
           Compétences
         </h3>
         <div class="skills-grid">
-          <span class="skill-tag" *ngFor="let skill of profile.profile.skills">
+          <span class="skill-tag" *ngFor="let skill of profile.profile?.skills">
             {{ skill }}
           </span>
         </div>
@@ -110,7 +110,7 @@
         </div>
         <div class="cv-file" *ngIf="profile.profile?.cv_filename" id="cv-filename">
           <ion-icon name="document-text-outline"></ion-icon>
-          <span>{{ profile.profile.cv_filename }}</span>
+          <span>{{ profile.profile?.cv_filename }} <small *ngIf="profile.profile?.cv_size">({{ formatBytes(profile.profile?.cv_size) }})</small></span>
         </div>
       </div>
 
@@ -121,7 +121,7 @@
           Certifications
         </h3>
         <div class="cert-list">
-          <div class="cert-card" *ngFor="let cert of profile.profile.certifications">
+          <div class="cert-card" *ngFor="let cert of profile.profile?.certifications">
             <ion-icon name="trophy-outline"></ion-icon>
             <div>
               <strong>{{ cert.name }}</strong>
@@ -138,17 +138,44 @@
           Portfolio
         </h3>
         <div class="portfolio-grid">
-          <div class="portfolio-card" *ngFor="let item of profile.profile.portfolio">
+          <div class="portfolio-card" *ngFor="let item of profile.profile?.portfolio">
             <img [src]="item.image_url" [alt]="item.title" loading="lazy" />
             <div class="portfolio-info">
               <strong>{{ item.title }}</strong>
               <p>{{ item.description }}</p>
               <div class="tags-row">
-                <span class="tag" *ngFor="let tag of item.tags">{{ tag }}</span>
+                <span class="tag" *ngFor="let tag of item.skills">{{ tag }}</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Avis (Reviews) -->
+      <div class="section-card" id="section-reviews">
+        <div class="reviews-header">
+          <h3>
+            <ion-icon name="star-outline"></ion-icon>
+            Avis clients
+          </h3>
+          <button class="leave-review-btn" (click)="leaveReview()" *ngIf="user?.id !== profile.user.id">
+            Laisser un avis
+          </button>
+        </div>
+        
+        <div class="reviews-list" *ngIf="reviews.length > 0">
+          <div class="review-item" *ngFor="let review of reviews">
+            <div class="review-top">
+              <strong>{{ review.reviewer?.full_name || 'Client' }}</strong>
+              <div class="stars">
+                <ion-icon name="star" *ngFor="let s of [1,2,3,4,5]" [class.filled]="s <= review.rating"></ion-icon>
+              </div>
+            </div>
+            <p>{{ review.comment }}</p>
+          </div>
+        </div>
+        
+        <p class="empty-text" *ngIf="reviews.length === 0">Aucun avis pour le moment.</p>
       </div>
 
     </div>
