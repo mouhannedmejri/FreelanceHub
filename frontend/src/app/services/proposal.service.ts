@@ -19,4 +19,8 @@ export class ProposalService {
   updateProposalStatus(proposalId: number, status: 'accepted' | 'rejected'): Observable<{ proposal: Proposal }> {
     return this.http.patch<{ proposal: Proposal }>(`${environment.apiUrl}/proposals/${proposalId}`, { status });
   }
+
+  updateProposal(proposalId: number, status: 'accepted' | 'rejected') {
+    return this.http.patch(`${environment.apiUrl}/proposals/${proposalId}`, { status });
+  }
 }

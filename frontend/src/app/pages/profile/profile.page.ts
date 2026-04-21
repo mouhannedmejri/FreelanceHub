@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { AlertController, ToastController } from '@ionic/angular';
+import { AlertController, ToastController, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
 import { FullProfile } from '../../models/profile.model';
 import { User } from '../../models/user.model';
 import { ReviewService } from '../../services/review.service';
 import { Review } from '../../models/review.model';
+import { LeaveReviewComponent } from '../../components/leave-review/leave-review.component';
 
 @Component({
   selector: 'app-profile',
@@ -24,7 +25,8 @@ export class ProfilePage implements OnInit {
     private profileService: ProfileService,
     private reviewService: ReviewService,
     private alertController: AlertController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private modalController: ModalController
   ) {}
 
   ngOnInit() {
@@ -68,38 +70,27 @@ export class ProfilePage implements OnInit {
 
   async leaveReview() {
     if (!this.profile?.user) return;
-    const alert = await this.alertController.create({
-      header: 'Laisser un avis',
-      inputs: [
-        { name: 'rating', type: 'number', placeholder: 'Note (1-5)', min: 1, max: 5 },
-        { name: 'comment', type: 'textarea', placeholder: 'Votre commentaire...' }
-      ],
-      buttons: [
-        { text: 'Annuler', role: 'cancel' },
-        { 
-          text: 'Envoyer', 
-          handler: (data) => {
-            if (data.rating < 1 || data.rating > 5) {
-              this.showToast('La note doit être entre 1 et 5');
-              return false;
-            }
-            this.reviewService.submitReview({
-              target_user_id: this.profile!.user.id,
-              rating: parseInt(data.rating, 10),
-              comment: data.comment
-            }).subscribe({
-              next: () => {
-                this.showToast('Avis publié avec succès');
-                this.loadReviews(this.profile!.user.id);
-              },
-              error: (err) => this.showToast(err.error?.error || 'Erreur lors de la publication')
-            });
-            return true;
-          } 
-        }
-      ]
+    const modal = await this.modalController.create({
+      component: LeaveReviewComponent,
+      componentProps: { targetUserId: this.profile.user.id }
     });
-    await alert.present();
+    
+    await modal.present();
+    
+    const { data, role } = await modal.onDidDismiss();
+    if (role === 'confirm' && data) {
+      this.reviewService.submitReview({
+        target_user_id: this.profile!.user.id,
+        rating: data.rating,
+        comment: data.comment
+      }).subscribe({
+        next: () => {
+          this.showToast('Avis publié avec succès');
+          this.loadReviews(this.profile!.user.id);
+        },
+        error: (err) => this.showToast(err.error?.error || 'Erreur lors de la publication')
+      });
+    }
   }
 
   getInitials(): string {

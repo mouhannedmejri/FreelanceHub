@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
+import { RoleGuard } from './guards/role.guard';
 
 const routes: Routes = [
   {
@@ -36,13 +37,26 @@ const routes: Routes = [
       import('./pages/publish-offer/publish-offer.module').then(
         (m) => m.PublishOfferPageModule
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['client'] }
+  },
+  {
+    path: 'offer-proposals/:id',
+    loadChildren: () => import('./pages/offer-proposals/offer-proposals.module').then( m => m.OfferProposalsPageModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['client'] }
+  },
+  {
+    path: 'admin-dashboard',
+    loadChildren: () => import('./pages/admin-dashboard/admin-dashboard.module').then( m => m.AdminDashboardPageModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['admin'] }
   },
   {
     path: '',
     redirectTo: 'auth',
     pathMatch: 'full',
-  },
+  }
 ];
 
 @NgModule({

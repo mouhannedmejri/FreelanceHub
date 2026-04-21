@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastController, LoadingController } from '@ionic/angular';
@@ -9,7 +9,7 @@ import { ToastController, LoadingController } from '@ionic/angular';
   styleUrls: ['./auth.page.scss'],
   standalone: false,
 })
-export class AuthPage {
+export class AuthPage implements OnInit {
   activeTab: 'login' | 'register' = 'login';
 
   // Login fields
@@ -29,6 +29,14 @@ export class AuthPage {
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController
   ) {}
+
+  ngOnInit() {
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.router.navigate(['/home'], { replaceUrl: true });
+      }
+    });
+  }
 
   switchTab(tab: 'login' | 'register') {
     this.activeTab = tab;

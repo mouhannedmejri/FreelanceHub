@@ -3,6 +3,10 @@
 ══════════════════════════════════════════ -->
 
 <ion-content class="offers-content" [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <div class="offers-container">
 
     <!-- ── FREELANCER VIEW ──────────────────── -->
@@ -29,7 +33,7 @@
       </div>
 
       <!-- Loading -->
-      <div class="offers-list" *ngIf="isLoading && offers.length === 0">
+      <div class="offers-list" *ngIf="isLoading && displayedOffers.length === 0">
         <div class="skeleton-card" *ngFor="let i of [1, 2, 3]">
           <div class="skeleton-body">
             <div class="skeleton-line wide"></div>
@@ -43,10 +47,10 @@
       </div>
 
       <!-- Offer Cards - Freelancer -->
-      <div class="offers-list" *ngIf="offers.length > 0">
+      <div class="offers-list" *ngIf="displayedOffers.length > 0">
         <div
           class="offer-card"
-          *ngFor="let offer of offers; let idx = index"
+          *ngFor="let offer of displayedOffers; let idx = index"
           [id]="'offer-card-' + offer.id"
           [style.animation-delay]="idx * 0.07 + 's'"
         >
@@ -98,7 +102,7 @@
       </div>
 
       <!-- Empty State -->
-      <div class="empty-state" *ngIf="!isLoading && offers.length === 0">
+      <div class="empty-state" *ngIf="!isLoading && displayedOffers.length === 0">
         <ion-icon name="document-text-outline"></ion-icon>
         <h3>Aucune offre disponible</h3>
         <p>Revenez bientôt pour découvrir de nouvelles missions.</p>
@@ -121,7 +125,7 @@
       </div>
 
       <!-- Loading -->
-      <div class="offers-list" *ngIf="isLoading && offers.length === 0">
+      <div class="offers-list" *ngIf="isLoading && displayedOffers.length === 0">
         <div class="skeleton-card" *ngFor="let i of [1, 2]">
           <div class="skeleton-body">
             <div class="skeleton-line wide"></div>
@@ -134,10 +138,10 @@
       </div>
 
       <!-- Offer Cards - Client -->
-      <div class="offers-list" *ngIf="offers.length > 0">
+      <div class="offers-list" *ngIf="displayedOffers.length > 0">
         <div
           class="offer-card"
-          *ngFor="let offer of offers; let idx = index"
+          *ngFor="let offer of displayedOffers; let idx = index"
           [id]="'my-offer-card-' + offer.id"
           [style.animation-delay]="idx * 0.07 + 's'"
         >
@@ -186,7 +190,7 @@
       </div>
 
       <!-- Empty State - Client -->
-      <div class="empty-state" *ngIf="!isLoading && offers.length === 0">
+      <div class="empty-state" *ngIf="!isLoading && displayedOffers.length === 0">
         <ion-icon name="document-text-outline"></ion-icon>
         <h3>Aucune offre publiée</h3>
         <p>Publiez votre première offre pour trouver le freelancer idéal.</p>
@@ -199,6 +203,10 @@
     </ng-container>
 
   </div>
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!hasMore" threshold="200px">
+    <ion-infinite-scroll-content loadingSpinner="crescent" loadingText="Chargement..."></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
 
   <!-- Apply Modal -->
   <ion-modal [isOpen]="isApplyModalOpen" (didDismiss)="isApplyModalOpen = false">

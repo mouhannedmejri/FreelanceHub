@@ -20,6 +20,10 @@
       <ion-icon name="settings-outline"></ion-icon>
       <span>Paramètres</span>
     </div>
+    <div class="drawer-item" *ngIf="user?.role === 'admin'" (click)="navigateFromDrawer('/admin-dashboard')">
+      <ion-icon name="shield-checkmark-outline"></ion-icon>
+      <span>Admin Dashboard</span>
+    </div>
     <div class="drawer-item">
       <ion-icon name="globe-outline"></ion-icon>
       <span>Langue</span>

@@ -26,6 +26,12 @@ export class DigitalStorePage implements OnInit, OnDestroy {
     { id: 'plan-archi', label: 'Plans Archi', icon: 'home-outline' }
   ];
 
+  allProducts: Product[] = [];
+  displayedProducts: Product[] = [];
+  page = 1;
+  pageSize = 10;
+  hasMore = true;
+
   constructor(private productService: ProductService) {}
 
   ngOnInit() {
@@ -36,20 +42,44 @@ export class DigitalStorePage implements OnInit, OnDestroy {
     this.subs.forEach((s) => s.unsubscribe());
   }
 
-  loadProducts() {
+  doRefresh(event: any) {
+    this.loadProducts(event);
+  }
+
+  loadProducts(event?: any) {
+    if (this.isLoading && !event) return;
     this.isLoading = true;
+    this.page = 1;
+    
     this.subs.push(
       this.productService.getProducts(this.activeCategory, this.searchTerm).subscribe({
         next: (res) => {
-          this.products = res.products;
+          this.allProducts = res.products;
           this.filteredProducts = res.products;
+          this.updateDisplayedProducts();
           this.isLoading = false;
+          if (event) event.target.complete();
         },
         error: () => {
           this.isLoading = false;
+          if (event) event.target.complete();
         }
       })
     );
+  }
+
+  updateDisplayedProducts() {
+    this.displayedProducts = this.filteredProducts.slice(0, this.page * this.pageSize);
+    this.hasMore = this.displayedProducts.length < this.filteredProducts.length;
+  }
+
+  loadMore(event: any) {
+    this.page++;
+    this.updateDisplayedProducts();
+    event.target.complete();
+    if (!this.hasMore) {
+      event.target.disabled = true;
+    }
   }
 
   onSearch() {

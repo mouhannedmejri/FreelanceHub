@@ -1,0 +1,90 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+      <ion-back-button defaultHref="/home/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Admin Dashboard</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding dark-bg">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="isLoading && !stats" class="loading-state">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <div *ngIf="stats" class="stats-grid">
+    <div class="stat-card">
+      <ion-icon name="people-outline" color="primary"></ion-icon>
+      <h3>{{ stats.total_users }}</h3>
+      <p>Total Utilisateurs</p>
+    </div>
+    <div class="stat-card">
+      <ion-icon name="briefcase-outline" color="secondary"></ion-icon>
+      <h3>{{ stats.freelancers }}</h3>
+      <p>Freelancers</p>
+    </div>
+    <div class="stat-card">
+      <ion-icon name="business-outline" color="tertiary"></ion-icon>
+      <h3>{{ stats.clients }}</h3>
+      <p>Clients</p>
+    </div>
+    <div class="stat-card">
+      <ion-icon name="document-text-outline" color="success"></ion-icon>
+      <h3>{{ stats.offers }}</h3>
+      <p>Offres</p>
+    </div>
+    <div class="stat-card">
+      <ion-icon name="construct-outline" color="warning"></ion-icon>
+      <h3>{{ stats.services }}</h3>
+      <p>Services</p>
+    </div>
+    <div class="stat-card">
+      <ion-icon name="cash-outline" color="danger"></ion-icon>
+      <h3>{{ stats.revenue | currency:'EUR':'symbol':'1.0-0' }}</h3>
+      <p>Revenus</p>
+    </div>
+  </div>
+
+  <h2 class="section-title" *ngIf="users.length > 0">Utilisateurs récents</h2>
+  
+  <div class="users-table-container" *ngIf="users.length > 0">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Rôle</th>
+          <th>Date</th>
+          <th>Statut</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of users">
+          <td>
+            <strong>{{ u.full_name }}</strong><br>
+            <small>{{ u.email }}</small>
+          </td>
+          <td>
+            <ion-badge color="light">{{ u.role }}</ion-badge>
+          </td>
+          <td>{{ u.created_at | date:'shortDate' }}</td>
+          <td>
+            <ion-badge [color]="u.is_approved ? 'success' : 'danger'">
+              {{ u.is_approved ? 'Approuvé' : 'Révoqué' }}
+            </ion-badge>
+          </td>
+          <td>
+            <ion-button *ngIf="u.role === 'freelancer'" size="small" [color]="u.is_approved ? 'danger' : 'success'" (click)="toggleApprove(u)">
+              {{ u.is_approved ? 'Révoquer' : 'Approuver' }}
+            </ion-button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ion-content>

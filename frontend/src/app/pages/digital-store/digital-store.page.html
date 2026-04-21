@@ -1,4 +1,7 @@
 <ion-content class="store-content" [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
   
   <div class="store-header">
     <div class="header-bg-shapes">
@@ -35,7 +38,7 @@
     </div>
     
     <div class="results-header">
-      <span class="count">{{ filteredProducts.length }} produits trouvés</span>
+      <span class="count">{{ displayedProducts.length }} produits trouvés</span>
       <button class="icon-btn">
         <ion-icon name="options-outline"></ion-icon>
         Filtres
@@ -49,7 +52,7 @@
   </div>
 
   <div class="products-grid" *ngIf="!isLoading">
-    <div class="product-card" *ngFor="let product of filteredProducts">
+    <div class="product-card" *ngFor="let product of displayedProducts">
       <div class="product-image">
         <img [src]="product.image_url" [alt]="product.title" loading="lazy" />
         <div class="version-badge">v{{ product.version }}</div>
@@ -83,10 +86,14 @@
     </div>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && filteredProducts.length === 0">
+  <div class="empty-state" *ngIf="!isLoading && displayedProducts.length === 0">
     <ion-icon name="cube-outline"></ion-icon>
     <h3>Aucun produit trouvé</h3>
     <p>Essayez de modifier vos filtres ou votre recherche.</p>
   </div>
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!hasMore" threshold="200px">
+    <ion-infinite-scroll-content loadingSpinner="crescent" loadingText="Chargement..."></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
 
 </ion-content>
