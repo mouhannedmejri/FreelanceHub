@@ -1,0 +1,77 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home/tabs/store"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Propositions</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding" color="light">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="loading-state" *ngIf="isLoading && proposals.length === 0">
+    <ion-list>
+      <ion-item *ngFor="let i of [1,2,3]">
+        <ion-avatar slot="start">
+          <ion-skeleton-text animated></ion-skeleton-text>
+        </ion-avatar>
+        <ion-label>
+          <h3><ion-skeleton-text animated style="width: 50%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated style="width: 80%"></ion-skeleton-text></p>
+          <p><ion-skeleton-text animated style="width: 30%"></ion-skeleton-text></p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && proposals.length === 0">
+    <ion-icon name="document-text-outline" style="font-size: 64px; color: var(--ion-color-medium)"></ion-icon>
+    <h3 style="color: var(--ion-color-dark)">Aucune proposition</h3>
+    <p style="color: var(--ion-color-medium)">Vous n'avez pas encore reçu de propositions pour cette offre.</p>
+  </div>
+
+  <ion-list *ngIf="proposals.length > 0">
+    <ion-card *ngFor="let p of proposals" class="proposal-card">
+      <ion-item lines="none" class="proposal-header">
+        <ion-avatar slot="start" class="freelancer-avatar">
+          <div class="avatar-placeholder">{{ p.freelancer?.full_name?.charAt(0) || '?' }}</div>
+        </ion-avatar>
+        <ion-label>
+          <h2>{{ p.freelancer?.full_name }}</h2>
+          <p>Rating: 4.8 <ion-icon name="star" color="warning"></ion-icon></p>
+        </ion-label>
+        <ion-badge slot="end" [color]="p.status === 'accepted' ? 'success' : (p.status === 'rejected' ? 'medium' : 'warning')">
+          {{ p.status | titlecase }}
+        </ion-badge>
+      </ion-item>
+
+      <ion-card-content>
+        <div class="proposal-meta">
+          <ion-chip color="primary">
+            <ion-icon name="cash-outline"></ion-icon>
+            <ion-label>{{ p.proposed_price }}€</ion-label>
+          </ion-chip>
+          <ion-chip color="tertiary">
+            <ion-icon name="time-outline"></ion-icon>
+            <ion-label>{{ p.estimated_duration }}</ion-label>
+          </ion-chip>
+        </div>
+        <p class="excerpt">"{{ p.cover_letter | slice:0:100 }}{{ p.cover_letter.length > 100 ? '...' : '' }}"</p>
+        
+        <div class="actions" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <ion-button fill="outline" size="small" (click)="viewProfile(p.freelancer_id)">Voir profil</ion-button>
+          <div style="flex: 1"></div>
+          <ion-button *ngIf="p.status === 'pending'" color="success" size="small" (click)="updateProposal(p, 'accepted')">
+            <ion-icon name="checkmark-outline" slot="start"></ion-icon> Accepter
+          </ion-button>
+          <ion-button *ngIf="p.status === 'pending'" color="danger" size="small" (click)="updateProposal(p, 'rejected')">
+            <ion-icon name="close-outline" slot="start"></ion-icon> Refuser
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
+</ion-content>

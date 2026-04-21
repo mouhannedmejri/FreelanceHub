@@ -1,0 +1,35 @@
+<ion-header>
+  <ion-toolbar color="dark">
+    <ion-title>Laisser un avis</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">Fermer</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding" color="light">
+  <div class="rating-container">
+    <p>Sélectionnez une note</p>
+    <div class="stars">
+      <ion-icon name="star" 
+        *ngFor="let s of [1,2,3,4,5]" 
+        [class.active]="s <= rating" 
+        (click)="setRating(s)">
+      </ion-icon>
+    </div>
+  </div>
+
+  <div class="comment-container">
+    <p>Votre commentaire</p>
+    <ion-textarea 
+      rows="5" 
+      placeholder="Partagez votre expérience avec ce freelancer..." 
+      [(ngModel)]="comment" 
+      class="custom-textarea">
+    </ion-textarea>
+  </div>
+
+  <ion-button expand="block" color="primary" class="submit-btn" [disabled]="rating === 0 || !comment.trim()" (click)="submit()">
+    Soumettre l'avis
+  </ion-button>
+</ion-content>

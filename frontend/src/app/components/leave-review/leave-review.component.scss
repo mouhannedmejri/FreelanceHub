@@ -1,0 +1,58 @@
+.rating-container {
+  text-align: center;
+  margin-bottom: 24px;
+  
+  p {
+    font-size: 16px;
+    color: var(--ion-color-dark);
+    font-weight: 500;
+  }
+  
+  .stars {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    font-size: 40px;
+    
+    ion-icon {
+      color: #e0e0e0;
+      transition: color 0.2s ease, transform 0.1s ease;
+      
+      &.active {
+        color: var(--ion-color-warning);
+      }
+      
+      &:active {
+        transform: scale(0.9);
+      }
+    }
+  }
+}
+
+.comment-container {
+  margin-bottom: 30px;
+  
+  p {
+    font-size: 16px;
+    color: var(--ion-color-dark);
+    font-weight: 500;
+  }
+  
+  .custom-textarea {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    --padding-start: 10px;
+    --padding-end: 10px;
+    --padding-top: 10px;
+    --padding-bottom: 10px;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
+  }
+}
+
+.submit-btn {
+  margin-top: 20px;
+  border-radius: 8px;
+  --border-radius: 8px;
+}

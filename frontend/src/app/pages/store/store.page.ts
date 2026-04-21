@@ -22,6 +22,13 @@ export class StorePage implements OnInit, OnDestroy {
   searchTerm = '';
   private subs: Subscription[] = [];
   private searchTimeout: any;
+  
+  // Pagination
+  allOffers: Offer[] = [];
+  displayedOffers: Offer[] = [];
+  page = 1;
+  pageSize = 10;
+  hasMore = true;
 
   constructor(
     private authService: AuthService,
@@ -49,9 +56,14 @@ export class StorePage implements OnInit, OnDestroy {
     return this.user?.role === 'client';
   }
 
-  loadOffers() {
-    if (this.isLoading) return;
+  doRefresh(event: any) {
+    this.loadOffers(event);
+  }
+
+  loadOffers(event?: any) {
+    if (this.isLoading && !event) return;
     this.isLoading = true;
+    this.page = 1;
 
     const call = this.isClient
       ? this.offerService.getMyOffers()
@@ -59,14 +71,31 @@ export class StorePage implements OnInit, OnDestroy {
 
     call.subscribe({
       next: (data) => {
-        this.offers = data.offers;
+        this.allOffers = data.offers;
         this.totalOffers = data.total;
+        this.updateDisplayedOffers();
         this.isLoading = false;
+        if (event) event.target.complete();
       },
       error: () => {
         this.isLoading = false;
+        if (event) event.target.complete();
       },
     });
+  }
+
+  updateDisplayedOffers() {
+    this.displayedOffers = this.allOffers.slice(0, this.page * this.pageSize);
+    this.hasMore = this.displayedOffers.length < this.allOffers.length;
+  }
+
+  loadMore(event: any) {
+    this.page++;
+    this.updateDisplayedOffers();
+    event.target.complete();
+    if (!this.hasMore) {
+      event.target.disabled = true;
+    }
   }
 
   onSearch() {
@@ -152,44 +181,20 @@ export class StorePage implements OnInit, OnDestroy {
   }
 
   viewProposals(offer: Offer) {
-    this.selectedOffer = offer;
-    this.isProposalsModalOpen = true;
-    this.loadProposals();
+    this.router.navigate(['/offer-proposals', offer.id]);
   }
 
-  loadProposals() {
-    if (!this.selectedOffer) return;
-    this.isLoadingProposals = true;
-    this.proposalService.getOfferProposals(this.selectedOffer.id).subscribe({
-      next: (res) => {
-        this.proposals = res.proposals;
-        this.isLoadingProposals = false;
+  updateProposal(proposal: any, status: 'accepted' | 'rejected') {
+    this.proposalService.updateProposal(proposal.id, status).subscribe({
+      next: () => {
+        proposal.status = status;
+        this.toastController.create({
+          message: status === 'accepted' ? 'Proposition acceptée' : 'Proposition refusée',
+          duration: 2000,
+          color: status === 'accepted' ? 'success' : 'medium'
+        }).then(t => t.present());
       },
-      error: () => {
-        this.isLoadingProposals = false;
-      }
+      error: (err: any) => console.error(err)
     });
-  }
-
-  async updateProposal(proposal: any, status: 'accepted' | 'rejected') {
-    const alert = await this.alertController.create({
-      header: 'Confirmation',
-      message: `Êtes-vous sûr de vouloir ${status === 'accepted' ? 'accepter' : 'refuser'} cette proposition ?`,
-      buttons: [
-        { text: 'Annuler', role: 'cancel' },
-        { 
-          text: 'Confirmer', 
-          handler: () => {
-            this.proposalService.updateProposalStatus(proposal.id, status).subscribe({
-              next: () => {
-                this.loadProposals();
-                this.loadOffers();
-              }
-            });
-          } 
-        }
-      ]
-    });
-    await alert.present();
   }
 }

@@ -60,6 +60,30 @@ export class ServicesPage implements OnInit {
       });
   }
 
+  doRefresh(event: any) {
+    this.page = 1;
+    this.isLoading = true;
+    this.serviceService
+      .getServices({
+        category: this.selectedCategory,
+        search: this.searchTerm,
+        page: this.page,
+      })
+      .subscribe({
+        next: (data) => {
+          this.services = data.services;
+          this.totalServices = data.total;
+          this.hasMore = data.has_more;
+          this.isLoading = false;
+          event.target.complete();
+        },
+        error: () => {
+          this.isLoading = false;
+          event.target.complete();
+        },
+      });
+  }
+
   selectCategory(value: string) {
     this.selectedCategory = value;
     this.page = 1;
