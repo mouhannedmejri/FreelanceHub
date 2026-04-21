@@ -4,6 +4,8 @@ import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
 import { FullProfile } from '../../models/profile.model';
 import { User } from '../../models/user.model';
+import { ReviewService } from '../../services/review.service';
+import { Review } from '../../models/review.model';
 
 @Component({
   selector: 'app-profile',
@@ -15,10 +17,12 @@ export class ProfilePage implements OnInit {
   profile: FullProfile | null = null;
   user: User | null = null;
   isLoading = true;
+  reviews: Review[] = [];
 
   constructor(
     private authService: AuthService,
     private profileService: ProfileService,
+    private reviewService: ReviewService,
     private alertController: AlertController,
     private toastController: ToastController
   ) {}
@@ -44,11 +48,58 @@ export class ProfilePage implements OnInit {
       next: (data) => {
         this.profile = data;
         this.isLoading = false;
+        if (this.user) {
+          this.loadReviews(this.user.id);
+        }
       },
       error: () => {
         this.isLoading = false;
       },
     });
+  }
+
+  loadReviews(userId: number) {
+    this.reviewService.getUserReviews(userId).subscribe({
+      next: (res) => {
+        this.reviews = res.reviews;
+      }
+    });
+  }
+
+  async leaveReview() {
+    if (!this.profile?.user) return;
+    const alert = await this.alertController.create({
+      header: 'Laisser un avis',
+      inputs: [
+        { name: 'rating', type: 'number', placeholder: 'Note (1-5)', min: 1, max: 5 },
+        { name: 'comment', type: 'textarea', placeholder: 'Votre commentaire...' }
+      ],
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        { 
+          text: 'Envoyer', 
+          handler: (data) => {
+            if (data.rating < 1 || data.rating > 5) {
+              this.showToast('La note doit être entre 1 et 5');
+              return false;
+            }
+            this.reviewService.submitReview({
+              target_user_id: this.profile!.user.id,
+              rating: parseInt(data.rating, 10),
+              comment: data.comment
+            }).subscribe({
+              next: () => {
+                this.showToast('Avis publié avec succès');
+                this.loadReviews(this.profile!.user.id);
+              },
+              error: (err) => this.showToast(err.error?.error || 'Erreur lors de la publication')
+            });
+            return true;
+          } 
+        }
+      ]
+    });
+    await alert.present();
   }
 
   getInitials(): string {
@@ -165,5 +216,14 @@ export class ProfilePage implements OnInit {
       color: 'dark',
     });
     await toast.present();
+  }
+
+  formatBytes(bytes?: number, decimals = 2) {
+    if (!bytes || !+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   }
 }

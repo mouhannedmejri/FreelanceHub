@@ -84,24 +84,34 @@
       </ion-tab-button>
 
       <ion-tab-button tab="messages" id="tab-messages">
-        <div class="tab-icon-wrapper">
+        <div class="tab-icon-wrapper" style="position: relative;">
           <ion-icon name="chatbubble-outline"></ion-icon>
+          <ion-badge color="danger" class="tab-badge" *ngIf="unreadMessagesCount > 0" style="position: absolute; top: -5px; right: -10px; font-size: 10px; padding: 2px 4px; border-radius: 8px;">
+            {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
+          </ion-badge>
         </div>
         <ion-label>Messages</ion-label>
       </ion-tab-button>
 
-      <ion-tab-button tab="store" id="tab-store">
+      <ion-tab-button tab="digital-store" id="tab-digital-store">
         <div class="tab-icon-wrapper">
-          <ion-icon name="bag-outline"></ion-icon>
+          <ion-icon name="cart-outline"></ion-icon>
         </div>
         <ion-label>Store</ion-label>
       </ion-tab-button>
 
+      <ion-tab-button tab="store" id="tab-offres">
+        <div class="tab-icon-wrapper">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
+        <ion-label>Offres</ion-label>
+      </ion-tab-button>
+
       <ion-tab-button tab="profile" id="tab-profile">
         <div class="tab-icon-wrapper">
-          <ion-icon [name]="lastTabIcon"></ion-icon>
+          <ion-icon name="person-outline"></ion-icon>
         </div>
-        <ion-label>{{ lastTabLabel }}</ion-label>
+        <ion-label>Profil</ion-label>
       </ion-tab-button>
 
     </ion-tab-bar>
