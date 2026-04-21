@@ -1,0 +1,207 @@
+<ion-content class="auth-content" [fullscreen]="true">
+  <div class="auth-container">
+
+    <!-- Logo Section -->
+    <div class="logo-section">
+      <div class="logo-icon">
+        <ion-icon name="briefcase-outline"></ion-icon>
+      </div>
+      <h1 class="logo-text">Freelance<span>Hub</span></h1>
+      <p class="logo-subtitle">La plateforme des freelances</p>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="auth-card">
+
+      <!-- Tab Switcher -->
+      <div class="tab-switcher">
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'login'"
+          (click)="switchTab('login')"
+          id="login-tab-btn"
+        >
+          Connexion
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab === 'register'"
+          (click)="switchTab('register')"
+          id="register-tab-btn"
+        >
+          Inscription
+        </button>
+      </div>
+
+      <!-- LOGIN TAB -->
+      <div class="tab-content" *ngIf="activeTab === 'login'">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-wrapper">
+            <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+            <input
+              type="email"
+              class="form-input"
+              placeholder="votre@email.com"
+              [(ngModel)]="loginEmail"
+              id="login-email-input"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-wrapper">
+            <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+            <input
+              type="password"
+              class="form-input"
+              placeholder="••••••••"
+              [(ngModel)]="loginPassword"
+              id="login-password-input"
+            />
+          </div>
+        </div>
+
+        <button class="primary-btn" (click)="onLogin()" id="login-submit-btn">
+          <ion-icon name="log-in-outline"></ion-icon>
+          Se connecter
+        </button>
+
+        <a class="forgot-link" href="javascript:void(0)">Mot de passe oublié?</a>
+
+        <!-- Social Buttons -->
+        <div class="divider">
+          <span>ou continuer avec</span>
+        </div>
+
+        <div class="social-buttons">
+          <button class="social-btn google" id="google-login-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google
+          </button>
+          <button class="social-btn apple" id="apple-login-btn">
+            <ion-icon name="logo-apple"></ion-icon>
+            Apple
+          </button>
+        </div>
+
+        <!-- Demo Quick Login -->
+        <div class="demo-section">
+          <p class="demo-title">Connexion rapide Demo</p>
+          <div class="demo-buttons">
+            <button class="demo-btn freelancer" (click)="demoLogin('freelancer')" id="demo-freelancer-btn">
+              <ion-icon name="briefcase-outline"></ion-icon>
+              Freelancer
+            </button>
+            <button class="demo-btn client" (click)="demoLogin('client')" id="demo-client-btn">
+              <ion-icon name="person-outline"></ion-icon>
+              Client
+            </button>
+            <button class="demo-btn admin" (click)="demoLogin('admin')" id="demo-admin-btn">
+              <ion-icon name="shield-outline"></ion-icon>
+              Admin
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGISTER TAB -->
+      <div class="tab-content" *ngIf="activeTab === 'register'">
+        <div class="form-group">
+          <label class="form-label">Nom complet</label>
+          <div class="input-wrapper">
+            <ion-icon name="person-outline" class="input-icon"></ion-icon>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Jean Dupont"
+              [(ngModel)]="registerFullName"
+              id="register-name-input"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-wrapper">
+            <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+            <input
+              type="email"
+              class="form-input"
+              placeholder="votre@email.com"
+              [(ngModel)]="registerEmail"
+              id="register-email-input"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-wrapper">
+            <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+            <input
+              type="password"
+              class="form-input"
+              placeholder="Minimum 6 caractères"
+              [(ngModel)]="registerPassword"
+              id="register-password-input"
+            />
+          </div>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="form-group">
+          <label class="form-label">Je suis un...</label>
+          <div class="role-selector">
+            <button
+              class="role-card"
+              [class.selected]="registerRole === 'freelancer'"
+              (click)="selectRole('freelancer')"
+              id="role-freelancer-btn"
+            >
+              <ion-icon name="briefcase-outline"></ion-icon>
+              <span>Freelancer</span>
+              <small>Je propose mes services</small>
+            </button>
+            <button
+              class="role-card"
+              [class.selected]="registerRole === 'client'"
+              (click)="selectRole('client')"
+              id="role-client-btn"
+            >
+              <ion-icon name="person-outline"></ion-icon>
+              <span>Client</span>
+              <small>Je cherche un freelancer</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <label class="terms-check" id="terms-checkbox-label">
+          <input type="checkbox" [(ngModel)]="acceptTerms" id="terms-checkbox" />
+          <span class="checkmark"></span>
+          <span class="terms-text">
+            J'accepte les <a href="javascript:void(0)">conditions d'utilisation</a>
+            et la <a href="javascript:void(0)">politique de confidentialité</a>
+          </span>
+        </label>
+
+        <button
+          class="primary-btn"
+          (click)="onRegister()"
+          [disabled]="!acceptTerms"
+          id="register-submit-btn"
+        >
+          <ion-icon name="person-add-outline"></ion-icon>
+          Créer un compte
+        </button>
+      </div>
+    </div>
+  </div>
+</ion-content>

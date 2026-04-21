@@ -1,0 +1,32 @@
+.messages-content {
+  --background: #0f0b1a;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #8b83a6;
+  text-align: center;
+  padding: 40px;
+
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f1f0f5;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}

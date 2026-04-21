@@ -1,0 +1,84 @@
+<ion-content class="notif-content">
+    <!-- Header -->
+    <div class="page-header">
+        <button class="back-btn" (click)="goBack()" id="notif-back-btn">
+            <ion-icon name="arrow-back-outline"></ion-icon>
+        </button>
+        <div class="header-center">
+            <h1 class="page-title">Notifications</h1>
+            <span class="unread-subtitle" *ngIf="unreadCount > 0">
+                {{ unreadCount }} non lue{{ unreadCount > 1 ? 's' : '' }}
+            </span>
+            <span class="unread-subtitle read-all" *ngIf="unreadCount === 0">
+                Tout lu ✓
+            </span>
+        </div>
+        <button class="mark-all-btn" (click)="markAllAsRead()" [disabled]="unreadCount === 0" id="mark-all-btn">
+            <ion-icon name="checkmark-done-outline"></ion-icon>
+        </button>
+    </div>
+
+    <!-- Mark All Label -->
+    <div class="mark-all-label" *ngIf="unreadCount > 0" (click)="markAllAsRead()">
+        Tout marquer comme lu
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="filter-pills">
+        <button class="pill" [class.active]="filter === 'all'" (click)="setFilter('all')" id="filter-all-btn">
+            Toutes ({{ totalCount }})
+        </button>
+        <button class="pill" [class.active]="filter === 'unread'" (click)="setFilter('unread')" id="filter-unread-btn">
+            Non lues ({{ unreadCount }})
+        </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-state" *ngIf="loading">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading && displayedNotifications.length === 0">
+        <div class="empty-icon-wrap">
+            <ion-icon name="notifications-off-outline"></ion-icon>
+        </div>
+        <p class="empty-title">Aucune notification</p>
+        <p class="empty-sub">
+            {{ filter === 'unread' ? 'Vous avez tout lu 🎉' : 'Vous êtes à jour !' }}
+        </p>
+    </div>
+
+    <!-- Notification Cards -->
+    <div class="notif-list" *ngIf="!loading && displayedNotifications.length > 0">
+        <div class="notif-card" [class.unread]="!notif.is_read" *ngFor="let notif of displayedNotifications"
+            (click)="markAsRead(notif)" [id]="'notif-card-' + notif.id">
+            <!-- Unread Badge -->
+            <span class="new-badge" *ngIf="!notif.is_read">Nouveau</span>
+
+            <!-- Icon -->
+            <div class="notif-icon" [style.background]="getTypeColor(notif.type) + '22'"
+                [style.border-color]="getTypeColor(notif.type) + '44'">
+                <ion-icon [name]="getTypeIcon(notif.type)" [style.color]="getTypeColor(notif.type)"></ion-icon>
+            </div>
+
+            <!-- Content -->
+            <div class="notif-body">
+                <span class="notif-title">{{ notif.title }}</span>
+                <span class="notif-text">{{ notif.body }}</span>
+                <div class="notif-footer">
+                    <span class="notif-time">{{ formatTime(notif.created_at) }}</span>
+                    <button class="read-link" *ngIf="!notif.is_read"
+                        (click)="markAsRead(notif); $event.stopPropagation()" [id]="'mark-read-' + notif.id">
+                        Marquer comme lu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Delete -->
+            <button class="delete-btn" (click)="deleteNotification(notif, $event)" [id]="'delete-notif-' + notif.id">
+                <ion-icon name="trash-outline"></ion-icon>
+            </button>
+        </div>
+    </div>
+</ion-content>

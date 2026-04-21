@@ -1,0 +1,165 @@
+<ion-content class="home-content" [fullscreen]="true">
+
+  <!-- Search Bar -->
+  <div class="search-wrap">
+    <div class="search-bar">
+      <ion-icon name="search-outline" class="search-icon"></ion-icon>
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Rechercher une offre..." class="search-input"
+        id="home-search-input" />
+      <button class="search-clear" *ngIf="searchQuery" (click)="searchQuery = ''">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Hero Banner -->
+  <div class="hero-banner">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 class="hero-title">Bienvenue sur<br><span class="hero-brand">FreelanceHub</span></h1>
+        <p class="hero-sub">La plateforme de référence pour connecter freelances talentueux et clients ambitieux en
+          France.</p>
+      </div>
+
+      <!-- 2×2 Stat Grid -->
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-icon-wrap">
+            <ion-icon name="people-outline"></ion-icon>
+          </div>
+          <span class="stat-value">{{ formattedFreelancers }}</span>
+          <span class="stat-label">Freelances</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon-wrap">
+            <ion-icon name="briefcase-outline"></ion-icon>
+          </div>
+          <span class="stat-value">{{ formattedProjects }}</span>
+          <span class="stat-label">Projets</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon-wrap">
+            <ion-icon name="business-outline"></ion-icon>
+          </div>
+          <span class="stat-value">{{ formattedClients }}</span>
+          <span class="stat-label">Clients</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon-wrap">
+            <ion-icon name="star-outline"></ion-icon>
+          </div>
+          <span class="stat-value">4.9★</span>
+          <span class="stat-label">Note moy.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why FreelanceHub -->
+  <div class="section">
+    <h2 class="section-title">Pourquoi choisir FreelanceHub ?</h2>
+    <div class="feature-cards">
+      <div class="feature-card">
+        <div class="feature-icon shield">
+          <ion-icon name="shield-checkmark-outline"></ion-icon>
+        </div>
+        <div class="feature-text">
+          <span class="feature-name">Paiements sécurisés</span>
+          <span class="feature-desc">Vos transactions protégées à 100%</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon chart">
+          <ion-icon name="trending-up-outline"></ion-icon>
+        </div>
+        <div class="feature-text">
+          <span class="feature-name">Croissance garantie</span>
+          <span class="feature-desc">+200% de revenus en moyenne</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon people">
+          <ion-icon name="people-circle-outline"></ion-icon>
+        </div>
+        <div class="feature-text">
+          <span class="feature-name">Communauté active</span>
+          <span class="feature-desc">15 000+ professionnels connectés</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommended Jobs -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Recommandé pour vous</h2>
+      <span class="section-count">{{ filteredJobs.length }} offres</span>
+    </div>
+
+    <div class="empty-reco" *ngIf="filteredJobs.length === 0">
+      <ion-icon name="search-outline"></ion-icon>
+      <span>Aucune offre trouvée</span>
+    </div>
+
+    <div class="job-list" *ngIf="filteredJobs.length > 0">
+      <div class="job-card" *ngFor="let job of filteredJobs" [id]="'job-card-' + job.id">
+        <div class="job-card-top">
+          <span class="reco-badge">
+            <ion-icon name="sparkles-outline"></ion-icon>
+            Recommandé
+          </span>
+          <span class="job-propositions">{{ job.propositions }} propositions</span>
+        </div>
+
+        <h3 class="job-title">{{ job.title }}</h3>
+        <span class="job-client">
+          <ion-icon name="person-circle-outline"></ion-icon>
+          {{ job.client }}
+        </span>
+
+        <p class="job-desc">{{ job.description }}</p>
+
+        <!-- Skill Tags -->
+        <div class="skill-tags">
+          <span class="skill-tag" *ngFor="let skill of job.skills">{{ skill }}</span>
+        </div>
+
+        <!-- Meta Row -->
+        <div class="job-meta">
+          <span class="meta-chip">
+            <ion-icon name="cash-outline"></ion-icon>
+            {{ job.budget }}
+          </span>
+          <span class="meta-chip">
+            <ion-icon name="time-outline"></ion-icon>
+            {{ job.duration }}
+          </span>
+          <span class="meta-chip">
+            <ion-icon name="location-outline"></ion-icon>
+            {{ job.location }}
+          </span>
+        </div>
+
+        <button class="apply-btn" id="apply-btn-{{ job.id }}">
+          <ion-icon name="send-outline"></ion-icon>
+          Postuler
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spacer for CTA if logged out -->
+  <div style="height: 80px" *ngIf="!user"></div>
+
+</ion-content>
+
+<!-- Fixed Bottom CTA for logged-out users -->
+<div class="cta-bar" *ngIf="!user">
+  <button class="cta-register" (click)="goToAuth('register')" id="cta-register-btn">
+    Créer un compte
+  </button>
+  <button class="cta-login" (click)="goToAuth('login')" id="cta-login-btn">
+    Se connecter
+  </button>
+</div>

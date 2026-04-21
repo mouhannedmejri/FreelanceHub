@@ -1,0 +1,109 @@
+<!-- Sidebar Backdrop -->
+<div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+
+<!-- Sidebar Drawer -->
+<div class="drawer" [class.open]="drawerOpen">
+  <div class="drawer-header">
+    <div class="drawer-avatar">{{ userInitials }}</div>
+    <div class="drawer-user-info">
+      <span class="drawer-name">{{ user?.full_name }}</span>
+      <span class="drawer-role">{{ roleLabel }}</span>
+    </div>
+  </div>
+
+  <div class="drawer-menu">
+    <div class="drawer-item" (click)="navigateFromDrawer('/home/dashboard')">
+      <ion-icon name="grid-outline"></ion-icon>
+      <span>Dashboard</span>
+    </div>
+    <div class="drawer-item" (click)="navigateFromDrawer('/home/profile')">
+      <ion-icon name="settings-outline"></ion-icon>
+      <span>Paramètres</span>
+    </div>
+    <div class="drawer-item">
+      <ion-icon name="globe-outline"></ion-icon>
+      <span>Langue</span>
+    </div>
+    <div class="drawer-item">
+      <ion-icon name="help-circle-outline"></ion-icon>
+      <span>Aide</span>
+    </div>
+    <div class="drawer-item" (click)="navigateFromDrawer('/notifications')">
+      <ion-icon name="notifications-outline"></ion-icon>
+      <span>Notifications</span>
+      <span class="drawer-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <span class="version">Version 1.0.0</span>
+    <span class="copyright">© 2026 FreelanceHub</span>
+  </div>
+</div>
+
+<!-- Main Shell -->
+<div class="shell-wrapper" [class.shifted]="drawerOpen">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="top-bar-btn" (click)="toggleDrawer()" id="hamburger-btn">
+      <ion-icon name="menu-outline"></ion-icon>
+    </button>
+
+    <div class="top-bar-logo">
+      <ion-icon name="diamond-outline" class="logo-icon"></ion-icon>
+      <span class="logo-text">Freelance<span class="logo-accent">Hub</span></span>
+    </div>
+
+    <div class="top-bar-actions">
+      <button class="top-bar-btn notification-btn" (click)="openNotifications()" id="bell-btn">
+        <ion-icon name="notifications-outline"></ion-icon>
+        <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+      </button>
+      <button class="top-bar-btn" (click)="logout()" id="logout-top-btn">
+        <ion-icon name="log-out-outline"></ion-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs Content -->
+  <ion-tabs>
+    <ion-tab-bar slot="bottom">
+
+      <ion-tab-button tab="dashboard" id="tab-dashboard">
+        <div class="tab-icon-wrapper">
+          <ion-icon name="home-outline"></ion-icon>
+        </div>
+        <ion-label>Accueil</ion-label>
+      </ion-tab-button>
+
+      <ion-tab-button tab="services" id="tab-services">
+        <div class="tab-icon-wrapper">
+          <ion-icon name="briefcase-outline"></ion-icon>
+        </div>
+        <ion-label>Services</ion-label>
+      </ion-tab-button>
+
+      <ion-tab-button tab="messages" id="tab-messages">
+        <div class="tab-icon-wrapper">
+          <ion-icon name="chatbubble-outline"></ion-icon>
+        </div>
+        <ion-label>Messages</ion-label>
+      </ion-tab-button>
+
+      <ion-tab-button tab="store" id="tab-store">
+        <div class="tab-icon-wrapper">
+          <ion-icon name="bag-outline"></ion-icon>
+        </div>
+        <ion-label>Store</ion-label>
+      </ion-tab-button>
+
+      <ion-tab-button tab="profile" id="tab-profile">
+        <div class="tab-icon-wrapper">
+          <ion-icon [name]="lastTabIcon"></ion-icon>
+        </div>
+        <ion-label>{{ lastTabLabel }}</ion-label>
+      </ion-tab-button>
+
+    </ion-tab-bar>
+  </ion-tabs>
+</div>

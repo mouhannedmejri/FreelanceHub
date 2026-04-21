@@ -1,0 +1,157 @@
+<ion-content class="profile-content" [fullscreen]="true">
+
+  <!-- Loading State -->
+  <div class="loading-profile" *ngIf="isLoading">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Chargement du profil...</p>
+  </div>
+
+  <div *ngIf="!isLoading && profile">
+
+    <!-- ═══ Hero Banner ═══ -->
+    <div class="hero-banner">
+      <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="avatar-large" id="profile-avatar">
+          {{ getInitials() }}
+        </div>
+        <h1 id="profile-name">{{ profile.user.full_name }}</h1>
+        <p class="job-title" *ngIf="profile.profile?.title">
+          {{ profile.profile.title }}
+        </p>
+
+        <div class="meta-row">
+          <span *ngIf="profile.profile?.location">
+            <ion-icon name="location-outline"></ion-icon>
+            {{ profile.profile.location }}
+          </span>
+          <span *ngIf="profile.profile?.hourly_rate">
+            <ion-icon name="cash-outline"></ion-icon>
+            {{ profile.profile.hourly_rate }}€/h
+          </span>
+        </div>
+
+        <div class="badges-row">
+          <span class="approved-badge" *ngIf="profile.user.is_approved" id="approved-badge">
+            <ion-icon name="checkmark-circle"></ion-icon>
+            Approuvé
+          </span>
+        </div>
+
+        <button class="edit-btn" (click)="editProfile()" id="edit-profile-btn">
+          <ion-icon name="create-outline"></ion-icon>
+          Modifier le profil
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ Profile Sections ═══ -->
+    <div class="profile-sections">
+
+      <!-- À propos -->
+      <div class="section-card" *ngIf="profile.profile?.bio" id="section-about">
+        <h3>
+          <ion-icon name="information-circle-outline"></ion-icon>
+          À propos
+        </h3>
+        <p>{{ profile.profile.bio }}</p>
+      </div>
+
+      <!-- Contact -->
+      <div class="section-card" id="section-contact">
+        <h3>
+          <ion-icon name="call-outline"></ion-icon>
+          Informations de contact
+        </h3>
+        <div class="contact-item">
+          <ion-icon name="mail-outline"></ion-icon>
+          <span>{{ profile.user.email }}</span>
+        </div>
+        <div class="contact-item">
+          <ion-icon name="call-outline"></ion-icon>
+          <span>{{ profile.profile?.phone || 'Non renseigné' }}</span>
+        </div>
+      </div>
+
+      <!-- Compétences -->
+      <div class="section-card" *ngIf="profile.profile?.skills?.length" id="section-skills">
+        <h3>
+          <ion-icon name="code-outline"></ion-icon>
+          Compétences
+        </h3>
+        <div class="skills-grid">
+          <span class="skill-tag" *ngFor="let skill of profile.profile.skills">
+            {{ skill }}
+          </span>
+        </div>
+      </div>
+
+      <!-- CV / Portfolio Upload -->
+      <div class="section-card" id="section-cv">
+        <h3>
+          <ion-icon name="document-outline"></ion-icon>
+          CV / Portfolio
+        </h3>
+        <div class="upload-area" (click)="fileInput.click()" id="cv-upload-area">
+          <ion-icon name="cloud-upload-outline"></ion-icon>
+          <p>Cliquez pour télécharger votre CV</p>
+          <span>PDF jusqu'à 5MB</span>
+          <input
+            type="file"
+            #fileInput
+            accept=".pdf"
+            (change)="onFileSelected($event)"
+            hidden
+          />
+        </div>
+        <div class="cv-file" *ngIf="profile.profile?.cv_filename" id="cv-filename">
+          <ion-icon name="document-text-outline"></ion-icon>
+          <span>{{ profile.profile.cv_filename }}</span>
+        </div>
+      </div>
+
+      <!-- Certifications -->
+      <div class="section-card" *ngIf="profile.profile?.certifications?.length" id="section-certifications">
+        <h3>
+          <ion-icon name="ribbon-outline"></ion-icon>
+          Certifications
+        </h3>
+        <div class="cert-list">
+          <div class="cert-card" *ngFor="let cert of profile.profile.certifications">
+            <ion-icon name="trophy-outline"></ion-icon>
+            <div>
+              <strong>{{ cert.name }}</strong>
+              <p>{{ cert.issuer }} · {{ cert.year }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio -->
+      <div class="section-card" *ngIf="profile.profile?.portfolio?.length" id="section-portfolio">
+        <h3>
+          <ion-icon name="images-outline"></ion-icon>
+          Portfolio
+        </h3>
+        <div class="portfolio-grid">
+          <div class="portfolio-card" *ngFor="let item of profile.profile.portfolio">
+            <img [src]="item.image_url" [alt]="item.title" loading="lazy" />
+            <div class="portfolio-info">
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.description }}</p>
+              <div class="tags-row">
+                <span class="tag" *ngFor="let tag of item.tags">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</ion-content>

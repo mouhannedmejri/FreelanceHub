@@ -1,0 +1,130 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>
+      <span class="header-logo">Services</span>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="services-content" [fullscreen]="true">
+  <div class="services-container">
+
+    <!-- Search Bar -->
+    <div class="search-wrapper">
+      <div class="search-box">
+        <ion-icon name="search-outline"></ion-icon>
+        <input
+          type="text"
+          placeholder="Rechercher un service..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          id="search-input"
+        />
+      </div>
+    </div>
+
+    <!-- Category Pills -->
+    <div class="category-pills">
+      <button
+        *ngFor="let cat of categories"
+        [class.active]="selectedCategory === cat.value"
+        (click)="selectCategory(cat.value)"
+        [id]="'cat-' + cat.label.toLowerCase()"
+      >
+        {{ cat.label }}
+      </button>
+    </div>
+
+    <!-- Results Header -->
+    <div class="results-header">
+      <span class="result-count">{{ totalServices }} services trouvés</span>
+      <button class="filter-btn" id="filter-btn">
+        <ion-icon name="options-outline"></ion-icon>
+        Filtres
+      </button>
+    </div>
+
+    <!-- Loading Skeletons -->
+    <div class="services-list" *ngIf="isLoading && services.length === 0">
+      <div class="skeleton-card" *ngFor="let i of [1, 2, 3]">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Cards -->
+    <div class="services-list" *ngIf="services.length > 0">
+      <div
+        class="service-card"
+        *ngFor="let service of services; let idx = index"
+        [id]="'service-card-' + service.id"
+        [style.animation-delay]="idx * 0.08 + 's'"
+      >
+        <!-- Cover Image -->
+        <div class="card-image">
+          <img [src]="service.cover_image_url" [alt]="service.title" loading="lazy" />
+          <span class="level-badge" [ngClass]="service.level.toLowerCase()">
+            {{ service.level }}
+          </span>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body">
+          <h3>{{ service.title }}</h3>
+
+          <div class="freelancer-row">
+            <div class="avatar-circle">{{ getInitials(service.freelancer_name) }}</div>
+            <span class="freelancer-name">{{ service.freelancer_name }}</span>
+          </div>
+
+          <div class="rating-row">
+            <div class="stars">
+              <ion-icon
+                *ngFor="let star of getStars(service.rating)"
+                [name]="star"
+              ></ion-icon>
+            </div>
+            <span class="review-count">({{ service.review_count }} avis)</span>
+          </div>
+
+          <div class="tags-row">
+            <span class="tag" *ngFor="let tag of service.tags.slice(0, 4)">{{ tag }}</span>
+          </div>
+
+          <div class="card-footer">
+            <span class="price">À partir de {{ service.price_from }}€</span>
+            <button class="details-btn" [id]="'details-btn-' + service.id">
+              Voir détails
+              <ion-icon name="arrow-forward-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && services.length === 0">
+      <ion-icon name="search-outline"></ion-icon>
+      <h3>Aucun service trouvé</h3>
+      <p>Essayez de modifier vos filtres ou votre recherche.</p>
+    </div>
+
+  </div>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll
+    (ionInfinite)="loadMore($event)"
+    [disabled]="!hasMore"
+    threshold="200px"
+  >
+    <ion-infinite-scroll-content
+      loadingSpinner="crescent"
+      loadingText="Chargement..."
+    >
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

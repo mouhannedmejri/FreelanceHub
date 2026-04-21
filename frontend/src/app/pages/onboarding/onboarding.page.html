@@ -1,0 +1,42 @@
+<ion-content class="onboarding-content" [fullscreen]="true">
+  <div class="onboarding-container">
+
+    <div class="header">
+      <div class="step-indicator">
+        <span class="step active"></span>
+        <span class="step"></span>
+        <span class="step"></span>
+      </div>
+      <h1>Vos centres d'intérêt</h1>
+      <p>Sélectionnez les domaines qui vous passionnent pour personnaliser votre expérience.</p>
+    </div>
+
+    <div class="interests-grid">
+      <button
+        *ngFor="let interest of interests"
+        class="interest-chip"
+        [class.selected]="interest.selected"
+        (click)="toggleInterest(interest)"
+      >
+        <ion-icon [name]="interest.icon"></ion-icon>
+        <span>{{ interest.name }}</span>
+      </button>
+    </div>
+
+    <div class="selected-info" *ngIf="selectedCount > 0">
+      <ion-icon name="checkmark-circle" class="info-icon"></ion-icon>
+      {{ selectedCount }} domaine{{ selectedCount > 1 ? 's' : '' }} sélectionné{{ selectedCount > 1 ? 's' : '' }}
+    </div>
+
+    <div class="actions">
+      <button class="primary-btn" (click)="continue()" [disabled]="selectedCount === 0" id="onboarding-continue-btn">
+        Continuer
+        <ion-icon name="arrow-forward-outline"></ion-icon>
+      </button>
+      <button class="skip-btn" (click)="skip()" id="onboarding-skip-btn">
+        Passer cette étape
+      </button>
+    </div>
+
+  </div>
+</ion-content>
