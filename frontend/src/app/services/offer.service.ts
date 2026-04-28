@@ -8,16 +8,24 @@ import { Offer, OffersResponse, CreateOfferPayload } from '../models/offer.model
 export class OfferService {
   constructor(private http: HttpClient) {}
 
-  getOffers(search?: string): Observable<OffersResponse> {
+  getOffers(filters: any = {}): Observable<OffersResponse> {
     let params = new HttpParams();
-    if (search) {
-      params = params.set('search', search);
-    }
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+        params = params.set(key, filters[key]);
+      }
+    });
     return this.http.get<OffersResponse>(`${environment.apiUrl}/offers/`, { params });
   }
 
-  getMyOffers(): Observable<OffersResponse> {
-    return this.http.get<OffersResponse>(`${environment.apiUrl}/offers/mine`);
+  getMyOffers(filters: any = {}): Observable<OffersResponse> {
+    let params = new HttpParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+        params = params.set(key, filters[key]);
+      }
+    });
+    return this.http.get<OffersResponse>(`${environment.apiUrl}/offers/mine`, { params });
   }
 
   getOffer(id: number): Observable<{ offer: Offer }> {

@@ -12,7 +12,7 @@
   </div>
 
   <div class="drawer-menu">
-    <div class="drawer-item" (click)="navigateFromDrawer('/home/dashboard')">
+    <div class="drawer-item" (click)="openDashboard()">
       <ion-icon name="grid-outline"></ion-icon>
       <span>Dashboard</span>
     </div>
@@ -20,7 +20,7 @@
       <ion-icon name="settings-outline"></ion-icon>
       <span>Paramètres</span>
     </div>
-    <div class="drawer-item" *ngIf="user?.role === 'admin'" (click)="navigateFromDrawer('/admin-dashboard')">
+    <div class="drawer-item" *ngIf="user?.role === 'admin' && !isGuest" (click)="navigateFromDrawer('/admin-dashboard')">
       <ion-icon name="shield-checkmark-outline"></ion-icon>
       <span>Admin Dashboard</span>
     </div>
@@ -40,7 +40,7 @@
   </div>
 
   <div class="drawer-footer">
-    <span class="version">Version 1.0.0</span>
+    <span class="version">{{ isGuest ? 'Guest mode' : 'Version 1.0.0' }}</span>
     <span class="copyright">© 2026 FreelanceHub</span>
   </div>
 </div>
@@ -64,58 +64,50 @@
         <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
       </button>
       <button class="top-bar-btn" (click)="logout()" id="logout-top-btn">
-        <ion-icon name="log-out-outline"></ion-icon>
+        <ion-icon [name]="isGuest ? 'log-in-outline' : 'log-out-outline'"></ion-icon>
       </button>
     </div>
   </div>
 
   <!-- Tabs Content -->
   <ion-tabs>
-    <ion-tab-bar slot="bottom">
+    <ion-tab-bar slot="bottom" class="custom-tab-bar">
 
-      <ion-tab-button tab="dashboard" id="tab-dashboard">
+      <ion-tab-button tab="dashboard" id="tab-home">
         <div class="tab-icon-wrapper">
           <ion-icon name="home-outline"></ion-icon>
         </div>
-        <ion-label>Accueil</ion-label>
+        <ion-label>Home</ion-label>
       </ion-tab-button>
 
-      <ion-tab-button tab="services" id="tab-services">
+      <ion-tab-button tab="services" id="tab-browse">
         <div class="tab-icon-wrapper">
-          <ion-icon name="briefcase-outline"></ion-icon>
+          <ion-icon name="search-outline"></ion-icon>
         </div>
-        <ion-label>Services</ion-label>
+        <ion-label>Browse</ion-label>
       </ion-tab-button>
 
-      <ion-tab-button tab="messages" id="tab-messages">
-        <div class="tab-icon-wrapper" style="position: relative;">
+      <ion-tab-button tab="messages" id="tab-messages" (click)="handleMessagesTab($event)">
+        <div class="tab-icon-wrapper">
           <ion-icon name="chatbubble-outline"></ion-icon>
-          <ion-badge color="danger" class="tab-badge" *ngIf="unreadMessagesCount > 0" style="position: absolute; top: -5px; right: -10px; font-size: 10px; padding: 2px 4px; border-radius: 8px;">
-            {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
-          </ion-badge>
+          <span class="tab-badge msg-badge" *ngIf="unreadMessagesCount > 0 && !isGuest">{{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}</span>
         </div>
         <ion-label>Messages</ion-label>
       </ion-tab-button>
 
-      <ion-tab-button tab="digital-store" id="tab-digital-store">
+      <ion-tab-button tab="store" id="tab-projects">
         <div class="tab-icon-wrapper">
-          <ion-icon name="cart-outline"></ion-icon>
+          <ion-icon name="folder-outline"></ion-icon>
+          <span class="tab-badge project-badge" *ngIf="activeProjectCount > 0 && !isGuest">{{ activeProjectCount }}</span>
         </div>
-        <ion-label>Store</ion-label>
-      </ion-tab-button>
-
-      <ion-tab-button tab="store" id="tab-offres">
-        <div class="tab-icon-wrapper">
-          <ion-icon name="document-text-outline"></ion-icon>
-        </div>
-        <ion-label>Offres</ion-label>
+        <ion-label>Projects</ion-label>
       </ion-tab-button>
 
       <ion-tab-button tab="profile" id="tab-profile">
         <div class="tab-icon-wrapper">
           <ion-icon name="person-outline"></ion-icon>
         </div>
-        <ion-label>Profil</ion-label>
+        <ion-label>Profile</ion-label>
       </ion-tab-button>
 
     </ion-tab-bar>

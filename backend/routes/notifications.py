@@ -1,98 +1,100 @@
 from flask import Blueprint, request, jsonify
-from models import db, Notification, NotificationTypeEnum
-from routes.auth import token_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 import datetime
+from bson import ObjectId
+
+from app import mongo, serialize, serialize_list
 
 notifications_bp = Blueprint('notifications', __name__, url_prefix='/api/notifications')
 
-
 @notifications_bp.route('/', methods=['GET'])
-@token_required
-def get_notifications(current_user):
+@jwt_required()
+def get_notifications():
     """Return all notifications for current user, newest first."""
-    notifications = Notification.query.filter_by(user_id=current_user.id)\
-        .order_by(Notification.created_at.desc()).all()
+    user_id = get_jwt_identity()
+    notifications = list(mongo.db.notifications.find({"user_id": user_id}).sort("created_at", -1))
     return jsonify({
-        'notifications': [n.to_dict() for n in notifications],
-        'unread_count': sum(1 for n in notifications if not n.is_read),
+        'notifications': serialize_list(notifications),
+        'unread_count': sum(1 for n in notifications if not n.get('is_read')),
     }), 200
 
-
-@notifications_bp.route('/<int:notification_id>/read', methods=['PATCH'])
-@token_required
-def mark_as_read(current_user, notification_id):
+@notifications_bp.route('/<notification_id>/read', methods=['PATCH'])
+@jwt_required()
+def mark_as_read(notification_id):
     """Mark a single notification as read."""
-    notification = Notification.query.filter_by(
-        id=notification_id, user_id=current_user.id
-    ).first()
-
-    if not notification:
+    user_id = get_jwt_identity()
+    
+    result = mongo.db.notifications.update_one(
+        {"_id": ObjectId(notification_id), "user_id": user_id},
+        {"$set": {"is_read": True}}
+    )
+    
+    if result.matched_count == 0:
         return jsonify({'error': 'Notification not found'}), 404
 
-    notification.is_read = True
-    db.session.commit()
-    return jsonify({'notification': notification.to_dict()}), 200
-
+    notification = mongo.db.notifications.find_one({"_id": ObjectId(notification_id)})
+    return jsonify({'notification': serialize(notification)}), 200
 
 @notifications_bp.route('/read-all', methods=['PATCH', 'POST'])
-@token_required
-def mark_all_as_read(current_user):
+@jwt_required()
+def mark_all_as_read():
     """Mark all notifications for current user as read."""
-    Notification.query.filter_by(
-        user_id=current_user.id, is_read=False
-    ).update({'is_read': True})
-    db.session.commit()
+    user_id = get_jwt_identity()
+    mongo.db.notifications.update_many(
+        {"user_id": user_id, "is_read": False},
+        {"$set": {"is_read": True}}
+    )
     return jsonify({'message': 'All notifications marked as read'}), 200
 
-
-@notifications_bp.route('/<int:notification_id>', methods=['DELETE'])
-@token_required
-def delete_notification(current_user, notification_id):
+@notifications_bp.route('/<notification_id>', methods=['DELETE'])
+@jwt_required()
+def delete_notification(notification_id):
     """Delete a single notification."""
-    notification = Notification.query.filter_by(
-        id=notification_id, user_id=current_user.id
-    ).first()
+    user_id = get_jwt_identity()
+    result = mongo.db.notifications.delete_one({"_id": ObjectId(notification_id), "user_id": user_id})
 
-    if not notification:
+    if result.deleted_count == 0:
         return jsonify({'error': 'Notification not found'}), 404
 
-    db.session.delete(notification)
-    db.session.commit()
     return jsonify({'message': 'Notification deleted'}), 200
 
-
-def seed_notifications_for_user(user):
+def seed_notifications_for_user(user_doc):
     """Seed 4 sample notifications for a newly registered user."""
     now = datetime.datetime.now(datetime.timezone.utc)
+    user_id = str(user_doc["_id"])
     samples = [
         {
-            'type': NotificationTypeEnum.message,
+            'user_id': user_id,
+            'type': 'message',
             'title': 'Nouveau message reçu',
             'body': 'Un client vous a envoyé un message concernant votre profil.',
+            'is_read': False,
             'created_at': now - datetime.timedelta(minutes=5),
         },
         {
-            'type': NotificationTypeEnum.offer,
+            'user_id': user_id,
+            'type': 'offer',
             'title': 'Nouvelle offre disponible',
             'body': 'Une offre correspondant à vos compétences a été publiée.',
+            'is_read': False,
             'created_at': now - datetime.timedelta(hours=2),
         },
         {
-            'type': NotificationTypeEnum.payment,
+            'user_id': user_id,
+            'type': 'payment',
             'title': 'Paiement reçu',
             'body': 'Vous avez reçu un paiement de 150€ pour votre dernière mission.',
+            'is_read': False,
             'created_at': now - datetime.timedelta(days=1),
         },
         {
-            'type': NotificationTypeEnum.review,
+            'user_id': user_id,
+            'type': 'review',
             'title': 'Nouvel avis client',
             'body': 'Un client vous a laissé un avis 5 étoiles. Félicitations!',
+            'is_read': False,
             'created_at': now - datetime.timedelta(days=3),
         },
     ]
 
-    for s in samples:
-        notif = Notification(user_id=user.id, **s)
-        db.session.add(notif)
-
-    db.session.commit()
+    mongo.db.notifications.insert_many(samples)

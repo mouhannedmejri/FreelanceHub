@@ -1,0 +1,355 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      <span class="dash-title">Dashboard</span>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="dash-content">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoadingDashboard && !stats">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <div class="dash-container" *ngIf="stats">
+
+    <!-- ═══ GREETING ═══ -->
+    <div class="greeting-row">
+      <div>
+        <p class="greeting-label">Bonjour 👋</p>
+        <h1 class="greeting-name">{{ user?.full_name?.split(' ')[0] || 'Freelancer' }}</h1>
+      </div>
+      <div class="greeting-avatar">
+        {{ user?.full_name?.[0] || 'F' }}
+      </div>
+    </div>
+
+    <!-- ═══ TOTAL EARNINGS CARD ═══ -->
+    <div class="earnings-hero-card">
+      <div class="earnings-hero-left">
+        <span class="earnings-hero-label">Total Revenus</span>
+        <h2 class="earnings-hero-value">{{ stats.total_earned | currency:'EUR':'symbol':'1.0-0' }}</h2>
+        <div class="earnings-hero-change">
+          <ion-icon name="trending-up-outline"></ion-icon>
+          <span>+{{ stats.success_rate | number:'1.0-0' }}% taux de succès</span>
+        </div>
+      </div>
+      <div class="earnings-hero-right">
+        <svg class="sparkline-svg" viewBox="0 0 120 40" *ngIf="sparklinePoints">
+          <polyline [attr.points]="sparklinePoints" fill="none" stroke="rgba(168,139,250,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- ═══ METRIC CHIPS ═══ -->
+    <div class="metric-chips">
+      <div class="metric-chip">
+        <ion-icon name="rocket-outline" class="metric-icon green"></ion-icon>
+        <div class="metric-info">
+          <span class="metric-value">{{ stats.active_projects }}</span>
+          <span class="metric-label">Actifs</span>
+        </div>
+      </div>
+      <div class="metric-chip">
+        <ion-icon name="checkmark-circle-outline" class="metric-icon purple"></ion-icon>
+        <div class="metric-info">
+          <span class="metric-value">{{ stats.completed_projects }}</span>
+          <span class="metric-label">Terminés</span>
+        </div>
+      </div>
+      <div class="metric-chip">
+        <ion-icon name="star-outline" class="metric-icon amber"></ion-icon>
+        <div class="metric-info">
+          <span class="metric-value">{{ stats.avg_rating | number:'1.1-1' }}★</span>
+          <span class="metric-label">Note</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ QUICK ACTIONS ═══ -->
+    <div class="quick-actions">
+      <button class="qa-btn" (click)="navigateTo('/home/services')">
+        <div class="qa-icon purple"><ion-icon name="paper-plane-outline"></ion-icon></div>
+        <span>Propositions</span>
+      </button>
+      <button class="qa-btn" (click)="navigateTo('/home/messages')">
+        <div class="qa-icon blue"><ion-icon name="chatbubble-outline"></ion-icon></div>
+        <span>Messages</span>
+      </button>
+      <button class="qa-btn" (click)="requestWithdraw()">
+        <div class="qa-icon green"><ion-icon name="wallet-outline"></ion-icon></div>
+        <span>Retirer</span>
+      </button>
+      <button class="qa-btn" (click)="setTab('earnings')">
+        <div class="qa-icon amber"><ion-icon name="bar-chart-outline"></ion-icon></div>
+        <span>Gains</span>
+      </button>
+    </div>
+
+    <!-- ═══ TABS ═══ -->
+    <div class="dash-tabs">
+      <button [class.active]="currentTab === 'overview'" (click)="setTab('overview')">Aperçu</button>
+      <button [class.active]="currentTab === 'projects'" (click)="setTab('projects')">Projets</button>
+      <button [class.active]="currentTab === 'earnings'" (click)="setTab('earnings')">Gains</button>
+      <button [class.active]="currentTab === 'reviews'" (click)="setTab('reviews')">Avis</button>
+    </div>
+
+    <!-- ═══════════════════════ TAB: OVERVIEW ═══════════════════════ -->
+    <ng-container *ngIf="currentTab === 'overview'">
+
+      <!-- Upcoming Milestones -->
+      <div class="section" *ngIf="upcomingMilestones.length > 0">
+        <h3 class="section-title">
+          <ion-icon name="flag-outline"></ion-icon>
+          Milestones à venir
+        </h3>
+        <div class="milestone-list">
+          <div class="milestone-item" *ngFor="let m of upcomingMilestones" (click)="goToProjectDetails(m.project_id)">
+            <div class="milestone-left">
+              <div class="milestone-dot" [class.urgent]="getDaysRemaining(m.due_date) < 7"></div>
+              <div class="milestone-info">
+                <span class="milestone-title">{{ m.milestone_title }}</span>
+                <span class="milestone-project">{{ m.project_title }}</span>
+              </div>
+            </div>
+            <div class="milestone-right">
+              <span class="milestone-days" [class.urgent]="getDaysRemaining(m.due_date) < 7">{{ getDaysRemaining(m.due_date) }}j</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Projects -->
+      <div class="section">
+        <h3 class="section-title">
+          <ion-icon name="briefcase-outline"></ion-icon>
+          Projets en cours
+        </h3>
+        <div class="empty-card" *ngIf="activeProjects.length === 0">
+          <p>Aucun projet en cours.</p>
+        </div>
+        <div class="project-card" *ngFor="let p of activeProjects | slice:0:3" (click)="goToProjectDetails(p._id || p.id)">
+          <div class="project-card-top">
+            <div class="project-card-info">
+              <h4>{{ p.title }}</h4>
+              <div class="project-client-row">
+                <div class="mini-avatar">{{ p.client?.avatar_initials }}</div>
+                <span>{{ p.client?.full_name }}</span>
+              </div>
+            </div>
+            <div class="project-budget">{{ p.budget }}€</div>
+          </div>
+          <div class="project-progress-bar">
+            <div class="progress-fill" [style.width]="getDaysElapsed(p.started_at, p.deadline) + '%'"
+                 [class.warning]="getDaysRemaining(p.deadline) < 14"
+                 [class.danger]="getDaysRemaining(p.deadline) < 7"></div>
+          </div>
+          <div class="project-card-footer">
+            <span class="project-deadline">
+              <ion-icon name="calendar-outline"></ion-icon>
+              {{ getDaysRemaining(p.deadline) }} jours restants
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Favorite Clients -->
+      <div class="section" *ngIf="recentReviews.length > 0">
+        <h3 class="section-title">
+          <ion-icon name="heart-outline"></ion-icon>
+          Clients récents
+        </h3>
+        <div class="fav-clients-scroll">
+          <div class="fav-client" *ngFor="let rev of recentReviews">
+            <div class="fav-avatar">{{ rev.client?.avatar_initials }}</div>
+            <span class="fav-name">{{ rev.client?.full_name?.split(' ')[0] }}</span>
+            <div class="fav-stars">
+              <ion-icon name="star" *ngFor="let s of getStarArray(rev.rating)"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Proposals -->
+      <div class="section">
+        <h3 class="section-title">
+          <ion-icon name="paper-plane-outline"></ion-icon>
+          Propositions récentes
+        </h3>
+        <div class="empty-card" *ngIf="recentProposals.length === 0">
+          <p>Aucune proposition récente.</p>
+        </div>
+        <div class="proposal-item" *ngFor="let prop of recentProposals">
+          <div class="proposal-left">
+            <span class="proposal-title">{{ prop.offer_title }}</span>
+            <span class="proposal-meta">{{ prop.created_at | date:'dd/MM' }} · {{ prop.price }}€</span>
+          </div>
+          <span class="proposal-badge" [ngClass]="prop.status">
+            {{ prop.status === 'accepted' ? 'Acceptée' : (prop.status === 'rejected' ? 'Refusée' : 'En attente') }}
+          </span>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════ TAB: PROJECTS ═══════════════════════ -->
+    <ng-container *ngIf="currentTab === 'projects'">
+      <div class="filter-pills">
+        <button [class.active]="projectsFilter === 'all'" (click)="setProjectsFilter('all')">Tous</button>
+        <button [class.active]="projectsFilter === 'active'" (click)="setProjectsFilter('active')">En cours</button>
+        <button [class.active]="projectsFilter === 'completed'" (click)="setProjectsFilter('completed')">Terminés</button>
+        <button [class.active]="projectsFilter === 'cancelled'" (click)="setProjectsFilter('cancelled')">Annulés</button>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoadingProjects && projectsList.length === 0">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <div class="empty-card" *ngIf="!isLoadingProjects && projectsList.length === 0">
+        <ion-icon name="folder-open-outline"></ion-icon>
+        <p>Aucun projet trouvé</p>
+      </div>
+
+      <div class="project-card" *ngFor="let p of projectsList" (click)="goToProjectDetails(p._id || p.id)">
+        <div class="project-card-top">
+          <div class="project-card-info">
+            <h4>{{ p.title }}</h4>
+            <div class="project-client-row">
+              <div class="mini-avatar">{{ p.client?.avatar_initials }}</div>
+              <span>{{ p.client?.full_name }}</span>
+            </div>
+          </div>
+          <div class="project-budget">{{ p.budget }}€</div>
+        </div>
+        <div class="project-status-row">
+          <span class="status-dot" [ngClass]="p.status"></span>
+          <span class="status-text" [ngClass]="p.status">{{ p.status === 'active' ? 'En cours' : (p.status === 'completed' ? 'Terminé' : 'Annulé') }}</span>
+        </div>
+      </div>
+
+      <ion-infinite-scroll (ionInfinite)="loadMoreProjects($event)" [disabled]="!hasMoreProjects">
+        <ion-infinite-scroll-content></ion-infinite-scroll-content>
+      </ion-infinite-scroll>
+    </ng-container>
+
+    <!-- ═══════════════════════ TAB: EARNINGS ═══════════════════════ -->
+    <ng-container *ngIf="currentTab === 'earnings'">
+      <div class="period-toggle">
+        <button [class.active]="earningsPeriod === 'month'" (click)="setEarningsPeriod('month')">Mois</button>
+        <button [class.active]="earningsPeriod === 'year'" (click)="setEarningsPeriod('year')">Année</button>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoadingEarnings && !earningsData">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <div *ngIf="earningsData">
+        <!-- Total card -->
+        <div class="earnings-total-card">
+          <span class="etc-label">Total gagné</span>
+          <h2 class="etc-value">{{ earningsData.total | currency:'EUR':'symbol':'1.0-0' }}</h2>
+          <div class="etc-period-row">
+            <div class="etc-period">
+              <span class="etc-period-label">{{ earningsPeriod === 'month' ? 'Ce mois' : 'Cette année' }}</span>
+              <span class="etc-period-value">{{ earningsData.this_period }}€</span>
+            </div>
+            <div class="etc-divider"></div>
+            <div class="etc-period">
+              <span class="etc-period-label">{{ earningsPeriod === 'month' ? 'Mois dernier' : 'Année dernière' }}</span>
+              <span class="etc-period-value">{{ earningsData.last_period }}€</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bar chart -->
+        <div class="section">
+          <h3 class="section-title"><ion-icon name="bar-chart-outline"></ion-icon> Évolution</h3>
+          <div class="bar-chart">
+            <div class="bar-row" *ngFor="let item of earningsData.by_month; let last = last">
+              <span class="bar-label">{{ item.month }}</span>
+              <div class="bar-track">
+                <div class="bar-fill" [class.current]="last" [style.width]="(item.amount / getMaxChartAmount() * 100) + '%'"></div>
+              </div>
+              <span class="bar-value">{{ item.amount }}€</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per project -->
+        <div class="section">
+          <h3 class="section-title"><ion-icon name="list-outline"></ion-icon> Détail par projet</h3>
+          <div class="empty-card" *ngIf="earningsData.by_project?.length === 0">
+            <p>Aucun gain enregistré.</p>
+          </div>
+          <div class="earning-item" *ngFor="let p of earningsData.by_project">
+            <div class="earning-info">
+              <span class="earning-title">{{ p.title }}</span>
+              <span class="earning-date">{{ p.date | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <span class="earning-amount">+{{ p.amount }}€</span>
+          </div>
+        </div>
+
+        <!-- Withdraw button -->
+        <button class="withdraw-btn" (click)="requestWithdraw()">
+          <ion-icon name="wallet-outline"></ion-icon>
+          Demander un retrait
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════ TAB: REVIEWS ═══════════════════════ -->
+    <ng-container *ngIf="currentTab === 'reviews'">
+      <!-- Rating summary -->
+      <div class="rating-summary-card" *ngIf="stats">
+        <div class="rating-big">
+          <h2>{{ stats.avg_rating | number:'1.1-1' }}</h2>
+          <div class="rating-stars">
+            <ion-icon name="star" *ngFor="let s of getStarArray(stats.avg_rating)"></ion-icon>
+            <ion-icon name="star-outline" *ngFor="let s of getEmptyStarArray(stats.avg_rating)"></ion-icon>
+          </div>
+          <span class="rating-count">{{ stats.total_reviews || 0 }} avis</span>
+        </div>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoadingReviews && reviewsList.length === 0">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <div class="empty-card" *ngIf="!isLoadingReviews && reviewsList.length === 0">
+        <ion-icon name="star-outline"></ion-icon>
+        <p>Aucun avis pour l'instant</p>
+      </div>
+
+      <div class="review-card" *ngFor="let rev of reviewsList">
+        <div class="review-top">
+          <div class="review-left">
+            <div class="review-avatar">{{ rev.client?.avatar_initials }}</div>
+            <div class="review-meta">
+              <span class="review-name">{{ rev.client?.full_name }}</span>
+              <span class="review-date">{{ rev.date | date:'dd MMM yyyy' }}</span>
+            </div>
+          </div>
+          <div class="review-stars">
+            <ion-icon name="star" *ngFor="let s of getStarArray(rev.rating)"></ion-icon>
+            <ion-icon name="star-outline" *ngFor="let s of getEmptyStarArray(rev.rating)"></ion-icon>
+          </div>
+        </div>
+        <p class="review-project">{{ rev.project_title }}</p>
+        <p class="review-comment">"{{ rev.comment }}"</p>
+      </div>
+
+      <ion-infinite-scroll (ionInfinite)="loadMoreReviews($event)" [disabled]="!hasMoreReviews">
+        <ion-infinite-scroll-content></ion-infinite-scroll-content>
+      </ion-infinite-scroll>
+    </ng-container>
+
+  </div>
+</ion-content>

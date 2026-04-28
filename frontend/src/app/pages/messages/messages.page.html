@@ -42,7 +42,7 @@
         >
           <div class="avatar-wrapper">
             <div class="avatar">{{ getInitials(conv.other_user.full_name) }}</div>
-            <div class="online-dot"></div>
+            <div class="online-dot" *ngIf="isUserOnline(conv.other_user?.id)"></div>
           </div>
           <div class="conv-info">
             <div class="conv-header">
@@ -85,13 +85,27 @@
             <div class="avatar">{{ getInitials(selectedConversation.other_user.full_name) }}</div>
             <div class="user-details">
               <span class="user-name">{{ selectedConversation.other_user.full_name }}</span>
-              <span class="user-status">En ligne</span>
+              <span class="user-status">
+                {{ isUserOnline(selectedConversation.other_user.id) ? 'Online' : 'Offline' }}
+              </span>
             </div>
           </div>
           
           <button class="menu-btn">
             <ion-icon name="ellipsis-vertical"></ion-icon>
           </button>
+        </div>
+
+        <div class="context-card" *ngIf="selectedConversation.offer_id">
+          <ion-icon name="briefcase-outline"></ion-icon>
+          <div>
+            <strong>Linked offer/project</strong>
+            <p>Conversation context ID: {{ selectedConversation.offer_id }}</p>
+          </div>
+        </div>
+
+        <div class="typing-indicator" *ngIf="getTypingText(selectedConversation.id)">
+          {{ getTypingText(selectedConversation.id) }} is typing...
         </div>
 
         <!-- Chat Messages -->
@@ -110,22 +124,41 @@
               *ngFor="let msg of group.messages"
               [class.sent]="msg.sender_id === currentUser?.id"
               [class.received]="msg.sender_id !== currentUser?.id"
+              (touchstart)="onMessageTouchStart($event)"
+              (touchend)="onMessageTouchEnd($event, msg)"
             >
-              <div class="message-bubble">
-                <p>{{ msg.content }}</p>
+              <div class="reply-quote" *ngIf="msg.reply_to_message_id">
+                Replying to message #{{ msg.reply_to_message_id }}
               </div>
-              <span class="message-time">{{ formatTime(msg.created_at) }}</span>
+              <div class="message-bubble">
+                <p (contextmenu)="toggleMessageTimestamp(msg.id); $event.preventDefault()">{{ msg.content }}</p>
+              </div>
+              <span class="message-time" *ngIf="isTimestampVisible(msg.id)">{{ formatTime(msg.created_at) }}</span>
+              <span class="message-tick" *ngIf="msg.sender_id === currentUser?.id">
+                <ng-container [ngSwitch]="getMessageTickState(msg)">
+                  <span *ngSwitchCase="'sent'">✓</span>
+                  <span *ngSwitchCase="'delivered'">✓✓</span>
+                  <span *ngSwitchCase="'read'" class="read">✓✓</span>
+                </ng-container>
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Chat Input -->
         <div class="chat-input-area">
-          <button class="attach-btn">
+          <button class="attach-btn" (click)="onAttachClick()">
             <ion-icon name="attach-outline"></ion-icon>
+          </button>
+          <button class="attach-btn" (click)="onEmojiClick()">
+            <ion-icon name="happy-outline"></ion-icon>
           </button>
           
           <div class="input-box">
+            <div class="reply-preview" *ngIf="replyToMessage">
+              Replying to: {{ replyToMessage.content | slice:0:60 }}...
+              <button (click)="clearReply()">x</button>
+            </div>
             <textarea 
               placeholder="Écrivez votre message..." 
               rows="1"

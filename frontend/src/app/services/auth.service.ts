@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, from, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Preferences } from '@capacitor/preferences';
 import { environment } from '../../environments/environment';
 import { User, AuthResponse, LoginRequest, RegisterRequest } from '../models/user.model';
+import { SocketService } from './socket.service';
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
+const GUEST_KEY = 'guest_mode';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +19,7 @@ export class AuthService {
 
   private tokenSubject = new BehaviorSubject<string | null>(null);
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private socketService: SocketService) {
     this.loadStoredAuth();
   }
 
@@ -33,6 +35,10 @@ export class AuthService {
     return !!this.tokenSubject.value;
   }
 
+  get isGuest(): boolean {
+    return localStorage.getItem(GUEST_KEY) === 'true';
+  }
+
   private async loadStoredAuth(): Promise<void> {
     try {
       const tokenResult = await Preferences.get({ key: TOKEN_KEY });
@@ -41,6 +47,7 @@ export class AuthService {
       if (tokenResult.value && userResult.value) {
         this.tokenSubject.next(tokenResult.value);
         this.currentUserSubject.next(JSON.parse(userResult.value));
+        this.socketService.connect(tokenResult.value);
       }
     } catch (e) {
       console.error('Error loading stored auth:', e);
@@ -72,12 +79,32 @@ export class AuthService {
     await Preferences.remove({ key: USER_KEY });
     this.tokenSubject.next(null);
     this.currentUserSubject.next(null);
+    this.socketService.disconnect();
+    localStorage.removeItem(GUEST_KEY);
+  }
+
+  enterGuestMode(): void {
+    this.tokenSubject.next(null);
+    this.currentUserSubject.next(null);
+    this.socketService.disconnect();
+    localStorage.setItem(GUEST_KEY, 'true');
+  }
+
+  exitGuestMode(): void {
+    localStorage.removeItem(GUEST_KEY);
+  }
+
+  async setCurrentUser(user: User): Promise<void> {
+    await Preferences.set({ key: USER_KEY, value: JSON.stringify(user) });
+    this.currentUserSubject.next(user);
   }
 
   private async handleAuthResponse(response: AuthResponse): Promise<void> {
+    this.exitGuestMode();
     await Preferences.set({ key: TOKEN_KEY, value: response.access_token });
     await Preferences.set({ key: USER_KEY, value: JSON.stringify(response.user) });
     this.tokenSubject.next(response.access_token);
     this.currentUserSubject.next(response.user);
+    this.socketService.connect(response.access_token);
   }
 }

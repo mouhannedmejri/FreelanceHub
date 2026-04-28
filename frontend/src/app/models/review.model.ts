@@ -1,12 +1,12 @@
 export interface Review {
-  id?: number;
-  target_user_id: number;
-  reviewer_id?: number;
+  id?: number | string;
+  target_user_id: number | string;
+  reviewer_id?: number | string;
   rating: number;
   comment: string;
   created_at?: string;
   reviewer?: {
-    id: number;
+    id: number | string;
     full_name: string;
   };
 }

@@ -1,10 +1,22 @@
 export interface User {
-  id: number;
+  id: number | string;
   full_name: string;
   email: string;
   role: 'freelancer' | 'client' | 'admin';
   created_at: string;
   is_approved: boolean;
+  onboarding_complete?: boolean;
+  preferences?: {
+    role_goal?: 'client' | 'freelancer';
+    skills_or_interests?: string[];
+    budget_or_rate?: number;
+    notifications?: {
+      proposals?: boolean;
+      messages?: boolean;
+      marketing?: boolean;
+      product_updates?: boolean;
+    };
+  };
 }
 
 export interface AuthResponse {

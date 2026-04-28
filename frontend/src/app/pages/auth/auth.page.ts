@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastController, LoadingController } from '@ionic/angular';
 
@@ -20,17 +20,23 @@ export class AuthPage implements OnInit {
   registerFullName = '';
   registerEmail = '';
   registerPassword = '';
+  registerConfirmPassword = '';
   registerRole: 'freelancer' | 'client' = 'freelancer';
-  acceptTerms = false;
 
   constructor(
     private authService: AuthService,
+    private route: ActivatedRoute,
     private router: Router,
     private toastCtrl: ToastController,
     private loadingCtrl: LoadingController
   ) {}
 
   ngOnInit() {
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'register' || tab === 'login') {
+      this.activeTab = tab;
+    }
+
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.router.navigate(['/home'], { replaceUrl: true });
@@ -79,8 +85,8 @@ export class AuthPage implements OnInit {
       this.showToast('Veuillez remplir tous les champs', 'warning');
       return;
     }
-    if (!this.acceptTerms) {
-      this.showToast('Veuillez accepter les conditions', 'warning');
+    if (this.registerPassword !== this.registerConfirmPassword) {
+      this.showToast('Les mots de passe ne correspondent pas', 'warning');
       return;
     }
 
@@ -101,11 +107,7 @@ export class AuthPage implements OnInit {
         next: (res) => {
           loading.dismiss();
           this.showToast('Compte créé avec succès!', 'success');
-          if (res.user.role === 'freelancer') {
-            this.router.navigate(['/onboarding'], { replaceUrl: true });
-          } else {
-            this.router.navigate(['/home'], { replaceUrl: true });
-          }
+          this.router.navigate(['/onboarding'], { replaceUrl: true });
         },
         error: (err) => {
           loading.dismiss();
@@ -115,32 +117,17 @@ export class AuthPage implements OnInit {
       });
   }
 
-  async demoLogin(role: 'freelancer' | 'client' | 'admin') {
-    const credentials: Record<string, { email: string; password: string }> = {
-      freelancer: { email: 'freelancer@demo.com', password: 'password123' },
-      client: { email: 'client@demo.com', password: 'password123' },
-      admin: { email: 'admin@demo.com', password: 'password123' },
-    };
+  browseAsGuest() {
+    this.authService.enterGuestMode();
+    this.router.navigate(['/home'], { replaceUrl: true });
+  }
 
-    const cred = credentials[role];
-    const loading = await this.loadingCtrl.create({
-      message: `Connexion ${role}...`,
-      spinner: 'crescent',
-    });
-    await loading.present();
+  onForgotPassword() {
+    this.showToast('Fonctionnalité bientôt disponible', 'warning');
+  }
 
-    this.authService.login(cred).subscribe({
-      next: (res) => {
-        loading.dismiss();
-        this.showToast(`Bienvenue, ${res.user.full_name}!`, 'success');
-        this.router.navigate(['/home'], { replaceUrl: true });
-      },
-      error: (err) => {
-        loading.dismiss();
-        const msg = err.error?.error || 'Erreur de connexion demo';
-        this.showToast(msg, 'danger');
-      },
-    });
+  onSocialLogin(provider: 'google' | 'facebook') {
+    this.showToast(`${provider.toUpperCase()} OAuth bientôt disponible`, 'warning');
   }
 
   selectRole(role: 'freelancer' | 'client') {

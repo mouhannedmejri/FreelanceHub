@@ -1,6 +1,6 @@
 export interface Service {
-  id: number;
-  freelancer_id: number;
+  id: number | string;
+  freelancer_id: number | string;
   freelancer_name: string;
   title: string;
   description: string;

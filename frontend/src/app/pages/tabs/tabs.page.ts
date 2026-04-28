@@ -5,6 +5,7 @@ import { NotificationService } from '../../services/notification.service';
 import { ConversationService } from '../../services/conversation.service';
 import { User } from '../../models/user.model';
 import { Subscription } from 'rxjs';
+import { GuestAccessService } from '../../services/guest-access.service';
 
 @Component({
   selector: 'app-tabs',
@@ -16,6 +17,7 @@ export class TabsPage implements OnInit, OnDestroy {
   user: User | null = null;
   unreadCount = 0;
   unreadMessagesCount = 0;
+  activeProjectCount = 0;
   drawerOpen = false;
   private subs: Subscription[] = [];
 
@@ -23,6 +25,7 @@ export class TabsPage implements OnInit, OnDestroy {
     private authService: AuthService,
     private notificationService: NotificationService,
     private conversationService: ConversationService,
+    private guestAccessService: GuestAccessService,
     private router: Router
   ) {}
 
@@ -45,9 +48,10 @@ export class TabsPage implements OnInit, OnDestroy {
       })
     );
 
-    // Load notifications and conversations to get unread counts
-    this.notificationService.loadNotifications().subscribe();
-    this.conversationService.getConversations().subscribe();
+    if (this.authService.isAuthenticated) {
+      this.notificationService.loadNotifications().subscribe();
+      this.conversationService.getConversations().subscribe();
+    }
   }
 
   ngOnDestroy() {
@@ -94,6 +98,10 @@ export class TabsPage implements OnInit, OnDestroy {
   }
 
   openNotifications() {
+    if (this.authService.isGuest) {
+      this.guestAccessService.showSignupPrompt('Sign up to view notifications.');
+      return;
+    }
     this.router.navigate(['/notifications']);
   }
 
@@ -104,7 +112,48 @@ export class TabsPage implements OnInit, OnDestroy {
 
   async logout() {
     this.drawerOpen = false;
+    if (this.authService.isGuest) {
+      this.authService.exitGuestMode();
+      this.router.navigate(['/auth'], { replaceUrl: true });
+      return;
+    }
     await this.authService.logout();
     this.router.navigate(['/auth'], { replaceUrl: true });
+  }
+
+  async openDashboard() {
+    if (!this.user || this.authService.isGuest) {
+      await this.guestAccessService.showSignupPrompt('Sign up to access role dashboards.');
+      return;
+    }
+    if (this.user.role === 'client') {
+      this.navigateFromDrawer('/client-dashboard');
+      return;
+    }
+    if (this.user.role === 'freelancer') {
+      this.navigateFromDrawer('/freelancer-dashboard');
+      return;
+    }
+    if (this.user.role === 'admin') {
+      this.navigateFromDrawer('/admin-dashboard');
+      return;
+    }
+    this.navigateFromDrawer('/home/dashboard');
+  }
+
+  get isGuest(): boolean {
+    return this.authService.isGuest;
+  }
+
+  get canSeeMessages(): boolean {
+    return this.authService.isAuthenticated;
+  }
+
+  async handleMessagesTab(ev: Event) {
+    if (this.canSeeMessages) {
+      return;
+    }
+    ev.preventDefault();
+    await this.guestAccessService.showSignupPrompt('Sign up to send messages.');
   }
 }

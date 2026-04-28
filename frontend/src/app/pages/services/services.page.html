@@ -27,25 +27,99 @@
       </div>
     </div>
 
-    <!-- Category Pills -->
-    <div class="category-pills">
-      <button
-        *ngFor="let cat of categories"
-        [class.active]="selectedCategory === cat.value"
-        (click)="selectCategory(cat.value)"
-        [id]="'cat-' + cat.label.toLowerCase()"
-      >
-        {{ cat.label }}
-      </button>
+    <!-- ═══════════════════════════════════════════
+         FILTER BAR — horizontal scrollable chips
+         ═══════════════════════════════════════════ -->
+    <div class="filter-bar">
+      <div class="filter-chips-scroll">
+        <!-- Services dropdown -->
+        <button class="filter-chip" [class.active]="!!filters.category" (click)="toggleFilterSheet('category')" id="filter-category">
+          <ion-icon name="grid-outline"></ion-icon>
+          {{ filters.category || 'Services' }}
+          <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+        </button>
+
+        <!-- Budget dropdown -->
+        <button class="filter-chip" [class.active]="filters.budgetMin > 0 || filters.budgetMax < 10000" (click)="toggleFilterSheet('budget')" id="filter-budget">
+          <ion-icon name="cash-outline"></ion-icon>
+          Budget
+          <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+        </button>
+
+        <!-- Level dropdown -->
+        <button class="filter-chip" [class.active]="!!filters.level" (click)="toggleFilterSheet('level')" id="filter-level">
+          <ion-icon name="bar-chart-outline"></ion-icon>
+          {{ filters.level || 'Level' }}
+          <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+        </button>
+
+        <!-- Remote toggle -->
+        <button class="filter-chip" [class.active]="filters.remoteOnly" (click)="toggleRemote()" id="filter-remote">
+          <ion-icon name="globe-outline"></ion-icon>
+          Remote
+        </button>
+      </div>
+    </div>
+
+    <!-- Active filter chips -->
+    <div class="active-filters" *ngIf="hasActiveFilters">
+      <span class="active-chip" *ngFor="let chip of activeFilterChips" (click)="clearFilter(chip.key)">
+        {{ chip.label }}
+        <ion-icon name="close-circle"></ion-icon>
+      </span>
+    </div>
+
+    <!-- ═══ BOTTOM SHEET: Category ═══ -->
+    <div class="filter-sheet" *ngIf="activeFilterSheet === 'category'" (click)="closeFilterSheet()">
+      <div class="sheet-content" (click)="$event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Catégorie</h3>
+        <div class="sheet-options">
+          <button *ngFor="let cat of categories"
+                  [class.selected]="filters.category === cat.value"
+                  (click)="selectCategory(cat.value)">
+            {{ cat.label }}
+            <ion-icon name="checkmark" *ngIf="filters.category === cat.value"></ion-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BOTTOM SHEET: Budget ═══ -->
+    <div class="filter-sheet" *ngIf="activeFilterSheet === 'budget'" (click)="closeFilterSheet()">
+      <div class="sheet-content" (click)="$event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Budget</h3>
+        <div class="budget-presets">
+          <button (click)="setBudgetRange(0, 200)" [class.selected]="filters.budgetMax === 200">0 – 200€</button>
+          <button (click)="setBudgetRange(200, 500)" [class.selected]="filters.budgetMin === 200 && filters.budgetMax === 500">200 – 500€</button>
+          <button (click)="setBudgetRange(500, 1000)" [class.selected]="filters.budgetMin === 500 && filters.budgetMax === 1000">500 – 1 000€</button>
+          <button (click)="setBudgetRange(1000, 5000)" [class.selected]="filters.budgetMin === 1000 && filters.budgetMax === 5000">1 000 – 5 000€</button>
+          <button (click)="setBudgetRange(5000, 10000)" [class.selected]="filters.budgetMin === 5000">5 000€+</button>
+          <button (click)="setBudgetRange(0, 10000)" [class.selected]="filters.budgetMin === 0 && filters.budgetMax === 10000">Tous</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BOTTOM SHEET: Level ═══ -->
+    <div class="filter-sheet" *ngIf="activeFilterSheet === 'level'" (click)="closeFilterSheet()">
+      <div class="sheet-content" (click)="$event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Niveau</h3>
+        <div class="sheet-options">
+          <button *ngFor="let lev of levels"
+                  [class.selected]="filters.level === lev.value"
+                  (click)="setLevel(lev.value)">
+            {{ lev.label }}
+            <ion-icon name="checkmark" *ngIf="filters.level === lev.value"></ion-icon>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Results Header -->
     <div class="results-header">
       <span class="result-count">{{ totalServices }} services trouvés</span>
-      <button class="filter-btn" id="filter-btn">
-        <ion-icon name="options-outline"></ion-icon>
-        Filtres
-      </button>
     </div>
 
     <!-- Loading Skeletons -->
@@ -60,52 +134,63 @@
       </div>
     </div>
 
-    <!-- Service Cards -->
+    <!-- ═══════════════════════════════════════════
+         OFFER CARDS — redesigned
+         ═══════════════════════════════════════════ -->
     <div class="services-list" *ngIf="services.length > 0">
       <div
-        class="service-card"
+        class="offer-card"
         *ngFor="let service of services; let idx = index"
         [id]="'service-card-' + service.id"
-        [style.animation-delay]="idx * 0.08 + 's'"
+        [style.animation-delay]="idx * 0.06 + 's'"
       >
-        <!-- Cover Image -->
-        <div class="card-image">
-          <img [src]="service.cover_image_url" [alt]="service.title" loading="lazy" />
-          <span class="level-badge" [ngClass]="service.level.toLowerCase()">
-            {{ service.level }}
-          </span>
+        <!-- Card Top: freelancer + timestamp -->
+        <div class="offer-card-top">
+          <div class="offer-freelancer" (click)="openFreelancerProfile(service)">
+            <div class="offer-avatar">{{ getInitials(service.freelancer_name) }}</div>
+            <div class="offer-meta">
+              <span class="offer-company">{{ service.freelancer_name }}</span>
+              <span class="offer-time">{{ getTimeAgo() }}</span>
+            </div>
+          </div>
+          <button class="save-btn" [class.saved]="isSaved(service)" (click)="toggleSave(service)">
+            <ion-icon [name]="isSaved(service) ? 'heart' : 'heart-outline'"></ion-icon>
+          </button>
         </div>
 
-        <!-- Card Body -->
-        <div class="card-body">
-          <h3>{{ service.title }}</h3>
+        <!-- Title -->
+        <h3 class="offer-title">{{ service.title }}</h3>
 
-          <div class="freelancer-row">
-            <div class="avatar-circle">{{ getInitials(service.freelancer_name) }}</div>
-            <span class="freelancer-name">{{ service.freelancer_name }}</span>
-          </div>
+        <!-- Tags -->
+        <div class="offer-tags">
+          <span class="offer-tag type-tag">Freelance</span>
+          <span class="offer-tag remote-tag">Remote</span>
+          <span class="offer-tag level-tag" [ngClass]="service.level.toLowerCase()">{{ service.level }}</span>
+        </div>
 
-          <div class="rating-row">
-            <div class="stars">
-              <ion-icon
-                *ngFor="let star of getStars(service.rating)"
-                [name]="star"
-              ></ion-icon>
-            </div>
-            <span class="review-count">({{ service.review_count }} avis)</span>
+        <!-- Budget + Rating row -->
+        <div class="offer-details-row">
+          <div class="offer-budget">
+            <span class="budget-amount">À partir de {{ service.price_from }}€</span>
           </div>
+          <div class="offer-rating">
+            <ion-icon name="star" class="star-filled"></ion-icon>
+            <span class="rating-val">{{ service.rating }}</span>
+            <span class="rating-count">({{ service.review_count }})</span>
+          </div>
+        </div>
 
-          <div class="tags-row">
-            <span class="tag" *ngFor="let tag of service.tags.slice(0, 4)">{{ tag }}</span>
-          </div>
+        <!-- Skills -->
+        <div class="offer-skills">
+          <span class="offer-skill" *ngFor="let tag of service.tags.slice(0, 3)">{{ tag }}</span>
+        </div>
 
-          <div class="card-footer">
-            <span class="price">À partir de {{ service.price_from }}€</span>
-            <button class="details-btn" [id]="'details-btn-' + service.id">
-              Voir détails
-              <ion-icon name="arrow-forward-outline"></ion-icon>
-            </button>
-          </div>
+        <!-- Actions -->
+        <div class="offer-actions">
+          <button class="apply-btn" [id]="'details-btn-' + service.id" (click)="openFreelancerProfile(service)">
+            Voir le profil
+            <ion-icon name="arrow-forward-outline"></ion-icon>
+          </button>
         </div>
       </div>
     </div>

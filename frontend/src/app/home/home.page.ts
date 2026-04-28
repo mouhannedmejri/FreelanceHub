@@ -2,7 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { HomeService, HomeStats } from '../services/home.service';
+import { ProjectService } from '../services/project.service';
+import { ProfileService } from '../services/profile.service';
 import { User } from '../models/user.model';
+import { UpcomingMilestone } from '../models/project.model';
 import { Subscription } from 'rxjs';
 
 export interface RecommendedJob {
@@ -27,6 +30,8 @@ export class HomePage implements OnInit, OnDestroy {
   user: User | null = null;
   stats: HomeStats | null = null;
   searchQuery = '';
+  upcomingMilestones: UpcomingMilestone[] = [];
+  followingFeed: any[] = [];
   private sub!: Subscription;
 
   recommendedJobs: RecommendedJob[] = [
@@ -71,6 +76,8 @@ export class HomePage implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private homeService: HomeService,
+    private projectService: ProjectService,
+    private profileService: ProfileService,
     private router: Router
   ) { }
 
@@ -84,6 +91,20 @@ export class HomePage implements OnInit, OnDestroy {
       error: () =>
         (this.stats = { freelancers: 15000, projects: 50000, clients: 12000 }),
     });
+
+    // Load upcoming milestones if authenticated
+    if (this.authService.isAuthenticated) {
+      this.projectService.getUpcomingMilestones().subscribe({
+        next: (res) => (this.upcomingMilestones = res.milestones),
+        error: () => (this.upcomingMilestones = []),
+      });
+
+      // Load following feed
+      this.profileService.getFollowingFeed(5).subscribe({
+        next: (res) => (this.followingFeed = res.feed),
+        error: () => (this.followingFeed = []),
+      });
+    }
   }
 
   ngOnDestroy() {
@@ -121,5 +142,31 @@ export class HomePage implements OnInit, OnDestroy {
 
   goToAuth(tab: 'login' | 'register') {
     this.router.navigate(['/auth'], { queryParams: { tab } });
+  }
+
+  goToProjectMilestone(projectId: string) {
+    this.router.navigate(['/project-detail', projectId]);
+  }
+
+  goToFreelancerProfile(userId: string) {
+    this.router.navigate(['/home/profile'], {
+      queryParams: { userId }
+    });
+  }
+
+  getFeedIcon(type: string): string {
+    switch (type) {
+      case 'project': return 'briefcase-outline';
+      case 'service': return 'pricetag-outline';
+      default: return 'pulse-outline';
+    }
+  }
+
+  getFeedColor(type: string): string {
+    switch (type) {
+      case 'project': return '#7c3aed';
+      case 'service': return '#10b981';
+      default: return '#3b82f6';
+    }
   }
 }

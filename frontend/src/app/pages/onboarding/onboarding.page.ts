@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ProfileService } from '../../services/profile.service';
+import { ToastController } from '@ionic/angular';
 
 interface Interest {
   name: string;
@@ -15,6 +17,9 @@ interface Interest {
   standalone: false,
 })
 export class OnboardingPage {
+  step = 1;
+  readonly totalSteps = 4;
+
   interests: Interest[] = [
     { name: 'Développement Web', icon: 'code-slash-outline', selected: false },
     { name: 'Design UI/UX', icon: 'color-palette-outline', selected: false },
@@ -30,24 +35,106 @@ export class OnboardingPage {
     { name: 'Consulting', icon: 'people-outline', selected: false },
   ];
 
-  constructor(private router: Router, private authService: AuthService) {}
+  roleGoal: 'client' | 'freelancer' = 'freelancer';
+  budgetOrRate = 60;
+  notificationPreferences = {
+    proposals: true,
+    messages: true,
+    marketing: false,
+    product_updates: true,
+  };
+
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private profileService: ProfileService,
+    private toastCtrl: ToastController
+  ) {}
 
   get selectedCount(): number {
     return this.interests.filter((i) => i.selected).length;
   }
 
   toggleInterest(interest: Interest) {
+    if (!interest.selected && this.selectedCount >= 5) {
+      return;
+    }
     interest.selected = !interest.selected;
   }
 
+  selectRole(role: 'client' | 'freelancer') {
+    this.roleGoal = role;
+  }
+
   skip() {
-    this.router.navigate(['/home'], { replaceUrl: true });
+    if (this.step < this.totalSteps) {
+      this.step++;
+      return;
+    }
+    this.finishOnboarding();
   }
 
   continue() {
-    // In a real app, we'd save these interests to the backend
-    const selected = this.interests.filter((i) => i.selected).map((i) => i.name);
-    console.log('Selected interests:', selected);
-    this.router.navigate(['/home'], { replaceUrl: true });
+    if (this.step === 2 && (this.selectedCount < 3 || this.selectedCount > 5)) {
+      this.showToast('Select between 3 and 5 skills/interests');
+      return;
+    }
+    if (this.step < this.totalSteps) {
+      this.step++;
+      return;
+    }
+    this.finishOnboarding();
+  }
+
+  private finishOnboarding() {
+    const preferences = {
+      role_goal: this.roleGoal,
+      skills_or_interests: this.interests.filter((i) => i.selected).map((i) => i.name),
+      budget_or_rate: this.budgetOrRate,
+      notifications: this.notificationPreferences,
+    };
+
+    this.profileService
+      .updateOnboardingPreferences({
+        preferences,
+        onboarding_complete: true,
+      })
+      .subscribe({
+        next: async (res) => {
+          await this.authService.setCurrentUser(res.user);
+          this.router.navigate(['/home'], { replaceUrl: true });
+        },
+        error: () => {
+          this.showToast('Unable to save onboarding now');
+          this.router.navigate(['/home'], { replaceUrl: true });
+        },
+      });
+  }
+
+  get progress(): number {
+    return Math.round((this.step / this.totalSteps) * 100);
+  }
+
+  get isLastStep(): boolean {
+    return this.step === this.totalSteps;
+  }
+
+  get continueLabel(): string {
+    return this.isLastStep ? 'Finish' : 'Next';
+  }
+
+  get rateLabel(): string {
+    return this.roleGoal === 'client'
+      ? `Budget preference: ${this.budgetOrRate}€/h`
+      : `Rate preference: ${this.budgetOrRate}€/h`;
+  }
+
+  private async showToast(message: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2200,
+      color: 'warning',
+    });
+    await toast.present();
   }
 }

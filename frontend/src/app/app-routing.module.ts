@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
+import { GuestGuard } from './guards/guest.guard';
 
 const routes: Routes = [
   {
@@ -21,7 +22,7 @@ const routes: Routes = [
     path: 'home',
     loadChildren: () =>
       import('./pages/tabs/tabs.module').then((m) => m.TabsPageModule),
-    canActivate: [AuthGuard],
+    canActivate: [GuestGuard],
   },
   {
     path: 'notifications',
@@ -56,6 +57,23 @@ const routes: Routes = [
     path: '',
     redirectTo: 'auth',
     pathMatch: 'full',
+  },
+  {
+    path: 'client-dashboard',
+    loadChildren: () => import('./pages/client-dashboard/client-dashboard.module').then( m => m.ClientDashboardPageModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['client'] }
+  },
+  {
+    path: 'project-detail/:id',
+    loadChildren: () => import('./pages/project-detail/project-detail.module').then( m => m.ProjectDetailPageModule),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'freelancer-dashboard',
+    loadChildren: () => import('./pages/freelancer-dashboard/freelancer-dashboard.module').then( m => m.FreelancerDashboardPageModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['freelancer'] }
   }
 ];
 

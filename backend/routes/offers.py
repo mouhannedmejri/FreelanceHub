@@ -1,63 +1,138 @@
 from flask import Blueprint, request, jsonify
-from models import db, Offer, CategoryEnum, LocationEnum, OfferStatusEnum
-from routes.auth import token_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
+import datetime
+import re
+from bson import ObjectId
+
+from app import mongo, serialize, serialize_list
 
 offers_bp = Blueprint('offers', __name__, url_prefix='/api/offers')
-
 
 @offers_bp.route('/', methods=['GET'])
 def get_offers():
     """Return all active offers (freelancer/visitor view), optionally filtered by search."""
     search = request.args.get('search', '').strip()
+    category_param = request.args.get('category', '').strip()
+    location_param = request.args.get('location', '').strip()
+    duration_param = request.args.get('duration', '').strip()
+    budget_min = request.args.get('budget_min', '').strip()
+    budget_max = request.args.get('budget_max', '').strip()
 
-    query = Offer.query.filter_by(status=OfferStatusEnum.active)
+    query = {"status": "active"}
+
+    if category_param:
+        query["category"] = re.compile(f"^{re.escape(category_param)}$", re.IGNORECASE)
+
+    if location_param:
+        query["location"] = re.compile(f"^{re.escape(location_param)}$", re.IGNORECASE)
+
+    if duration_param:
+        query["duration"] = re.compile(re.escape(duration_param), re.IGNORECASE)
+
+    if budget_min:
+        try:
+            query["budget_min"] = {"$gte": float(budget_min)}
+        except ValueError:
+            pass
+    if budget_max:
+        try:
+            query["budget_max"] = {"$lte": float(budget_max)}
+        except ValueError:
+            pass
 
     if search:
-        like_term = f'%{search}%'
-        query = query.filter(
-            db.or_(
-                Offer.title.ilike(like_term),
-                Offer.description.ilike(like_term),
-            )
-        )
+        regex = re.compile(search, re.IGNORECASE)
+        query["$or"] = [
+            {"title": regex},
+            {"description": regex},
+            {"skills": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+        ]
 
-    offers = query.order_by(Offer.created_at.desc()).all()
+    offers = list(mongo.db.offers.find(query).sort("created_at", -1))
+    
+    # populate client_name
+    for o in offers:
+        client = mongo.db.users.find_one({"_id": ObjectId(o["client_id"])})
+        o["client_name"] = client.get("full_name") if client else ""
+
     return jsonify({
-        'offers': [o.to_dict() for o in offers],
+        'offers': serialize_list(offers),
         'total': len(offers),
     }), 200
-
 
 @offers_bp.route('/mine', methods=['GET'])
-@token_required
-def get_my_offers(current_user):
+@jwt_required()
+def get_my_offers():
     """Return offers created by the authenticated client."""
-    offers = (
-        Offer.query
-        .filter_by(client_id=current_user.id)
-        .order_by(Offer.created_at.desc())
-        .all()
-    )
+    client_id = get_jwt_identity()
+    search = request.args.get('search', '').strip()
+    category_param = request.args.get('category', '').strip()
+    location_param = request.args.get('location', '').strip()
+    duration_param = request.args.get('duration', '').strip()
+    budget_min = request.args.get('budget_min', '').strip()
+    budget_max = request.args.get('budget_max', '').strip()
+
+    query = {"client_id": client_id}
+
+    if category_param:
+        query["category"] = re.compile(f"^{re.escape(category_param)}$", re.IGNORECASE)
+
+    if location_param:
+        query["location"] = re.compile(f"^{re.escape(location_param)}$", re.IGNORECASE)
+
+    if duration_param:
+        query["duration"] = re.compile(re.escape(duration_param), re.IGNORECASE)
+
+    if budget_min:
+        try:
+            query["budget_min"] = {"$gte": float(budget_min)}
+        except ValueError:
+            pass
+    if budget_max:
+        try:
+            query["budget_max"] = {"$lte": float(budget_max)}
+        except ValueError:
+            pass
+
+    if search:
+        regex = re.compile(search, re.IGNORECASE)
+        query["$or"] = [
+            {"title": regex},
+            {"description": regex},
+            {"skills": {"$elemMatch": {"$regex": search, "$options": "i"}}}
+        ]
+
+    offers = list(mongo.db.offers.find(query).sort("created_at", -1))
+    
+    for o in offers:
+        client = mongo.db.users.find_one({"_id": ObjectId(o["client_id"])})
+        o["client_name"] = client.get("full_name") if client else ""
+
     return jsonify({
-        'offers': [o.to_dict() for o in offers],
+        'offers': serialize_list(offers),
         'total': len(offers),
     }), 200
 
-
-@offers_bp.route('/<int:offer_id>', methods=['GET'])
+@offers_bp.route('/<offer_id>', methods=['GET'])
 def get_offer(offer_id):
     """Return a single offer by ID."""
-    offer = Offer.query.get(offer_id)
+    offer = mongo.db.offers.find_one({"_id": ObjectId(offer_id)})
     if not offer:
         return jsonify({'error': 'Offer not found'}), 404
-    return jsonify({'offer': offer.to_dict()}), 200
-
+        
+    client = mongo.db.users.find_one({"_id": ObjectId(offer["client_id"])})
+    offer["client_name"] = client.get("full_name") if client else ""
+    
+    return jsonify({'offer': serialize(offer)}), 200
 
 @offers_bp.route('/', methods=['POST'])
-@token_required
-def create_offer(current_user):
+@jwt_required()
+def create_offer():
     """Create a new offer (client only)."""
-    if current_user.role.value != 'client':
+    user_id = get_jwt_identity()
+    current_user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+    
+    if current_user.get("role") != 'client':
         return jsonify({'error': 'Only clients can create offers'}), 403
 
     data = request.get_json()
@@ -73,86 +148,80 @@ def create_offer(current_user):
     duration = data.get('duration', '').strip()
     location_str = data.get('location', 'Remote').strip()
 
-    if not title:
-        return jsonify({'error': 'Title is required'}), 400
-    if not description:
-        return jsonify({'error': 'Description is required'}), 400
+    if not title: return jsonify({'error': 'Title is required'}), 400
+    if not description: return jsonify({'error': 'Description is required'}), 400
 
-    # Resolve category enum
-    try:
-        category = CategoryEnum(category_str)
-    except ValueError:
-        return jsonify({'error': f'Invalid category: {category_str}'}), 400
-
-    # Resolve location enum
-    location_map = {
-        'Remote': LocationEnum.remote,
-        'Hybrid': LocationEnum.hybrid,
-        'Hybride': LocationEnum.hybrid,
-        'Onsite': LocationEnum.onsite,
-        'Sur site': LocationEnum.onsite,
+    offer_doc = {
+        "client_id": user_id,
+        "title": title,
+        "description": description,
+        "category": category_str,
+        "skills": skills if isinstance(skills, list) else [],
+        "budget_min": float(budget_min),
+        "budget_max": float(budget_max),
+        "duration": duration,
+        "location": location_str,
+        "proposals_count": 0,
+        "status": "active",
+        "created_at": datetime.datetime.now(datetime.timezone.utc)
     }
-    location = location_map.get(location_str, LocationEnum.remote)
+    
+    result = mongo.db.offers.insert_one(offer_doc)
+    offer_doc["_id"] = result.inserted_id
+    offer_doc["client_name"] = current_user.get("full_name")
 
-    offer = Offer(
-        client_id=current_user.id,
-        title=title,
-        description=description,
-        category=category,
-        skills=skills if isinstance(skills, list) else [],
-        budget_min=float(budget_min),
-        budget_max=float(budget_max),
-        duration=duration,
-        location=location,
-        proposals_count=0,
-        status=OfferStatusEnum.active,
-    )
-    db.session.add(offer)
-    db.session.commit()
+    return jsonify({'offer': serialize(offer_doc)}), 201
 
-    return jsonify({'offer': offer.to_dict()}), 201
-
-@offers_bp.route('/<int:offer_id>/proposals', methods=['POST'])
-@token_required
-def create_proposal(current_user, offer_id):
+@offers_bp.route('/<offer_id>/proposals', methods=['POST'])
+@jwt_required()
+def create_proposal(offer_id):
     """Freelancer submits proposal."""
-    from models import Proposal
-
-    if current_user.role.value != 'freelancer':
+    user_id = get_jwt_identity()
+    current_user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+    
+    if current_user.get("role") != 'freelancer':
         return jsonify({'error': 'Only freelancers can submit proposals'}), 403
 
-    offer = Offer.query.get(offer_id)
+    offer = mongo.db.offers.find_one({"_id": ObjectId(offer_id)})
     if not offer:
         return jsonify({'error': 'Offer not found'}), 404
 
     data = request.get_json()
-    proposal = Proposal(
-        offer_id=offer_id,
-        freelancer_id=current_user.id,
-        cover_letter=data.get('cover_letter', '').strip(),
-        proposed_price=float(data.get('proposed_price', 0)),
-        estimated_duration=data.get('estimated_duration', '').strip()
-    )
-    db.session.add(proposal)
+    proposal_doc = {
+        "offer_id": offer_id,
+        "freelancer_id": user_id,
+        "cover_letter": data.get('cover_letter', '').strip(),
+        "proposed_price": float(data.get('proposed_price', 0)),
+        "estimated_duration": data.get('estimated_duration', '').strip(),
+        "status": "pending",
+        "created_at": datetime.datetime.now(datetime.timezone.utc)
+    }
+    
+    result = mongo.db.proposals.insert_one(proposal_doc)
+    proposal_doc["_id"] = result.inserted_id
     
     # Increment proposal count
-    offer.proposals_count = (offer.proposals_count or 0) + 1
-    db.session.commit()
+    mongo.db.offers.update_one({"_id": ObjectId(offer_id)}, {"$inc": {"proposals_count": 1}})
 
-    return jsonify({'proposal': proposal.to_dict()}), 201
+    return jsonify({'proposal': serialize(proposal_doc)}), 201
 
-@offers_bp.route('/<int:offer_id>/proposals', methods=['GET'])
-@token_required
-def get_offer_proposals(current_user, offer_id):
+@offers_bp.route('/<offer_id>/proposals', methods=['GET'])
+@jwt_required()
+def get_offer_proposals(offer_id):
     """Client sees proposals for their offer."""
-    from models import Proposal
+    user_id = get_jwt_identity()
 
-    offer = Offer.query.get(offer_id)
+    offer = mongo.db.offers.find_one({"_id": ObjectId(offer_id)})
     if not offer:
         return jsonify({'error': 'Offer not found'}), 404
 
-    if offer.client_id != current_user.id:
+    if offer.get("client_id") != user_id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    proposals = Proposal.query.filter_by(offer_id=offer_id).order_by(Proposal.created_at.desc()).all()
-    return jsonify({'proposals': [p.to_dict() for p in proposals]}), 200
+    proposals = list(mongo.db.proposals.find({"offer_id": offer_id}).sort("created_at", -1))
+    
+    for p in proposals:
+        freelancer = mongo.db.users.find_one({"_id": ObjectId(p["freelancer_id"])})
+        p["freelancer"] = serialize(freelancer) if freelancer else None
+
+    return jsonify({'proposals': serialize_list(proposals)}), 200

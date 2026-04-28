@@ -11,6 +11,8 @@ export interface FreelancerProfile {
   certifications: Certification[];
   cv_filename: string;
   cv_size: number;
+  avg_rating?: number;
+  total_reviews?: number;
 }
 
 export interface PortfolioItem {
@@ -28,6 +30,14 @@ export interface Certification {
   year: string;
 }
 
+export interface ProfileStats {
+  earnings: number;
+  hired: number;
+  rating: number;
+  reviews: number;
+  followers: number;
+}
+
 export interface FullProfile {
   user: {
     id: number;
@@ -38,4 +48,9 @@ export interface FullProfile {
     created_at: string;
   };
   profile: FreelancerProfile | null;
+  follower_count?: number;
+  is_following?: boolean;
+  badges?: string[];
+  availability?: string;
+  stats?: ProfileStats;
 }

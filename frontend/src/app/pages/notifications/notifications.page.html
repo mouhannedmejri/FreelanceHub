@@ -1,84 +1,93 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      <span class="notif-header-title">Notifications</span>
+    </ion-title>
+    <ion-buttons slot="end">
+      <button class="mark-all-btn" (click)="markAllAsRead()" *ngIf="unreadCount > 0">
+        <ion-icon name="checkmark-done-outline"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
 <ion-content class="notif-content">
-    <!-- Header -->
-    <div class="page-header">
-        <button class="back-btn" (click)="goBack()" id="notif-back-btn">
-            <ion-icon name="arrow-back-outline"></ion-icon>
-        </button>
-        <div class="header-center">
-            <h1 class="page-title">Notifications</h1>
-            <span class="unread-subtitle" *ngIf="unreadCount > 0">
-                {{ unreadCount }} non lue{{ unreadCount > 1 ? 's' : '' }}
-            </span>
-            <span class="unread-subtitle read-all" *ngIf="unreadCount === 0">
-                Tout lu ✓
-            </span>
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="notif-container">
+
+    <!-- Filter Tabs -->
+    <div class="notif-filter-tabs">
+      <button [class.active]="filter === 'all'" (click)="setFilter('all')">
+        Toutes
+        <span class="count-badge" *ngIf="totalCount > 0">{{ totalCount }}</span>
+      </button>
+      <button [class.active]="filter === 'unread'" (click)="setFilter('unread')">
+        Non lues
+        <span class="count-badge unread" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </button>
+    </div>
+
+    <!-- Loading Skeletons -->
+    <div *ngIf="loading" class="skeleton-list">
+      <div class="skeleton-notif" *ngFor="let i of [1,2,3,4,5]">
+        <div class="skeleton-icon"></div>
+        <div class="skeleton-text">
+          <div class="skeleton-line w80"></div>
+          <div class="skeleton-line w50"></div>
         </div>
-        <button class="mark-all-btn" (click)="markAllAsRead()" [disabled]="unreadCount === 0" id="mark-all-btn">
-            <ion-icon name="checkmark-done-outline"></ion-icon>
-        </button>
-    </div>
-
-    <!-- Mark All Label -->
-    <div class="mark-all-label" *ngIf="unreadCount > 0" (click)="markAllAsRead()">
-        Tout marquer comme lu
-    </div>
-
-    <!-- Filter Pills -->
-    <div class="filter-pills">
-        <button class="pill" [class.active]="filter === 'all'" (click)="setFilter('all')" id="filter-all-btn">
-            Toutes ({{ totalCount }})
-        </button>
-        <button class="pill" [class.active]="filter === 'unread'" (click)="setFilter('unread')" id="filter-unread-btn">
-            Non lues ({{ unreadCount }})
-        </button>
-    </div>
-
-    <!-- Loading -->
-    <div class="loading-state" *ngIf="loading">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
+      </div>
     </div>
 
     <!-- Empty State -->
-    <div class="empty-state" *ngIf="!loading && displayedNotifications.length === 0">
-        <div class="empty-icon-wrap">
-            <ion-icon name="notifications-off-outline"></ion-icon>
-        </div>
-        <p class="empty-title">Aucune notification</p>
-        <p class="empty-sub">
-            {{ filter === 'unread' ? 'Vous avez tout lu 🎉' : 'Vous êtes à jour !' }}
-        </p>
+    <div class="empty-notif" *ngIf="!loading && displayedNotifications.length === 0">
+      <ion-icon name="notifications-off-outline"></ion-icon>
+      <h3>Aucune notification</h3>
+      <p>Vous êtes à jour ! Les nouvelles notifications apparaîtront ici.</p>
     </div>
 
-    <!-- Notification Cards -->
-    <div class="notif-list" *ngIf="!loading && displayedNotifications.length > 0">
-        <div class="notif-card" [class.unread]="!notif.is_read" *ngFor="let notif of displayedNotifications"
-            (click)="markAsRead(notif)" [id]="'notif-card-' + notif.id">
-            <!-- Unread Badge -->
-            <span class="new-badge" *ngIf="!notif.is_read">Nouveau</span>
+    <!-- Grouped Notifications -->
+    <div *ngFor="let group of groupedNotifications" class="notif-group">
+      <h4 class="group-label">{{ group.label }}</h4>
 
-            <!-- Icon -->
-            <div class="notif-icon" [style.background]="getTypeColor(notif.type) + '22'"
-                [style.border-color]="getTypeColor(notif.type) + '44'">
-                <ion-icon [name]="getTypeIcon(notif.type)" [style.color]="getTypeColor(notif.type)"></ion-icon>
+      <ion-list class="notif-list">
+        <ion-item-sliding *ngFor="let notif of group.notifications">
+
+          <!-- Swipe Left: Delete -->
+          <ion-item-options side="end">
+            <ion-item-option color="danger" (click)="deleteNotification(notif)">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+
+          <!-- Swipe Right: Mark as Read -->
+          <ion-item-options side="start">
+            <ion-item-option color="success" (click)="markAsRead(notif)">
+              <ion-icon slot="icon-only" name="checkmark-outline"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+
+          <!-- Notification Item -->
+          <ion-item class="notif-item" [class.unread]="!notif.is_read" (click)="markAsRead(notif)" lines="none">
+            <div class="notif-icon" [ngStyle]="{'background': getTypeBg(notif.type), 'color': getTypeColor(notif.type)}" slot="start">
+              <ion-icon [name]="getTypeIcon(notif.type)"></ion-icon>
             </div>
+            <ion-label>
+              <h3 class="notif-title" style="font-size: 14px; font-weight: 700; margin: 0 0 4px; color: var(--text);">{{ notif.title }}</h3>
+              <p class="notif-message" style="font-weight: 500; color: var(--text-muted) !important; font-size: 12px !important;">{{ notif.body }}</p>
+              <span class="notif-time">{{ formatTime(notif.created_at) }}</span>
+            </ion-label>
+            <div class="unread-dot" *ngIf="!notif.is_read" slot="end"></div>
+          </ion-item>
 
-            <!-- Content -->
-            <div class="notif-body">
-                <span class="notif-title">{{ notif.title }}</span>
-                <span class="notif-text">{{ notif.body }}</span>
-                <div class="notif-footer">
-                    <span class="notif-time">{{ formatTime(notif.created_at) }}</span>
-                    <button class="read-link" *ngIf="!notif.is_read"
-                        (click)="markAsRead(notif); $event.stopPropagation()" [id]="'mark-read-' + notif.id">
-                        Marquer comme lu
-                    </button>
-                </div>
-            </div>
-
-            <!-- Delete -->
-            <button class="delete-btn" (click)="deleteNotification(notif, $event)" [id]="'delete-notif-' + notif.id">
-                <ion-icon name="trash-outline"></ion-icon>
-            </button>
-        </div>
+        </ion-item-sliding>
+      </ion-list>
     </div>
+
+  </div>
 </ion-content>
