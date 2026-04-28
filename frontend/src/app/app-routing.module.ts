@@ -56,6 +56,14 @@ const routes: Routes = [
     path: '',
     redirectTo: 'auth',
     pathMatch: 'full',
+  },
+  {
+    path: 'client-dashboard',
+    loadChildren: () => import('./pages/client-dashboard/client-dashboard.module').then( m => m.ClientDashboardPageModule)
+  },
+  {
+    path: 'freelancer-dashboard',
+    loadChildren: () => import('./pages/freelancer-dashboard/freelancer-dashboard.module').then( m => m.FreelancerDashboardPageModule)
   }
 ];
 

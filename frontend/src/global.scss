@@ -40,6 +40,11 @@ ion-content {
   --padding-end: 0;
 }
 
+/* Ensure all pages respect safe areas */
+ion-header ion-toolbar {
+  --padding-top: env(safe-area-inset-top);
+}
+
 /* Smooth scrollbar */
 ::-webkit-scrollbar {
   width: 4px;

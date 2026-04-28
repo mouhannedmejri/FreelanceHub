@@ -12,7 +12,15 @@
   </div>
 
   <div class="drawer-menu">
-    <div class="drawer-item" (click)="navigateFromDrawer('/home/dashboard')">
+    <div class="drawer-item" *ngIf="user?.role !== 'client' && user?.role !== 'freelancer' && user?.role !== 'admin'" (click)="navigateFromDrawer('/home/dashboard')">
+      <ion-icon name="grid-outline"></ion-icon>
+      <span>Dashboard</span>
+    </div>
+    <div class="drawer-item" *ngIf="user?.role === 'client'" (click)="navigateFromDrawer('/client-dashboard')">
+      <ion-icon name="grid-outline"></ion-icon>
+      <span>Dashboard</span>
+    </div>
+    <div class="drawer-item" *ngIf="user?.role === 'freelancer'" (click)="navigateFromDrawer('/freelancer-dashboard')">
       <ion-icon name="grid-outline"></ion-icon>
       <span>Dashboard</span>
     </div>

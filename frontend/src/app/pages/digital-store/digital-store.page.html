@@ -1,4 +1,10 @@
 <ion-content class="store-content" [fullscreen]="true">
+  <ion-header collapse="condenses">
+    <ion-toolbar>
+      <ion-title size="large">Store</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>

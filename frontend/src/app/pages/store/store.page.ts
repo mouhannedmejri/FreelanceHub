@@ -4,7 +4,8 @@ import { AuthService } from '../../services/auth.service';
 import { OfferService } from '../../services/offer.service';
 import { Offer } from '../../models/offer.model';
 import { User } from '../../models/user.model';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProposalService } from '../../services/proposal.service';
 import { ToastController, AlertController } from '@ionic/angular';
 
@@ -19,9 +20,19 @@ export class StorePage implements OnInit, OnDestroy {
   offers: Offer[] = [];
   totalOffers = 0;
   isLoading = false;
-  searchTerm = '';
+  filterParams: { [key: string]: any } = {
+    search: '',
+    category: '',
+    location: '',
+    duration: '',
+    budget_min: null,
+    budget_max: null
+  };
+  
+  isFilterModalOpen = false;
+
+  private searchSubject = new Subject<string>();
   private subs: Subscription[] = [];
-  private searchTimeout: any;
   
   // Pagination
   allOffers: Offer[] = [];
@@ -46,6 +57,16 @@ export class StorePage implements OnInit, OnDestroy {
         this.loadOffers();
       })
     );
+    
+    this.subs.push(
+      this.searchSubject.pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      ).subscribe(searchTerm => {
+        this.filterParams['search'] = searchTerm;
+        this.loadOffers();
+      })
+    );
   }
 
   ngOnDestroy() {
@@ -54,6 +75,12 @@ export class StorePage implements OnInit, OnDestroy {
 
   get isClient(): boolean {
     return this.user?.role === 'client';
+  }
+
+  get activeFilterCount(): number {
+    return Object.values(this.filterParams).filter(
+      v => v !== null && v !== '' && v !== undefined
+    ).length;
   }
 
   doRefresh(event: any) {
@@ -66,8 +93,8 @@ export class StorePage implements OnInit, OnDestroy {
     this.page = 1;
 
     const call = this.isClient
-      ? this.offerService.getMyOffers()
-      : this.offerService.getOffers(this.searchTerm);
+      ? this.offerService.getMyOffers(this.filterParams)
+      : this.offerService.getOffers(this.filterParams);
 
     call.subscribe({
       next: (data) => {
@@ -99,10 +126,44 @@ export class StorePage implements OnInit, OnDestroy {
   }
 
   onSearch() {
-    clearTimeout(this.searchTimeout);
-    this.searchTimeout = setTimeout(() => {
-      this.loadOffers();
-    }, 300);
+    this.searchSubject.next(this.filterParams['search']);
+  }
+
+  openFilterModal() {
+    this.isFilterModalOpen = true;
+  }
+
+  closeFilterModal() {
+    this.isFilterModalOpen = false;
+  }
+
+  applyFilters() {
+    this.isFilterModalOpen = false;
+    this.loadOffers();
+  }
+
+  resetFilters() {
+    this.filterParams = {
+      search: this.filterParams['search'], // Keep search term
+      category: '',
+      location: '',
+      duration: '',
+      budget_min: null,
+      budget_max: null
+    };
+    this.applyFilters();
+  }
+
+  toggleFilterCategory(cat: string) {
+    this.filterParams['category'] = this.filterParams['category'] === cat ? '' : cat;
+  }
+
+  toggleFilterLocation(loc: string) {
+    this.filterParams['location'] = this.filterParams['location'] === loc ? '' : loc;
+  }
+
+  toggleFilterDuration(dur: string) {
+    this.filterParams['duration'] = this.filterParams['duration'] === dur ? '' : dur;
   }
 
   navigateToPublish() {

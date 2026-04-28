@@ -6,6 +6,14 @@
     </ion-buttons>
     <ion-title>Admin Dashboard</ion-title>
   </ion-toolbar>
+  <ion-toolbar color="dark">
+    <ion-segment [(ngModel)]="currentTab" (ionChange)="setTab($event.detail.value)">
+      <ion-segment-button value="overview">Vue d'ensemble</ion-segment-button>
+      <ion-segment-button value="approvals">Approbations</ion-segment-button>
+      <ion-segment-button value="claims">Réclamations</ion-segment-button>
+      <ion-segment-button value="users">Utilisateurs</ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding dark-bg">
@@ -13,78 +21,414 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div *ngIf="isLoading && !stats" class="loading-state">
+  <div *ngIf="isLoadingStats && !stats" class="loading-state">
     <ion-spinner name="crescent"></ion-spinner>
   </div>
 
-  <div *ngIf="stats" class="stats-grid">
-    <div class="stat-card">
-      <ion-icon name="people-outline" color="primary"></ion-icon>
-      <h3>{{ stats.total_users }}</h3>
-      <p>Total Utilisateurs</p>
+  <!-- TAB 1: OVERVIEW -->
+  <ng-container *ngIf="currentTab === 'overview' && stats">
+    <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+      <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px;">
+        <ion-icon name="people" color="primary" style="font-size: 24px;"></ion-icon>
+        <h3 style="margin: 8px 0; color: #fff;">{{ stats.total_users }}</h3>
+        <p style="margin: 0; color: #a78bfa; font-size: 12px;">Total Utilisateurs</p>
+      </div>
+      <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px;">
+        <ion-icon name="briefcase" color="secondary" style="font-size: 24px;"></ion-icon>
+        <h3 style="margin: 8px 0; color: #fff;">{{ stats.freelancers_count }}</h3>
+        <p style="margin: 0; color: #a78bfa; font-size: 12px;">Freelancers actifs</p>
+      </div>
+      <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px;">
+        <ion-icon name="rocket" color="success" style="font-size: 24px;"></ion-icon>
+        <h3 style="margin: 8px 0; color: #fff;">{{ stats.active_projects }}</h3>
+        <p style="margin: 0; color: #a78bfa; font-size: 12px;">Projets actifs</p>
+      </div>
+      <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px;">
+        <ion-icon name="cash" color="warning" style="font-size: 24px;"></ion-icon>
+        <h3 style="margin: 8px 0; color: #fff;">{{ stats.total_revenue | currency:'EUR':'symbol':'1.0-0' }}</h3>
+        <p style="margin: 0; color: #a78bfa; font-size: 12px;">Revenus totaux</p>
+      </div>
+      <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px; position: relative;">
+        <ion-icon name="time" color="tertiary" style="font-size: 24px;"></ion-icon>
+        <h3 style="margin: 8px 0; color: #fff;">{{ stats.pending_approvals }}</h3>
+        <p style="margin: 0; color: #a78bfa; font-size: 12px;">Approbations en attente</p>
+        <ion-badge *ngIf="stats.pending_approvals > 0" color="warning" style="position: absolute; top: 12px; right: 12px;">{{ stats.pending_approvals }}</ion-badge>
+      </div>
+      <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px; position: relative;">
+        <ion-icon name="alert-circle" color="danger" style="font-size: 24px;"></ion-icon>
+        <h3 style="margin: 8px 0; color: #fff;">{{ stats.open_claims }}</h3>
+        <p style="margin: 0; color: #a78bfa; font-size: 12px;">Réclamations ouvertes</p>
+        <ion-badge *ngIf="stats.open_claims > 0" color="danger" style="position: absolute; top: 12px; right: 12px;">{{ stats.open_claims }}</ion-badge>
+      </div>
     </div>
-    <div class="stat-card">
-      <ion-icon name="briefcase-outline" color="secondary"></ion-icon>
-      <h3>{{ stats.freelancers }}</h3>
-      <p>Freelancers</p>
-    </div>
-    <div class="stat-card">
-      <ion-icon name="business-outline" color="tertiary"></ion-icon>
-      <h3>{{ stats.clients }}</h3>
-      <p>Clients</p>
-    </div>
-    <div class="stat-card">
-      <ion-icon name="document-text-outline" color="success"></ion-icon>
-      <h3>{{ stats.offers }}</h3>
-      <p>Offres</p>
-    </div>
-    <div class="stat-card">
-      <ion-icon name="construct-outline" color="warning"></ion-icon>
-      <h3>{{ stats.services }}</h3>
-      <p>Services</p>
-    </div>
-    <div class="stat-card">
-      <ion-icon name="cash-outline" color="danger"></ion-icon>
-      <h3>{{ stats.revenue | currency:'EUR':'symbol':'1.0-0' }}</h3>
-      <p>Revenus</p>
-    </div>
-  </div>
 
-  <h2 class="section-title" *ngIf="users.length > 0">Utilisateurs récents</h2>
-  
-  <div class="users-table-container" *ngIf="users.length > 0">
-    <table class="users-table">
-      <thead>
-        <tr>
-          <th>Nom</th>
-          <th>Rôle</th>
-          <th>Date</th>
-          <th>Statut</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let u of users">
-          <td>
-            <strong>{{ u.full_name }}</strong><br>
-            <small>{{ u.email }}</small>
-          </td>
-          <td>
-            <ion-badge color="light">{{ u.role }}</ion-badge>
-          </td>
-          <td>{{ u.created_at | date:'shortDate' }}</td>
-          <td>
-            <ion-badge [color]="u.is_approved ? 'success' : 'danger'">
-              {{ u.is_approved ? 'Approuvé' : 'Révoqué' }}
-            </ion-badge>
-          </td>
-          <td>
-            <ion-button *ngIf="u.role === 'freelancer'" size="small" [color]="u.is_approved ? 'danger' : 'success'" (click)="toggleApprove(u)">
-              {{ u.is_approved ? 'Révoquer' : 'Approuver' }}
-            </ion-button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div class="charts-section" style="margin-bottom: 24px;">
+      <h3 style="color: #fff; font-size: 16px; margin-bottom: 16px;">Nouveaux utilisateurs</h3>
+      <div style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a78bfa; margin-bottom: 4px;">
+          <span>Ce mois-ci</span>
+          <span>{{ stats.new_users_this_month }}</span>
+        </div>
+        <div style="background: #2a2342; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: #3b82f6; height: 100%;" [style.width]="(stats.new_users_this_month / getMathMax(stats.new_users_this_month, stats.new_users_last_month) * 100 || 0) + '%'"></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a78bfa; margin-bottom: 4px;">
+          <span>Mois dernier</span>
+          <span>{{ stats.new_users_last_month }}</span>
+        </div>
+        <div style="background: #2a2342; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: #64748b; height: 100%;" [style.width]="(stats.new_users_last_month / getMathMax(stats.new_users_this_month, stats.new_users_last_month) * 100 || 0) + '%'"></div>
+        </div>
+      </div>
+
+      <h3 style="color: #fff; font-size: 16px; margin-bottom: 16px;">Revenus</h3>
+      <div style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a78bfa; margin-bottom: 4px;">
+          <span>Ce mois-ci</span>
+          <span>{{ stats.revenue_this_month | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+        <div style="background: #2a2342; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: #10b981; height: 100%;" [style.width]="(stats.revenue_this_month / getMathMax(stats.revenue_this_month, stats.revenue_last_month) * 100 || 0) + '%'"></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a78bfa; margin-bottom: 4px;">
+          <span>Mois dernier</span>
+          <span>{{ stats.revenue_last_month | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+        <div style="background: #2a2342; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: #64748b; height: 100%;" [style.width]="(stats.revenue_last_month / getMathMax(stats.revenue_this_month, stats.revenue_last_month) * 100 || 0) + '%'"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="activity-section">
+      <h3 style="color: #fff; font-size: 16px; margin-bottom: 16px;">Activité récente</h3>
+      <div *ngIf="stats.recent_activity?.length > 0" style="background: #2a2342; border-radius: 12px; padding: 16px;">
+        <div *ngFor="let item of stats.recent_activity" style="display: flex; align-items: flex-start; margin-bottom: 12px; border-bottom: 1px solid #3d3559; padding-bottom: 12px;">
+          <div style="width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; margin-right: 12px; flex-shrink: 0;"
+               [ngStyle]="{'background': item.type === 'user' ? '#3b82f6' : (item.type === 'claim' ? '#ef4444' : '#f59e0b')}"></div>
+          <div style="flex: 1;">
+            <p style="margin: 0 0 4px; color: #fff; font-size: 14px;">{{ item.desc }}</p>
+            <p style="margin: 0; color: #a78bfa; font-size: 12px;">{{ item.date | date:'short' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- TAB 2: APPROVALS -->
+  <ng-container *ngIf="currentTab === 'approvals'">
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 16px;">
+      <ion-chip [color]="approvalStatusFilter === 'all' ? 'primary' : 'medium'" (click)="setApprovalFilter('all')">Toutes</ion-chip>
+      <ion-chip [color]="approvalStatusFilter === 'pending' ? 'primary' : 'medium'" (click)="setApprovalFilter('pending')">En attente ({{ approvalCounts.pending }})</ion-chip>
+      <ion-chip [color]="approvalStatusFilter === 'approved' ? 'primary' : 'medium'" (click)="setApprovalFilter('approved')">Approuvées ({{ approvalCounts.approved }})</ion-chip>
+      <ion-chip [color]="approvalStatusFilter === 'rejected' ? 'primary' : 'medium'" (click)="setApprovalFilter('rejected')">Rejetées ({{ approvalCounts.rejected }})</ion-chip>
+    </div>
+
+    <div *ngIf="isLoadingApprovals && approvals.length === 0" style="text-align: center; padding: 20px;">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <div *ngIf="!isLoadingApprovals && approvals.length === 0" style="text-align: center; padding: 40px 20px; color: #a78bfa;">
+      <ion-icon name="inbox-outline" style="font-size: 48px; margin-bottom: 16px;"></ion-icon>
+      <h3>Aucune demande correspondante</h3>
+    </div>
+
+    <div *ngFor="let app of approvals" style="background: #2a2342; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <ion-badge [color]="app.type === 'offer' ? 'tertiary' : 'secondary'">{{ app.type === 'offer' ? 'OFFRE' : 'SERVICE' }}</ion-badge>
+        <span style="font-size: 12px; color: #a78bfa;">{{ app.created_at | date:'shortDate' }}</span>
+      </div>
+      
+      <h3 style="color: #fff; margin: 0 0 8px; font-size: 16px;">{{ app.reference?.title || 'Titre inconnu' }}</h3>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: #7c3aed; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; margin-right: 8px;">
+          {{ app.requester?.full_name?.charAt(0) || '?' }}
+        </div>
+        <span style="color: #a78bfa; font-size: 14px;">par {{ app.requester?.full_name || 'Inconnu' }}</span>
+      </div>
+
+      <p style="color: #ccc; font-size: 14px; margin: 0 0 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+        {{ app.reference?.description }}
+      </p>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+        <span *ngFor="let skill of (app.reference?.skills || []) | slice:0:3" style="background: #3d3559; color: #e2e8f0; font-size: 12px; padding: 4px 8px; border-radius: 4px;">{{ skill }}</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a78bfa; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #3d3559;">
+        <span>{{ app.reference?.budget_min || app.reference?.price_from || 0 }}€</span>
+        <span>{{ app.reference?.category || 'Non catégorisé' }}</span>
+      </div>
+
+      <div *ngIf="app.status === 'pending'" style="display: flex; gap: 12px;">
+        <ion-button expand="block" color="success" style="flex: 1; margin: 0;" (click)="handleApprove(app._id || app.id)">
+          <ion-icon name="checkmark-outline" slot="start"></ion-icon> Approuver
+        </ion-button>
+        <ion-button expand="block" color="danger" fill="outline" style="flex: 1; margin: 0;" (click)="handleReject(app._id || app.id)">
+          <ion-icon name="close-outline" slot="start"></ion-icon> Rejeter
+        </ion-button>
+      </div>
+
+      <div *ngIf="app.status !== 'pending'">
+        <ion-badge [color]="app.status === 'approved' ? 'success' : 'danger'" style="margin-bottom: 8px;">
+          <ion-icon [name]="app.status === 'approved' ? 'checkmark-outline' : 'close-outline'"></ion-icon>
+          {{ app.status === 'approved' ? 'Approuvée' : 'Rejetée' }}
+        </ion-badge>
+        <p *ngIf="app.admin_note" style="margin: 0; color: #a78bfa; font-size: 12px; font-style: italic;">Note: {{ app.admin_note }}</p>
+      </div>
+    </div>
+
+    <ion-infinite-scroll (ionInfinite)="loadMoreApprovals($event)" [disabled]="!hasMoreApprovals">
+      <ion-infinite-scroll-content></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </ng-container>
+
+  <!-- TAB 3: RECLAMATIONS -->
+  <ng-container *ngIf="currentTab === 'claims'">
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 16px;">
+      <ion-chip [color]="claimStatusFilter === 'all' ? 'primary' : 'medium'" (click)="setClaimFilter('status', 'all')">Toutes</ion-chip>
+      <ion-chip [color]="claimStatusFilter === 'open' ? 'danger' : 'medium'" (click)="setClaimFilter('status', 'open')">Ouvertes ({{ claimStats.open }})</ion-chip>
+      <ion-chip [color]="claimStatusFilter === 'in_review' ? 'warning' : 'medium'" (click)="setClaimFilter('status', 'in_review')">En cours ({{ claimStats.in_review }})</ion-chip>
+      <ion-chip [color]="claimStatusFilter === 'resolved' ? 'success' : 'medium'" (click)="setClaimFilter('status', 'resolved')">Résolues ({{ claimStats.resolved }})</ion-chip>
+    </div>
+    
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 16px;">
+      <ion-chip [color]="claimPriorityFilter === 'all' ? 'primary' : 'medium'" (click)="setClaimFilter('priority', 'all')">Toutes Priorités</ion-chip>
+      <ion-chip [color]="claimPriorityFilter === 'urgent' ? 'danger' : 'medium'" (click)="setClaimFilter('priority', 'urgent')">Urgentes</ion-chip>
+      <ion-chip [color]="claimPriorityFilter === 'high' ? 'warning' : 'medium'" (click)="setClaimFilter('priority', 'high')">Haute</ion-chip>
+      <ion-chip [color]="claimPriorityFilter === 'medium' ? 'tertiary' : 'medium'" (click)="setClaimFilter('priority', 'medium')">Moyenne</ion-chip>
+      <ion-chip [color]="claimPriorityFilter === 'low' ? 'medium' : 'medium'" (click)="setClaimFilter('priority', 'low')">Basse</ion-chip>
+    </div>
+
+    <div *ngIf="isLoadingClaims && claims.length === 0" style="text-align: center; padding: 20px;">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <div *ngIf="!isLoadingClaims && claims.length === 0" style="text-align: center; padding: 40px 20px; color: #a78bfa;">
+      <ion-icon name="checkmark-done-circle-outline" style="font-size: 48px; margin-bottom: 16px;"></ion-icon>
+      <h3>Aucune réclamation correspondante</h3>
+    </div>
+
+    <div *ngFor="let c of claims" style="background: #2a2342; border-radius: 12px; padding: 16px; margin-bottom: 16px; position: relative;">
+      <ion-badge [color]="c.priority === 'urgent' ? 'danger' : (c.priority === 'high' ? 'warning' : (c.priority === 'medium' ? 'tertiary' : 'medium'))" style="position: absolute; top: 16px; right: 16px;">
+        {{ c.priority | uppercase }}
+      </ion-badge>
+
+      <div style="display: flex; align-items: center; margin-bottom: 8px; color: #a78bfa;">
+        <span *ngIf="c.type === 'payment'">💰 Paiement</span>
+        <span *ngIf="c.type === 'quality'">⭐ Qualité</span>
+        <span *ngIf="c.type === 'behavior'">⚠️ Comportement</span>
+        <span *ngIf="c.type === 'fraud'">🚨 Fraude</span>
+        <span *ngIf="c.type === 'other'">Autre</span>
+      </div>
+
+      <h3 style="color: #fff; margin: 0 0 8px; font-size: 16px;">{{ c.title }}</h3>
+      <p style="color: #a78bfa; font-size: 14px; margin: 0 0 12px;">par {{ c.claimant?.full_name || 'Inconnu' }} contre {{ c.target?.full_name || 'Inconnu' }}</p>
+
+      <p style="color: #ccc; font-size: 14px; margin: 0 0 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+        {{ c.description }}
+      </p>
+
+      <div *ngIf="c.project_id" style="margin-bottom: 12px;">
+        <ion-chip color="tertiary" style="margin: 0; font-size: 12px;">Projet Associé</ion-chip>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid #3d3559;">
+        <div>
+          <ion-badge [color]="c.status === 'open' ? 'danger' : (c.status === 'in_review' ? 'warning' : 'success')">
+            {{ c.status | uppercase }}
+          </ion-badge>
+        </div>
+        <ion-button size="small" color="primary" (click)="openClaimModal(c)">Gérer</ion-button>
+      </div>
+    </div>
+    
+    <ion-infinite-scroll (ionInfinite)="loadMoreClaims($event)" [disabled]="!hasMoreClaims">
+      <ion-infinite-scroll-content></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </ng-container>
+
+  <!-- TAB 4: UTILISATEURS -->
+  <ng-container *ngIf="currentTab === 'users'">
+    <div style="padding-bottom: 16px;">
+      <ion-searchbar [(ngModel)]="userSearch" (ionChange)="onUserSearchChange($event)" [debounce]="500" placeholder="Rechercher un utilisateur..."></ion-searchbar>
+    </div>
+
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 16px;">
+      <ion-chip [color]="userRoleFilter === 'all' ? 'primary' : 'medium'" (click)="setUserRoleFilter('all')">Tous</ion-chip>
+      <ion-chip [color]="userRoleFilter === 'freelancer' ? 'primary' : 'medium'" (click)="setUserRoleFilter('freelancer')">Freelancers</ion-chip>
+      <ion-chip [color]="userRoleFilter === 'client' ? 'primary' : 'medium'" (click)="setUserRoleFilter('client')">Clients</ion-chip>
+      <ion-chip [color]="userRoleFilter === 'pending_approval' ? 'warning' : 'medium'" (click)="setUserRoleFilter('pending_approval')">En attente d'approbation</ion-chip>
+    </div>
+
+    <div *ngIf="isLoadingUsers && users.length === 0" style="text-align: center; padding: 20px;">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <ion-list style="background: transparent;">
+      <ion-item *ngFor="let u of users" style="--background: #2a2342; border-radius: 12px; margin-bottom: 8px;">
+        <div slot="start" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;"
+             [ngStyle]="{'background': u.role === 'freelancer' ? '#7c3aed' : '#3b82f6'}">
+          {{ u.full_name?.charAt(0) || '?' }}
+        </div>
+        
+        <ion-label>
+          <h2 style="color: #fff; margin-bottom: 4px;">{{ u.full_name }}</h2>
+          <p style="color: #a78bfa; font-size: 12px;">{{ u.email }}</p>
+          <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <ion-badge [color]="u.status === 'active' ? 'success' : (u.status === 'banned' ? 'danger' : (u.status === 'deleted' ? 'dark' : 'warning'))">{{ u.status | uppercase }}</ion-badge>
+            <ion-badge *ngIf="u.role === 'freelancer'" [color]="u.is_approved ? 'success' : 'warning'">{{ u.is_approved ? 'Approuvé' : 'En attente' }}</ion-badge>
+          </div>
+        </ion-label>
+
+        <ion-button slot="end" fill="clear" color="medium" (click)="openUserActionSheet(u)">
+          <ion-icon name="ellipsis-vertical"></ion-icon>
+        </ion-button>
+      </ion-item>
+    </ion-list>
+
+    <ion-infinite-scroll (ionInfinite)="loadMoreUsers($event)" [disabled]="!hasMoreUsers">
+      <ion-infinite-scroll-content></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </ng-container>
+
+  <!-- CLAIM MODAL -->
+  <ion-modal [isOpen]="isClaimModalOpen" (didDismiss)="closeClaimModal()">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="dark">
+          <ion-title>Gérer la réclamation</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeClaimModal()">Fermer</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding dark-bg" *ngIf="selectedClaim">
+        <h2 style="color: #fff;">{{ selectedClaim.title }}</h2>
+        <p style="color: #ccc;">{{ selectedClaim.description }}</p>
+        
+        <ion-item style="--background: #2a2342; border-radius: 8px; margin-bottom: 16px;">
+          <ion-label position="stacked" style="color: #a78bfa;">Priorité</ion-label>
+          <ion-select [(ngModel)]="selectedClaim.priority" style="color: #fff;">
+            <ion-select-option value="low">Basse</ion-select-option>
+            <ion-select-option value="medium">Moyenne</ion-select-option>
+            <ion-select-option value="high">Haute</ion-select-option>
+            <ion-select-option value="urgent">Urgente</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item style="--background: #2a2342; border-radius: 8px; margin-bottom: 16px;">
+          <ion-label position="stacked" style="color: #a78bfa;">Statut</ion-label>
+          <ion-select [(ngModel)]="selectedClaim.status" style="color: #fff;">
+            <ion-select-option value="open">Ouverte</ion-select-option>
+            <ion-select-option value="in_review">En cours de révision</ion-select-option>
+            <ion-select-option value="resolved">Résolue</ion-select-option>
+            <ion-select-option value="rejected">Rejetée</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item style="--background: #2a2342; border-radius: 8px; margin-bottom: 16px;">
+          <ion-label position="stacked" style="color: #a78bfa;">Votre décision / commentaire</ion-label>
+          <ion-textarea [(ngModel)]="selectedClaim.admin_note" rows="4" style="color: #fff;"></ion-textarea>
+        </ion-item>
+
+        <ion-button expand="block" color="primary" (click)="saveClaim()">Sauvegarder</ion-button>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- BAN MODAL -->
+  <ion-modal [isOpen]="isBanModalOpen" (didDismiss)="closeBanModal()" initialBreakpoint="0.6" [breakpoints]="[0, 0.6, 0.8]">
+    <ng-template>
+      <ion-content class="ion-padding dark-bg">
+        <h2 style="color: #ef4444;">Bannir l'utilisateur</h2>
+        <p style="color: #ccc; font-size: 14px;">L'utilisateur sera notifié et perdra l'accès immédiatement.</p>
+        
+        <ion-item style="--background: #2a2342; border-radius: 8px; margin-bottom: 16px; margin-top: 16px;">
+          <ion-label position="stacked" style="color: #a78bfa;">Durée</ion-label>
+          <ion-select [(ngModel)]="banDuration" style="color: #fff;">
+            <ion-select-option value="24h">24 heures</ion-select-option>
+            <ion-select-option value="3j">3 jours</ion-select-option>
+            <ion-select-option value="7j">7 jours</ion-select-option>
+            <ion-select-option value="30j">30 jours</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item style="--background: #2a2342; border-radius: 8px; margin-bottom: 24px;">
+          <ion-label position="stacked" style="color: #a78bfa;">Raison (min 20 caractères)</ion-label>
+          <ion-textarea [(ngModel)]="banReason" rows="4" style="color: #fff;" placeholder="Cette raison sera visible par l'utilisateur"></ion-textarea>
+        </ion-item>
+
+        <div style="display: flex; gap: 12px;">
+          <ion-button expand="block" color="medium" fill="outline" style="flex: 1; margin: 0;" (click)="closeBanModal()">Annuler</ion-button>
+          <ion-button expand="block" color="danger" style="flex: 1; margin: 0;" (click)="submitBan()">Confirmer le bannissement</ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- USER DETAILS MODAL -->
+  <ion-modal [isOpen]="isUserDetailsModalOpen" (didDismiss)="closeUserDetails()">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="dark">
+          <ion-title>Profil Complet</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeUserDetails()">Fermer</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding dark-bg" *ngIf="selectedUserDetails">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="width: 80px; height: 80px; border-radius: 50%; background: #7c3aed; color: #fff; font-size: 32px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            {{ selectedUserDetails.user.full_name?.charAt(0) || '?' }}
+          </div>
+          <h2 style="color: #fff; margin: 0 0 8px;">{{ selectedUserDetails.user.full_name }}</h2>
+          <p style="color: #a78bfa; margin: 0 0 8px;">{{ selectedUserDetails.user.email }}</p>
+          <ion-badge [color]="selectedUserDetails.user.status === 'active' ? 'success' : 'danger'">{{ selectedUserDetails.user.status | uppercase }}</ion-badge>
+        </div>
+
+        <div style="background: #2a2342; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <h3 style="color: #fff; margin: 0 0 16px; font-size: 16px;">Statistiques</h3>
+          <div style="display: flex; justify-content: space-around; text-align: center;">
+            <div>
+              <h4 style="color: #fff; margin: 0 0 4px;">{{ selectedUserDetails.projects?.length || 0 }}</h4>
+              <span style="color: #a78bfa; font-size: 12px;">Projets</span>
+            </div>
+            <div>
+              <h4 style="color: #fff; margin: 0 0 4px;">{{ selectedUserDetails.claims?.length || 0 }}</h4>
+              <span style="color: #a78bfa; font-size: 12px;">Réclamations</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedUserDetails.projects?.length > 0" style="margin-bottom: 16px;">
+          <h3 style="color: #fff; font-size: 16px; margin-bottom: 12px;">Projets Récents</h3>
+          <ion-list style="background: transparent;">
+            <ion-item *ngFor="let p of selectedUserDetails.projects | slice:0:3" style="--background: #2a2342; border-radius: 8px; margin-bottom: 8px;">
+              <ion-label>
+                <h4 style="color: #fff;">{{ p.title }}</h4>
+                <p style="color: #a78bfa;">{{ p.budget }}€</p>
+              </ion-label>
+              <ion-badge slot="end" [color]="p.status === 'active' ? 'success' : 'medium'">{{ p.status }}</ion-badge>
+            </ion-item>
+          </ion-list>
+        </div>
+
+        <div *ngIf="selectedUserDetails.bans?.length > 0">
+          <h3 style="color: #ef4444; font-size: 16px; margin-bottom: 12px;">Historique des bannissements</h3>
+          <div *ngFor="let b of selectedUserDetails.bans" style="background: #2a2342; border-left: 4px solid #ef4444; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+            <p style="margin: 0 0 4px; color: #fff; font-size: 14px;">{{ b.reason }}</p>
+            <span style="color: #a78bfa; font-size: 12px;">Du {{ b.banned_at | date:'shortDate' }} au {{ b.expires_at ? (b.expires_at | date:'shortDate') : 'Définitif' }}</span>
+          </div>
+        </div>
+
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>
