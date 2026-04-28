@@ -12,7 +12,7 @@ export class ReviewService {
     return this.http.post<{ review: Review }>(`${environment.apiUrl}/reviews`, data);
   }
 
-  getUserReviews(userId: number): Observable<{ reviews: Review[] }> {
+  getUserReviews(userId: number | string): Observable<{ reviews: Review[] }> {
     return this.http.get<{ reviews: Review[] }>(`${environment.apiUrl}/users/${userId}/reviews`);
   }
 }

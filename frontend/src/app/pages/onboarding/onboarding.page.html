@@ -3,15 +3,30 @@
 
     <div class="header">
       <div class="step-indicator">
-        <span class="step active"></span>
-        <span class="step"></span>
-        <span class="step"></span>
+        <span class="step" [class.active]="step >= 1"></span>
+        <span class="step" [class.active]="step >= 2"></span>
+        <span class="step" [class.active]="step >= 3"></span>
+        <span class="step" [class.active]="step >= 4"></span>
       </div>
-      <h1>Vos centres d'intérêt</h1>
-      <p>Sélectionnez les domaines qui vous passionnent pour personnaliser votre expérience.</p>
+      <h1>Personalize Your Experience</h1>
+      <p>Step {{ step }} of {{ totalSteps }} - {{ progress }}% completed</p>
     </div>
 
-    <div class="interests-grid">
+    <div *ngIf="step === 1" class="role-step">
+      <h3>What do you want to do?</h3>
+      <div class="role-cards">
+        <button class="role-card" [class.selected]="roleGoal === 'client'" (click)="selectRole('client')">
+          <ion-icon name="briefcase-outline"></ion-icon>
+          <span>I want to hire</span>
+        </button>
+        <button class="role-card" [class.selected]="roleGoal === 'freelancer'" (click)="selectRole('freelancer')">
+          <ion-icon name="rocket-outline"></ion-icon>
+          <span>I want to work</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="interests-grid" *ngIf="step === 2">
       <button
         *ngFor="let interest of interests"
         class="interest-chip"
@@ -21,20 +36,49 @@
         <ion-icon [name]="interest.icon"></ion-icon>
         <span>{{ interest.name }}</span>
       </button>
+      <p class="step-help">Pick 3 to 5 items</p>
     </div>
 
-    <div class="selected-info" *ngIf="selectedCount > 0">
+    <div class="selected-info" *ngIf="step === 2 && selectedCount > 0">
       <ion-icon name="checkmark-circle" class="info-icon"></ion-icon>
       {{ selectedCount }} domaine{{ selectedCount > 1 ? 's' : '' }} sélectionné{{ selectedCount > 1 ? 's' : '' }}
     </div>
 
+    <div class="slider-step" *ngIf="step === 3">
+      <h3>Set your {{ roleGoal === 'client' ? 'budget' : 'hourly rate' }} preference</h3>
+      <ion-range min="10" max="300" step="5" pin="true" [(ngModel)]="budgetOrRate"></ion-range>
+      <p>{{ rateLabel }}</p>
+    </div>
+
+    <div class="notifications-step" *ngIf="step === 4">
+      <h3>Notification preferences</h3>
+      <ion-list lines="none">
+        <ion-item>
+          <ion-label>Proposal updates</ion-label>
+          <ion-toggle [(ngModel)]="notificationPreferences.proposals"></ion-toggle>
+        </ion-item>
+        <ion-item>
+          <ion-label>Messages</ion-label>
+          <ion-toggle [(ngModel)]="notificationPreferences.messages"></ion-toggle>
+        </ion-item>
+        <ion-item>
+          <ion-label>Marketing tips</ion-label>
+          <ion-toggle [(ngModel)]="notificationPreferences.marketing"></ion-toggle>
+        </ion-item>
+        <ion-item>
+          <ion-label>Product updates</ion-label>
+          <ion-toggle [(ngModel)]="notificationPreferences.product_updates"></ion-toggle>
+        </ion-item>
+      </ion-list>
+    </div>
+
     <div class="actions">
-      <button class="primary-btn" (click)="continue()" [disabled]="selectedCount === 0" id="onboarding-continue-btn">
-        Continuer
+      <button class="primary-btn" (click)="continue()" [disabled]="step === 2 && selectedCount < 3" id="onboarding-continue-btn">
+        {{ continueLabel }}
         <ion-icon name="arrow-forward-outline"></ion-icon>
       </button>
       <button class="skip-btn" (click)="skip()" id="onboarding-skip-btn">
-        Passer cette étape
+        Skip
       </button>
     </div>
 

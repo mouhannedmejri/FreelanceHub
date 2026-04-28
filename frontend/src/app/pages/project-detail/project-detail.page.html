@@ -1,0 +1,308 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/client-dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ project?.title || 'Projet' }}</ion-title>
+  </ion-toolbar>
+  <ion-toolbar color="dark">
+    <ion-segment [(ngModel)]="currentTab" (ionChange)="setTab($any($event).detail.value)">
+      <ion-segment-button value="milestones">
+        <ion-icon name="flag-outline"></ion-icon>
+        <ion-label>Milestones</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="tasks">
+        <ion-icon name="list-outline"></ion-icon>
+        <ion-label>Tâches</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="deliverables">
+        <ion-icon name="document-attach-outline"></ion-icon>
+        <ion-label>Livrables</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="overview">
+        <ion-icon name="pulse-outline"></ion-icon>
+        <ion-label>Activité</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding dark-bg">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- LOADING -->
+  <div *ngIf="isLoading" class="loading-state">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <ng-container *ngIf="!isLoading && project">
+
+    <!-- ═══════════════════════════════════════════════
+         HEADER: Progress ring + Avatars
+         ═══════════════════════════════════════════════ -->
+    <div class="project-header">
+      <div class="header-left">
+        <h1 class="project-title">{{ project.title }}</h1>
+        <div class="avatars-row">
+          <div class="avatar-chip" *ngIf="project.client">
+            <div class="avatar-circle client-avatar">{{ project.client.avatar_initials }}</div>
+            <span class="avatar-name">{{ project.client.full_name }}</span>
+            <ion-badge color="tertiary" class="role-badge">Client</ion-badge>
+          </div>
+          <div class="avatar-chip" *ngIf="project.freelancer">
+            <div class="avatar-circle freelancer-avatar">{{ project.freelancer.avatar_initials }}</div>
+            <span class="avatar-name">{{ project.freelancer.full_name }}</span>
+            <ion-badge color="primary" class="role-badge">Freelancer</ion-badge>
+          </div>
+        </div>
+      </div>
+      <div class="progress-ring-container">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="54" />
+          <circle class="ring-progress"
+                  cx="60" cy="60" r="54"
+                  [attr.stroke-dasharray]="progressCircumference"
+                  [attr.stroke-dashoffset]="progressDashOffset" />
+        </svg>
+        <div class="ring-label">
+          <span class="ring-value">{{ milestonesDone }}/{{ milestonesTotal }}</span>
+          <span class="ring-sub">milestones</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         BUDGET CARD
+         ═══════════════════════════════════════════════ -->
+    <div class="budget-row">
+      <div class="budget-chip">
+        <ion-icon name="wallet-outline" color="primary"></ion-icon>
+        <div class="budget-info">
+          <span class="budget-label">Budget total</span>
+          <span class="budget-value">{{ totalBudget | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </div>
+      <div class="budget-chip paid">
+        <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+        <div class="budget-info">
+          <span class="budget-label">Payé</span>
+          <span class="budget-value paid-value">{{ paidAmount | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </div>
+      <div class="budget-chip remaining">
+        <ion-icon name="hourglass-outline" color="warning"></ion-icon>
+        <div class="budget-info">
+          <span class="budget-label">Restant</span>
+          <span class="budget-value remaining-value">{{ remainingBudget | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         TAB: MILESTONES (vertical timeline)
+         ═══════════════════════════════════════════════ -->
+    <ng-container *ngIf="currentTab === 'milestones'">
+      <div class="section-top-bar">
+        <h2 class="section-heading">Milestones</h2>
+        <ion-button size="small" fill="outline" color="primary" (click)="addMilestone()" id="btn-add-milestone">
+          <ion-icon name="add-outline" slot="start"></ion-icon> Ajouter
+        </ion-button>
+      </div>
+
+      <div *ngIf="project.milestones.length === 0" class="empty-card">
+        <ion-icon name="flag-outline"></ion-icon>
+        <p>Aucun milestone pour le moment.</p>
+      </div>
+
+      <div class="timeline" *ngIf="project.milestones.length > 0">
+        <div class="timeline-item" *ngFor="let m of project.milestones; let last = last" (click)="toggleMilestone(m.id)">
+          <!-- Timeline line + dot -->
+          <div class="timeline-track">
+            <div class="timeline-dot" [ngStyle]="{'background': getMilestoneStatusColor(m.status)}">
+              <ion-icon [name]="m.status === 'done' ? 'checkmark' : (m.status === 'in_progress' ? 'play' : 'time')" style="font-size: 14px; color: #fff;"></ion-icon>
+            </div>
+            <div class="timeline-line" *ngIf="!last"></div>
+          </div>
+
+          <!-- Milestone card -->
+          <div class="milestone-card" [class.expanded]="isMilestoneExpanded(m.id)">
+            <div class="milestone-header">
+              <div class="milestone-title-row">
+                <h3 class="milestone-title">{{ m.title }}</h3>
+                <span class="status-chip" [ngStyle]="{'background': getMilestoneStatusColor(m.status) + '22', 'color': getMilestoneStatusColor(m.status), 'border-color': getMilestoneStatusColor(m.status) + '44'}">
+                  {{ getMilestoneStatusLabel(m.status) }}
+                </span>
+              </div>
+              <div class="milestone-meta">
+                <span class="meta-item" *ngIf="m.due_date">
+                  <ion-icon name="calendar-outline"></ion-icon> {{ m.due_date | date:'dd MMM yyyy' }}
+                </span>
+                <span class="meta-item" *ngIf="m.budget_allocated">
+                  <ion-icon name="cash-outline"></ion-icon> {{ m.budget_allocated }}€
+                </span>
+                <span class="meta-item">
+                  <ion-icon name="list-outline"></ion-icon> {{ getTasksForMilestone(m.id).length }} tâches
+                </span>
+              </div>
+
+              <!-- Deliverables list -->
+              <div class="deliverables-tags" *ngIf="m.deliverables && m.deliverables.length > 0">
+                <span class="deliverable-tag" *ngFor="let d of m.deliverables">
+                  <ion-icon name="document-outline"></ion-icon> {{ d }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Expanded: milestone tasks -->
+            <div class="milestone-tasks" *ngIf="isMilestoneExpanded(m.id)">
+              <div class="milestone-actions">
+                <ion-button size="small" fill="clear" color="warning"
+                            *ngIf="m.status !== 'in_progress'"
+                            (click)="updateMilestoneStatus(m.id, 'in_progress'); $event.stopPropagation()">
+                  <ion-icon name="play-outline" slot="start"></ion-icon> Démarrer
+                </ion-button>
+                <ion-button size="small" fill="clear" color="success"
+                            *ngIf="m.status !== 'done'"
+                            (click)="updateMilestoneStatus(m.id, 'done'); $event.stopPropagation()">
+                  <ion-icon name="checkmark-outline" slot="start"></ion-icon> Terminer
+                </ion-button>
+              </div>
+
+              <div *ngIf="getTasksForMilestone(m.id).length === 0" class="no-tasks-msg">
+                Aucune tâche associée à ce milestone.
+              </div>
+              <div *ngFor="let t of getTasksForMilestone(m.id)" class="mini-task-card">
+                <div class="mini-task-left">
+                  <span class="priority-dot" [ngStyle]="{'background': getPriorityColor(t.priority)}"></span>
+                  <span class="mini-task-title">{{ t.title }}</span>
+                </div>
+                <span class="mini-task-status" [ngStyle]="{'color': getMilestoneStatusColor(t.status === 'todo' ? 'pending' : (t.status === 'done' ? 'done' : 'in_progress'))}">
+                  {{ t.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════════════════════════════
+         TAB: TASKS (Kanban board)
+         ═══════════════════════════════════════════════ -->
+    <ng-container *ngIf="currentTab === 'tasks'">
+      <div class="section-top-bar">
+        <h2 class="section-heading">Tableau Kanban</h2>
+        <ion-button size="small" fill="outline" color="primary" (click)="addTask()" id="btn-add-task">
+          <ion-icon name="add-outline" slot="start"></ion-icon> Nouvelle tâche
+        </ion-button>
+      </div>
+
+      <div class="kanban-board">
+        <div class="kanban-column"
+             *ngFor="let col of kanbanColumns"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, col.key)">
+          <div class="kanban-column-header">
+            <span class="kanban-column-title">{{ col.label }}</span>
+            <span class="kanban-column-count">{{ col.tasks.length }}</span>
+          </div>
+
+          <div *ngIf="col.tasks.length === 0" class="kanban-empty">
+            <ion-icon name="albums-outline"></ion-icon>
+          </div>
+
+          <div class="task-card"
+               *ngFor="let task of col.tasks"
+               draggable="true"
+               (dragstart)="onDragStart(task)">
+            <div class="task-card-top">
+              <span class="priority-badge" [ngStyle]="{'background': getPriorityColor(task.priority) + '22', 'color': getPriorityColor(task.priority), 'border-color': getPriorityColor(task.priority) + '44'}">
+                {{ getPriorityLabel(task.priority) }}
+              </span>
+              <ion-button fill="clear" size="small" color="danger" (click)="deleteTask(task)" class="task-delete-btn">
+                <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </div>
+            <h4 class="task-title">{{ task.title }}</h4>
+            <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+            <div class="task-footer">
+              <span class="task-date" *ngIf="task.due_date">
+                <ion-icon name="calendar-outline"></ion-icon> {{ task.due_date | date:'dd/MM' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════════════════════════════
+         TAB: DELIVERABLES
+         ═══════════════════════════════════════════════ -->
+    <ng-container *ngIf="currentTab === 'deliverables'">
+      <div class="section-top-bar">
+        <h2 class="section-heading">Livrables</h2>
+        <ion-button size="small" fill="outline" color="primary" (click)="addDeliverable()" id="btn-add-deliverable">
+          <ion-icon name="cloud-upload-outline" slot="start"></ion-icon> Ajouter
+        </ion-button>
+      </div>
+
+      <div *ngIf="project.deliverables_list.length === 0" class="empty-card">
+        <ion-icon name="document-attach-outline"></ion-icon>
+        <p>Aucun livrable pour le moment.</p>
+      </div>
+
+      <div *ngFor="let d of project.deliverables_list" class="deliverable-card">
+        <div class="deliverable-icon-wrap">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
+        <div class="deliverable-info">
+          <span class="deliverable-name">{{ d.file_name }}</span>
+          <span class="deliverable-date">{{ d.uploaded_at | date:'dd MMM yyyy, HH:mm' }}</span>
+        </div>
+        <div class="deliverable-actions">
+          <a [href]="d.file_url" target="_blank" class="deliverable-link">
+            <ion-icon name="open-outline"></ion-icon>
+          </a>
+          <ion-button *ngIf="!d.confirmed && isClient"
+                      size="small" fill="outline" color="success"
+                      (click)="confirmDeliverable(d)">
+            <ion-icon name="checkmark-outline" slot="start"></ion-icon> Confirmer
+          </ion-button>
+          <ion-badge *ngIf="d.confirmed" color="success" class="confirmed-badge">
+            <ion-icon name="checkmark-circle"></ion-icon> Confirmé
+          </ion-badge>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════════════════════════════
+         TAB: OVERVIEW (Activity feed)
+         ═══════════════════════════════════════════════ -->
+    <ng-container *ngIf="currentTab === 'overview'">
+      <div class="section-top-bar">
+        <h2 class="section-heading">Activité récente</h2>
+      </div>
+
+      <div *ngIf="activityFeed.length === 0" class="empty-card">
+        <ion-icon name="pulse-outline"></ion-icon>
+        <p>Aucune activité récente.</p>
+      </div>
+
+      <div class="activity-list" *ngIf="activityFeed.length > 0">
+        <div class="activity-item" *ngFor="let a of activityFeed; let last = last">
+          <div class="activity-dot" [ngStyle]="{'background': a.color}">
+            <ion-icon [name]="a.icon" style="font-size: 12px; color: #fff;"></ion-icon>
+          </div>
+          <div class="activity-line" *ngIf="!last"></div>
+          <div class="activity-content">
+            <p class="activity-desc">{{ a.desc }}</p>
+            <span class="activity-date" *ngIf="a.date">{{ a.date | date:'dd MMM yyyy' }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </ng-container>
+</ion-content>

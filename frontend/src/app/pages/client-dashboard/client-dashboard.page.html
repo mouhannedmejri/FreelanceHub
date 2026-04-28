@@ -1,0 +1,332 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+      <ion-back-button defaultHref="/home/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Mon Dashboard</ion-title>
+    <ion-note slot="end" style="color: #a78bfa; margin-right: 16px; font-size: 12px;">{{ currentDate | date:'longDate' }}</ion-note>
+  </ion-toolbar>
+  <ion-toolbar color="dark">
+    <ion-segment [(ngModel)]="currentTab" (ionChange)="onTabChange($event.detail.value)">
+      <ion-segment-button value="overview">Aperçu</ion-segment-button>
+      <ion-segment-button value="active">Projets actifs</ion-segment-button>
+      <ion-segment-button value="history">Historique</ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding dark-bg">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="isLoadingDashboard && !stats" class="loading-state" style="text-align: center; padding: 40px;">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <!-- STATS ROW (Horizontal Scroll) -->
+  <div class="stats-scroll-container" *ngIf="stats" style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 16px; margin-bottom: 16px;">
+    <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px; min-width: 140px; flex-shrink: 0;">
+      <ion-icon name="briefcase" color="tertiary" style="font-size: 24px; margin-bottom: 8px;"></ion-icon>
+      <h3 style="margin: 0 0 4px; color: #fff; font-size: 24px;">{{ stats.total_offers_posted }}</h3>
+      <p style="margin: 0; color: #a78bfa; font-size: 12px;">Offres publiées</p>
+    </div>
+    <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px; min-width: 140px; flex-shrink: 0;">
+      <ion-icon name="rocket" color="success" style="font-size: 24px; margin-bottom: 8px;"></ion-icon>
+      <h3 style="margin: 0 0 4px; color: #fff; font-size: 24px;">{{ stats.active_projects }}</h3>
+      <p style="margin: 0; color: #a78bfa; font-size: 12px;">Projets actifs</p>
+    </div>
+    <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px; min-width: 140px; flex-shrink: 0;">
+      <ion-icon name="checkmark-circle" color="secondary" style="font-size: 24px; margin-bottom: 8px;"></ion-icon>
+      <h3 style="margin: 0 0 4px; color: #fff; font-size: 24px;">{{ stats.completed_projects }}</h3>
+      <p style="margin: 0; color: #a78bfa; font-size: 12px;">Projets terminés</p>
+    </div>
+    <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px; min-width: 140px; flex-shrink: 0;">
+      <ion-icon name="wallet" color="warning" style="font-size: 24px; margin-bottom: 8px;"></ion-icon>
+      <h3 style="margin: 0 0 4px; color: #fff; font-size: 24px;">{{ stats.total_spent | currency:'EUR':'symbol':'1.0-0' }}</h3>
+      <p style="margin: 0; color: #a78bfa; font-size: 12px;">Total dépensé</p>
+    </div>
+  </div>
+
+  <!-- ═══ RING CHART — Active Projects Summary ═══ -->
+  <div *ngIf="stats" style="background: #2a2342; border-radius: 16px; padding: 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 20px;">
+    <svg width="90" height="90" viewBox="0 0 100 100" style="flex-shrink: 0;">
+      <circle cx="50" cy="50" r="42" fill="none" stroke="#1e1a2f" stroke-width="8"/>
+      <circle cx="50" cy="50" r="42" fill="none" stroke="#10b981" stroke-width="8"
+              [attr.stroke-dasharray]="getRingDashArray(ringOnTrackPct)"
+              stroke-dashoffset="0" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+      <circle cx="50" cy="50" r="42" fill="none" stroke="#7c3aed" stroke-width="8"
+              [attr.stroke-dasharray]="getRingDashArray(ringCompletedPct)"
+              [attr.stroke-dashoffset]="getRingOffset(ringOnTrackPct)" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+      <text x="50" y="46" text-anchor="middle" fill="#fff" font-size="18" font-weight="900">{{ ringTotal }}</text>
+      <text x="50" y="60" text-anchor="middle" fill="#a78bfa" font-size="8" font-weight="600">PROJETS</text>
+    </svg>
+    <div style="flex: 1;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></div>
+        <span style="font-size: 12px; color: #fff; font-weight: 600;">En cours ({{ ringOnTrack }})</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #7c3aed;"></div>
+        <span style="font-size: 12px; color: #fff; font-weight: 600;">Terminés ({{ ringCompleted }})</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></div>
+        <span style="font-size: 12px; color: #fff; font-weight: 600;">À risque ({{ stats.at_risk || 0 }})</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BUDGET UTILIZATION BAR ═══ -->
+  <div *ngIf="stats" style="background: #2a2342; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <span style="font-size: 12px; color: #a78bfa; font-weight: 600;">Budget total utilisé</span>
+      <span style="font-size: 12px; color: #fff; font-weight: 700;">{{ stats.total_spent | currency:'EUR':'symbol':'1.0-0' }}</span>
+    </div>
+    <div style="height: 8px; background: #1e1a2f; border-radius: 4px; overflow: hidden;">
+      <div style="height: 100%; border-radius: 4px; background: linear-gradient(90deg, #7c3aed, #a855f7); transition: width 0.5s;" [style.width]="budgetUsedPct + '%'"></div>
+    </div>
+  </div>
+
+  <!-- ═══ FAVORITE FREELANCERS ═══ -->
+  <div *ngIf="favoriteFreelancers.length > 0" style="margin-bottom: 16px;">
+    <h3 style="color: #fff; font-size: 16px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px;">
+      <ion-icon name="heart-outline" style="color: #a78bfa;"></ion-icon>
+      Freelancers favoris
+    </h3>
+    <div style="display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch;">
+      <div *ngFor="let f of favoriteFreelancers" style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; min-width: 64px; cursor: pointer;" (click)="goToFreelancerProfile(f.id)">
+        <div style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center;">
+          {{ f.avatar_initials }}
+        </div>
+        <span style="font-size: 11px; font-weight: 600; color: #fff; max-width: 64px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ f.full_name?.split(' ')[0] }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RECENT ACTIVITY FEED ═══ -->
+  <div *ngIf="recentActivity && recentActivity.length > 0" style="margin-bottom: 16px;">
+    <h3 style="color: #fff; font-size: 16px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px;">
+      <ion-icon name="pulse-outline" style="color: #a78bfa;"></ion-icon>
+      Activité récente
+    </h3>
+    <div style="background: #2a2342; border-radius: 16px; overflow: hidden;">
+      <div *ngFor="let act of recentActivity | slice:0:5" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(124,58,237,0.06);">
+        <div [ngStyle]="{'background': act.type === 'proposal' ? 'rgba(124,58,237,0.15)' : (act.type === 'message' ? 'rgba(59,130,246,0.15)' : 'rgba(16,185,129,0.15)')}"
+             style="width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <ion-icon [name]="act.type === 'proposal' ? 'paper-plane-outline' : (act.type === 'message' ? 'chatbubble-outline' : 'checkmark-circle-outline')"
+                    [ngStyle]="{'color': act.type === 'proposal' ? '#a78bfa' : (act.type === 'message' ? '#60a5fa' : '#34d399')}"
+                    style="font-size: 16px;"></ion-icon>
+        </div>
+        <div style="flex: 1; min-width: 0;">
+          <span style="font-size: 12px; font-weight: 600; color: #fff; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ act.description }}</span>
+          <span style="font-size: 10px; color: #a78bfa;">{{ act.date | date:'dd MMM, HH:mm' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: APERÇU -->
+  <ng-container *ngIf="currentTab === 'overview'">
+    <!-- Propositions en attente -->
+    <div class="section-container" style="margin-bottom: 24px;">
+      <h2 style="color: #fff; font-size: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        Propositions en attente
+        <ion-badge color="danger" *ngIf="stats?.pending_proposals > 0">{{ stats.pending_proposals }}</ion-badge>
+      </h2>
+      
+      <div *ngIf="pendingProposals.length === 0" style="background: #2a2342; border-radius: 12px; padding: 24px; text-align: center;">
+        <p style="color: #a78bfa; margin: 0;">Aucune proposition en attente.</p>
+      </div>
+
+      <div *ngIf="pendingProposals.length > 0" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
+        <div *ngFor="let prop of pendingProposals" style="background: #2a2342; border-radius: 12px; padding: 16px; min-width: 250px; flex-shrink: 0; border: 1px solid #3d3559;">
+          <div style="display: flex; align-items: center; margin-bottom: 12px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #7c3aed; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; margin-right: 12px;">
+              {{ prop.freelancer?.avatar_initials }}
+            </div>
+            <div>
+              <p style="margin: 0; color: #fff; font-size: 14px; font-weight: bold;">{{ prop.freelancer?.full_name }}</p>
+              <p style="margin: 0; color: #fbbf24; font-size: 12px;"><ion-icon name="star"></ion-icon> {{ prop.freelancer?.rating | number:'1.1-1' }}</p>
+            </div>
+            <div style="margin-left: auto; color: #10b981; font-weight: bold;">{{ prop.price }}€</div>
+          </div>
+          <p style="margin: 0 0 12px; color: #a78bfa; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ prop.offer_title }}</p>
+          <ion-button expand="block" size="small" fill="outline" color="primary" (click)="goToOfferProposals(prop.offer_id)">Voir</ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mes offres récentes -->
+    <div class="section-container" style="margin-bottom: 24px;">
+      <h2 style="color: #fff; font-size: 18px; margin-bottom: 12px;">Mes offres récentes</h2>
+      <div *ngIf="recentOffers.length === 0" style="background: #2a2342; border-radius: 12px; padding: 24px; text-align: center;">
+        <p style="color: #a78bfa; margin: 0;">Vous n'avez pas encore publié d'offre.</p>
+      </div>
+
+      <div *ngFor="let o of recentOffers" style="background: #2a2342; border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <h3 style="margin: 0; color: #fff; font-size: 16px; font-weight: 600;">{{ o.title }}</h3>
+          <ion-badge [color]="o.status === 'open' ? 'success' : (o.status === 'closed' ? 'medium' : 'warning')">{{ o.status | uppercase }}</ion-badge>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <ion-chip color="tertiary" style="margin: 0; font-size: 10px; height: 20px;">{{ o.category }}</ion-chip>
+          <span style="color: #a78bfa; font-size: 12px;">{{ o.budget_min }}€ - {{ o.budget_max }}€</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #3d3559; padding-top: 12px;">
+          <span style="color: #a78bfa; font-size: 12px;">{{ o.proposals_count }} proposition(s)</span>
+          <ion-button size="small" color="primary" fill="clear" (click)="goToOfferProposals(o._id || o.id)">Gérer</ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activité récente -->
+    <div class="section-container" style="margin-bottom: 24px;">
+      <h2 style="color: #fff; font-size: 18px; margin-bottom: 12px;">Activité récente</h2>
+      <div *ngIf="recentActivity.length === 0" style="background: #2a2342; border-radius: 12px; padding: 24px; text-align: center;">
+        <p style="color: #a78bfa; margin: 0;">Aucune activité récente.</p>
+      </div>
+
+      <div *ngIf="recentActivity.length > 0" style="background: #2a2342; border-radius: 12px; padding: 16px;">
+        <div *ngFor="let item of recentActivity" style="display: flex; align-items: flex-start; margin-bottom: 16px; position: relative;">
+          <!-- Timeline line -->
+          <div style="position: absolute; left: 5px; top: 16px; bottom: -16px; width: 2px; background: #3d3559;" *ngIf="item !== recentActivity[recentActivity.length - 1]"></div>
+          
+          <div style="width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; margin-right: 16px; flex-shrink: 0; z-index: 1;"
+               [ngStyle]="{'background': item.type === 'proposal' ? '#f59e0b' : '#10b981'}"></div>
+          
+          <div style="flex: 1;">
+            <p style="margin: 0 0 4px; color: #fff; font-size: 14px;">{{ item.desc }}</p>
+            <p style="margin: 0; color: #a78bfa; font-size: 12px;">{{ item.date | date:'short' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- TAB: PROJETS ACTIFS -->
+  <ng-container *ngIf="currentTab === 'active'">
+    <div *ngIf="isLoadingActiveProjects && activeProjectsList.length === 0" style="text-align: center; padding: 40px;">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <div *ngIf="!isLoadingActiveProjects && activeProjectsList.length === 0" style="text-align: center; padding: 40px 20px; color: #a78bfa;">
+      <ion-icon name="rocket-outline" style="font-size: 48px; margin-bottom: 16px;"></ion-icon>
+      <h3>Aucun projet actif</h3>
+      <p style="font-size: 14px;">Vous n'avez pas de projets en cours de réalisation pour le moment.</p>
+    </div>
+
+    <div *ngFor="let p of activeProjectsList" style="background: #2a2342; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div>
+          <h3 style="color: #fff; margin: 0 0 4px; font-size: 18px; font-weight: bold;">{{ p.title }}</h3>
+          <ion-chip color="tertiary" style="margin: 0; font-size: 10px; height: 20px;">{{ p.offer?.category || 'Non catégorisé' }}</ion-chip>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></div>
+          <span style="color: #10b981; font-size: 10px; font-weight: bold;">EN COURS</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; margin-bottom: 16px; background: #1e1a2f; padding: 8px 12px; border-radius: 8px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: #7c3aed; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; margin-right: 12px;">
+          {{ p.freelancer?.avatar_initials }}
+        </div>
+        <div>
+          <p style="margin: 0; color: #fff; font-size: 14px;">{{ p.freelancer?.full_name }}</p>
+          <p style="margin: 0; color: #fbbf24; font-size: 12px;"><ion-icon name="star"></ion-icon> {{ p.freelancer?.rating | number:'1.1-1' }}</p>
+        </div>
+      </div>
+
+      <!-- Progress bar visual -->
+      <div style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a78bfa; margin-bottom: 6px;">
+          <span>Progression estimée</span>
+          <span>{{ getDaysElapsed(p.started_at, p.deadline) }}%</span>
+        </div>
+        <div style="background: #1e1a2f; height: 6px; border-radius: 3px; overflow: hidden;">
+          <div style="background: #10b981; height: 100%; border-radius: 3px;" [style.width]="getDaysElapsed(p.started_at, p.deadline) + '%'"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a78bfa; margin-bottom: 16px;">
+        <span style="display: flex; align-items: center; gap: 4px;"><ion-icon name="cash-outline"></ion-icon> {{ p.budget }}€</span>
+        <span style="display: flex; align-items: center; gap: 4px;"><ion-icon name="calendar-outline"></ion-icon> {{ p.started_at | date:'dd/MM' }} - {{ p.deadline | date:'dd/MM' }}</span>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <ion-button expand="block" fill="outline" color="primary" style="flex: 1; margin: 0;" (click)="sendMessage(p.freelancer?.id)">
+          <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon> Message
+        </ion-button>
+        <ion-button expand="block" color="primary" style="flex: 1; margin: 0;" (click)="goToProjectDetails(p._id || p.id)">
+          <ion-icon name="list-outline" slot="start"></ion-icon> Détails
+        </ion-button>
+      </div>
+    </div>
+
+    <ion-infinite-scroll (ionInfinite)="loadMoreActive($event)" [disabled]="!hasMoreActiveProjects">
+      <ion-infinite-scroll-content></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </ng-container>
+
+  <!-- TAB: HISTORIQUE -->
+  <ng-container *ngIf="currentTab === 'history'">
+    <div style="padding-bottom: 16px;">
+      <ion-searchbar [(ngModel)]="historySearch" (ionChange)="onHistorySearchChange($event)" [debounce]="500" placeholder="Rechercher un projet..."></ion-searchbar>
+    </div>
+
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 8px;">
+      <ion-chip [color]="historyFilter === 'all' ? 'primary' : 'medium'" (click)="setHistoryFilter('all')">Tous</ion-chip>
+      <ion-chip [color]="historyFilter === 'completed' ? 'success' : 'medium'" (click)="setHistoryFilter('completed')">Terminés</ion-chip>
+      <ion-chip [color]="historyFilter === 'cancelled' ? 'danger' : 'medium'" (click)="setHistoryFilter('cancelled')">Annulés</ion-chip>
+      <ion-chip [color]="historyFilter === 'disputed' ? 'warning' : 'medium'" (click)="setHistoryFilter('disputed')">En litige</ion-chip>
+    </div>
+
+    <div *ngIf="isLoadingHistory && historyProjects.length === 0" style="text-align: center; padding: 40px;">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <div *ngIf="!isLoadingHistory && historyProjects.length === 0" style="text-align: center; padding: 40px 20px; color: #a78bfa;">
+      <img src="https://illustrations.popsy.co/amber/graphic-design.svg" alt="Empty History" style="max-width: 150px; margin-bottom: 16px; opacity: 0.8;" />
+      <h3>Aucun projet terminé pour l'instant</h3>
+    </div>
+
+    <div *ngFor="let p of historyProjects" style="background: #2a2342; border-radius: 12px; padding: 16px; margin-bottom: 16px; border-left: 4px solid" [ngStyle]="{'border-color': p.status === 'completed' ? '#10b981' : (p.status === 'cancelled' ? '#ef4444' : '#f59e0b')}">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <h3 style="color: #fff; margin: 0; font-size: 16px; font-weight: bold;">{{ p.title }}</h3>
+        <ion-badge [color]="p.status === 'completed' ? 'success' : (p.status === 'cancelled' ? 'danger' : 'warning')">
+          <ion-icon [name]="p.status === 'completed' ? 'checkmark' : (p.status === 'cancelled' ? 'close' : 'warning')"></ion-icon>
+          {{ p.status === 'completed' ? 'Terminé' : (p.status === 'cancelled' ? 'Annulé' : 'En litige') }}
+        </ion-badge>
+      </div>
+
+      <p style="color: #a78bfa; font-size: 12px; margin: 0 0 12px;">{{ p.completed_at ? 'Finalisé le ' + (p.completed_at | date:'dd/MM/yyyy') : 'Date inconnue' }}</p>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; background: #1e1a2f; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #7c3aed; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;">
+            {{ p.freelancer?.avatar_initials }}
+          </div>
+          <span style="color: #fff; font-size: 14px;">{{ p.freelancer?.full_name }}</span>
+        </div>
+        <div style="color: #fbbf24; font-size: 14px; font-weight: bold;" *ngIf="p.client_rating">
+          {{ p.client_rating }} <ion-icon name="star"></ion-icon>
+        </div>
+        <div style="color: #a78bfa; font-size: 12px; font-style: italic;" *ngIf="!p.client_rating && p.status === 'completed'">
+          Non noté
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #fff; font-weight: bold;">{{ p.budget }}€</span>
+        <ion-button size="small" fill="clear" (click)="goToProjectDetails(p._id || p.id)">Voir détails</ion-button>
+      </div>
+    </div>
+
+    <ion-infinite-scroll (ionInfinite)="loadMoreHistory($event)" [disabled]="!hasMoreHistory">
+      <ion-infinite-scroll-content></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </ng-container>
+
+</ion-content>

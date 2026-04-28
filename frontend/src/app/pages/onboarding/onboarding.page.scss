@@ -63,6 +63,57 @@
   }
 }
 
+.role-step,
+.slider-step,
+.notifications-step {
+  animation: fadeInUp 0.4s ease;
+  color: var(--text);
+}
+
+.role-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.role-card {
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+
+  &.selected {
+    border-color: var(--primary);
+    background: rgba(124, 58, 237, 0.15);
+  }
+}
+
+.step-help {
+  width: 100%;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.slider-step p {
+  color: var(--primary-light);
+  font-weight: 700;
+}
+
+.notifications-step {
+  ion-list,
+  ion-item {
+    --background: transparent;
+    color: var(--text);
+  }
+}
+
 .interests-grid {
   display: flex;
   flex-wrap: wrap;

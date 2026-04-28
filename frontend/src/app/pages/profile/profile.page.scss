@@ -7,19 +7,22 @@
   --card-border: rgba(124, 58, 237, 0.15);
   --text: #f1f0f5;
   --text-muted: #a09ab5;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --blue: #3b82f6;
 }
 
 .profile-content {
   --background: var(--bg);
 }
 
-/* ── Hero Banner ───────────────────────────── */
-
+/* ══════════════════════════════════════════════════
+   HERO BANNER (gradient background)
+   ══════════════════════════════════════════════════ */
 .hero-banner {
   position: relative;
+  height: 180px;
   background: var(--gradient);
-  padding: 48px 20px 36px;
-  text-align: center;
   border-radius: 0 0 32px 32px;
   overflow: hidden;
 }
@@ -50,145 +53,429 @@
     left: -30px;
     animation: floatShape 10s ease-in-out infinite reverse;
   }
+
+  .shape-3 {
+    width: 80px;
+    height: 80px;
+    top: 40px;
+    left: 40%;
+    animation: floatShape 6s ease-in-out infinite 1s;
+  }
 }
 
-.hero-content {
-  position: relative;
-  z-index: 1;
-}
-
-.avatar-large {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
-  border: 3px solid rgba(255, 255, 255, 0.35);
+.edit-floating-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
-  font-weight: 800;
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+
+  &:active {
+    transform: scale(0.9);
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   OVERLAPPING AVATAR
+   ══════════════════════════════════════════════════ */
+.avatar-overlap-container {
+  display: flex;
+  justify-content: center;
+  margin-top: -50px;
+  position: relative;
+  z-index: 5;
+}
+
+.avatar-overlap {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: 4px solid var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 900;
   color: #fff;
-  margin: 0 auto 16px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.3);
+  position: relative;
   animation: fadeInScale 0.5s ease-out;
 }
 
-.hero-banner {
-  h1 {
-    font-size: 22px;
-    font-weight: 800;
-    color: #fff;
-    margin: 0 0 4px;
-    animation: fadeInUp 0.5s ease-out 0.1s both;
-  }
+.availability-dot {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
 
-  .job-title {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 500;
-    margin: 0 0 16px;
-    animation: fadeInUp 0.5s ease-out 0.15s both;
-  }
+/* ══════════════════════════════════════════════════
+   PROFILE INFO SECTION
+   ══════════════════════════════════════════════════ */
+.profile-info {
+  padding: 16px 20px 0;
+  text-align: center;
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text);
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.job-title {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin: 0 0 12px;
+  animation: fadeInUp 0.4s ease-out 0.05s both;
 }
 
 .meta-row {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
-  animation: fadeInUp 0.5s ease-out 0.2s both;
+  margin-bottom: 12px;
+  animation: fadeInUp 0.4s ease-out 0.1s both;
 
   span {
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.85);
-    font-weight: 500;
-
-    ion-icon {
-      font-size: 16px;
-    }
-  }
-}
-
-.badges-row {
-  margin-bottom: 18px;
-  animation: fadeInUp 0.5s ease-out 0.25s both;
-
-  .approved-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 16px;
-    border-radius: 20px;
-    background: rgba(0, 0, 0, 0.3);
-    color: #fff;
     font-size: 12px;
-    font-weight: 700;
-    backdrop-filter: blur(8px);
-    letter-spacing: 0.3px;
+    font-weight: 600;
+    color: var(--text-muted);
 
     ion-icon {
-      font-size: 14px;
-      color: #4ade80;
+      font-size: 10px;
     }
   }
 }
 
-.edit-btn {
+/* ── Badges ─────────────────────────────── */
+.badges-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  animation: fadeInUp 0.4s ease-out 0.15s both;
+}
+
+.earned-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 11px 26px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
   backdrop-filter: blur(8px);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInUp 0.5s ease-out 0.3s both;
+  transition: transform 0.2s;
 
   &:active {
     transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.25);
   }
 
   ion-icon {
-    font-size: 18px;
+    font-size: 13px;
   }
 }
 
-/* ── Profile Sections ──────────────────────── */
+.earned-badge.top-rated {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
 
-.profile-sections {
-  padding: 20px 16px 40px;
+.earned-badge.fast-reply {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.earned-badge.approved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+/* ── Hourly Rate ────────────────────────── */
+.hourly-rate-display {
+  margin-bottom: 16px;
+  animation: fadeInUp 0.4s ease-out 0.2s both;
+
+  .rate-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .rate-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+}
+
+/* ── Stats Row ──────────────────────────── */
+.stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 18px 16px;
+  margin: 0 -4px 16px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(20px);
+  animation: fadeInUp 0.4s ease-out 0.25s both;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.stat-value {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--card-border);
+}
+
+/* ── Action Buttons ─────────────────────── */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
+  animation: fadeInUp 0.4s ease-out 0.3s both;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.25s;
+  border: 1px solid;
+
+  ion-icon {
+    font-size: 16px;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.contact-btn {
+  background: transparent;
+  border-color: var(--primary);
+  color: var(--primary-light);
+
+  &:active {
+    background: rgba(124, 58, 237, 0.1);
+  }
+}
+
+.follow-btn {
+  background: transparent;
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+
+  &.following {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+
+  &:active {
+    background: rgba(16, 185, 129, 0.15);
+  }
+}
+
+.heart-btn {
+  background: transparent;
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  padding: 10px 14px;
+
+  &:active {
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+/* ── Bio Section ────────────────────────── */
+.bio-section {
+  margin-bottom: 16px;
+  text-align: left;
+  animation: fadeInUp 0.4s ease-out 0.35s both;
+}
+
+.bio-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0 0 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all 0.3s;
+
+  &.expanded {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+}
+
+.bio-toggle {
+  background: none;
+  border: none;
+  color: var(--primary-light);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+
+  ion-icon {
+    font-size: 14px;
+  }
+}
+
+/* ── Skills Row ─────────────────────────── */
+.skills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  animation: fadeInUp 0.4s ease-out 0.4s both;
+}
+
+.skill-chip {
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  color: var(--primary-light);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &:active {
+    transform: scale(0.95);
+    background: rgba(124, 58, 237, 0.2);
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════════════ */
+.profile-tabs {
+  display: flex;
+  padding: 0 20px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--card-border);
+
+  button {
+    flex: 1;
+    padding: 12px 0;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-transform: none;
+
+    &.active {
+      color: var(--primary-light);
+      border-bottom-color: var(--primary);
+    }
+
+    &:active {
+      opacity: 0.7;
+    }
+  }
+}
+
+.tab-content {
+  padding: 0 16px 40px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  animation: fadeIn 0.3s ease;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════
+   SECTION CARDS (reused from old design)
+   ══════════════════════════════════════════════════ */
 .section-card {
   border-radius: 20px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   padding: 20px;
   backdrop-filter: blur(20px);
-  animation: fadeInUp 0.45s ease-out both;
-
-  &:nth-child(1) { animation-delay: 0.05s; }
-  &:nth-child(2) { animation-delay: 0.1s; }
-  &:nth-child(3) { animation-delay: 0.15s; }
-  &:nth-child(4) { animation-delay: 0.2s; }
-  &:nth-child(5) { animation-delay: 0.25s; }
-  &:nth-child(6) { animation-delay: 0.3s; }
 
   h3 {
     display: flex;
@@ -214,7 +501,6 @@
 }
 
 /* ── Contact ───────────────────────────────── */
-
 .contact-item {
   display: flex;
   align-items: center;
@@ -238,31 +524,7 @@
   }
 }
 
-/* ── Skills ────────────────────────────────── */
-
-.skills-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  .skill-tag {
-    padding: 7px 16px;
-    border-radius: 12px;
-    background: rgba(124, 58, 237, 0.12);
-    color: var(--primary-light);
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.25s;
-
-    &:active {
-      transform: scale(0.95);
-      background: rgba(124, 58, 237, 0.2);
-    }
-  }
-}
-
 /* ── CV Upload ─────────────────────────────── */
-
 .upload-area {
   border: 2px dashed rgba(124, 58, 237, 0.25);
   border-radius: 16px;
@@ -322,7 +584,6 @@
 }
 
 /* ── Certifications ────────────────────────── */
-
 .cert-list {
   display: flex;
   flex-direction: column;
@@ -338,10 +599,6 @@
   background: rgba(124, 58, 237, 0.06);
   border: 1px solid rgba(124, 58, 237, 0.08);
   transition: all 0.25s;
-
-  &:active {
-    background: rgba(124, 58, 237, 0.1);
-  }
 
   > ion-icon {
     font-size: 26px;
@@ -369,7 +626,6 @@
 }
 
 /* ── Portfolio ─────────────────────────────── */
-
 .portfolio-grid {
   display: flex;
   flex-direction: column;
@@ -429,8 +685,116 @@
   }
 }
 
-/* ── Loading State ─────────────────────────── */
+/* ── Reviews ─────────────────────────────── */
+.reviews-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 
+  h3 {
+    margin-bottom: 0 !important;
+  }
+}
+
+.leave-review-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: var(--primary-light);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:active {
+    background: rgba(124, 58, 237, 0.25);
+    transform: scale(0.95);
+  }
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.review-item {
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(124, 58, 237, 0.06);
+  border: 1px solid rgba(124, 58, 237, 0.08);
+
+  .review-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+
+    strong {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .stars {
+      display: flex;
+      gap: 2px;
+
+      ion-icon {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.15);
+
+        &.filled {
+          color: #fbbf24;
+        }
+      }
+    }
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+.empty-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  border: 1px dashed rgba(124, 58, 237, 0.2);
+
+  ion-icon {
+    font-size: 48px;
+    color: var(--text-muted);
+    opacity: 0.4;
+    margin-bottom: 12px;
+  }
+
+  p {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+/* ── Loading State ─────────────────────────── */
 .loading-profile {
   display: flex;
   flex-direction: column;
@@ -445,14 +809,23 @@
     transform: scale(1.3);
   }
 
+  ion-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
   p {
     font-size: 14px;
     font-weight: 600;
+    text-align: center;
+    max-width: 280px;
   }
 }
 
-/* ── Animations ────────────────────────────── */
-
+/* ══════════════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════════════ */
 @keyframes fadeInUp {
   from {
     opacity: 0;

@@ -1,4 +1,10 @@
 <ion-content class="home-content" [fullscreen]="true">
+  <ion-header collapse="condenses">
+    <ion-toolbar>
+      <ion-title size="large">Accueil</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
 
   <!-- Search Bar -->
   <div class="search-wrap">
@@ -86,6 +92,63 @@
           <span class="feature-name">Communauté active</span>
           <span class="feature-desc">15 000+ professionnels connectés</span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Milestones Widget -->
+  <div class="section" *ngIf="user && upcomingMilestones.length > 0">
+    <div class="section-header">
+      <h2 class="section-title">Prochains Milestones</h2>
+      <span class="section-count">{{ upcomingMilestones.length }} à venir</span>
+    </div>
+
+    <div class="upcoming-milestones-card">
+      <div class="milestone-row" *ngFor="let um of upcomingMilestones" (click)="goToProjectMilestone(um.project_id)">
+        <div class="milestone-row-left">
+          <div class="milestone-project-thumb">
+            <ion-icon name="folder-outline"></ion-icon>
+          </div>
+          <div class="milestone-row-info">
+            <span class="milestone-row-title">{{ um.milestone_title }}</span>
+            <span class="milestone-row-project">{{ um.project_title }}</span>
+          </div>
+        </div>
+        <div class="milestone-row-right">
+          <span class="milestone-row-date">
+            <ion-icon name="calendar-outline"></ion-icon>
+            {{ um.due_date | date:'dd MMM' }}
+          </span>
+          <div class="milestone-row-avatar" *ngIf="um.assignee">
+            {{ um.assignee.avatar_initials }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Following Feed Widget -->
+  <div class="section" *ngIf="user && followingFeed.length > 0">
+    <div class="section-header">
+      <h2 class="section-title">Fil d'abonnements</h2>
+      <span class="section-count">{{ followingFeed.length }} mises à jour</span>
+    </div>
+
+    <div class="following-feed-card">
+      <div class="feed-item" *ngFor="let item of followingFeed" (click)="goToFreelancerProfile(item.freelancer?.id)">
+        <div class="feed-item-left">
+          <div class="feed-avatar" [ngStyle]="{'background': getFeedColor(item.type)}">
+            {{ item.freelancer?.avatar_initials || '?' }}
+          </div>
+          <div class="feed-info">
+            <span class="feed-description">{{ item.description }}</span>
+            <span class="feed-date">
+              <ion-icon [name]="getFeedIcon(item.type)"></ion-icon>
+              {{ item.date | date:'dd MMM, HH:mm' }}
+            </span>
+          </div>
+        </div>
+        <ion-icon name="chevron-forward-outline" class="feed-arrow"></ion-icon>
       </div>
     </div>
   </div>

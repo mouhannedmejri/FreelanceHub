@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ProductService } from '../../services/product.service';
 import { Product } from '../../models/product.model';
 import { Subscription } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { GuestAccessService } from '../../services/guest-access.service';
 
 @Component({
   selector: 'app-digital-store',
@@ -32,7 +34,11 @@ export class DigitalStorePage implements OnInit, OnDestroy {
   pageSize = 10;
   hasMore = true;
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private authService: AuthService,
+    private guestAccessService: GuestAccessService
+  ) {}
 
   ngOnInit() {
     this.loadProducts();
@@ -92,5 +98,13 @@ export class DigitalStorePage implements OnInit, OnDestroy {
   filterByCategory(catId: string) {
     this.activeCategory = catId;
     this.loadProducts();
+  }
+
+  get isGuest(): boolean {
+    return this.authService.isGuest;
+  }
+
+  onBuyClick() {
+    this.guestAccessService.showSignupPrompt('Sign up to purchase products.');
   }
 }

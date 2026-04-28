@@ -339,6 +339,30 @@
   }
 }
 
+.context-card {
+  margin: 10px 20px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: rgba(124, 58, 237, 0.1);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--text);
+
+  p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+}
+
+.typing-indicator {
+  margin: 8px 20px 0;
+  font-size: 12px;
+  color: var(--primary-light);
+}
+
 .loading-messages {
   text-align: center;
   padding: 20px;
@@ -384,6 +408,24 @@
     color: var(--text-muted);
     margin-top: 4px;
     font-weight: 500;
+  }
+
+  .message-tick {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 2px;
+
+    .read {
+      color: #3b82f6;
+    }
+  }
+
+  .reply-quote {
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-left: 2px solid var(--primary-light);
+    padding-left: 8px;
   }
 
   &.received {
@@ -462,6 +504,23 @@
     resize: none;
     max-height: 100px;
     &::placeholder { color: var(--text-muted); }
+  }
+
+  .reply-preview {
+    width: 100%;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    button {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
   }
 }
 

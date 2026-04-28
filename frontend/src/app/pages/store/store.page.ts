@@ -4,9 +4,11 @@ import { AuthService } from '../../services/auth.service';
 import { OfferService } from '../../services/offer.service';
 import { Offer } from '../../models/offer.model';
 import { User } from '../../models/user.model';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProposalService } from '../../services/proposal.service';
 import { ToastController, AlertController } from '@ionic/angular';
+import { GuestAccessService } from '../../services/guest-access.service';
 
 @Component({
   selector: 'app-store',
@@ -19,9 +21,19 @@ export class StorePage implements OnInit, OnDestroy {
   offers: Offer[] = [];
   totalOffers = 0;
   isLoading = false;
-  searchTerm = '';
+  filterParams: { [key: string]: any } = {
+    search: '',
+    category: '',
+    location: '',
+    duration: '',
+    budget_min: null,
+    budget_max: null
+  };
+  
+  isFilterModalOpen = false;
+
+  private searchSubject = new Subject<string>();
   private subs: Subscription[] = [];
-  private searchTimeout: any;
   
   // Pagination
   allOffers: Offer[] = [];
@@ -36,6 +48,7 @@ export class StorePage implements OnInit, OnDestroy {
     private proposalService: ProposalService,
     private toastController: ToastController,
     private alertController: AlertController,
+    private guestAccessService: GuestAccessService,
     private router: Router
   ) {}
 
@@ -43,6 +56,16 @@ export class StorePage implements OnInit, OnDestroy {
     this.subs.push(
       this.authService.currentUser$.subscribe((user) => {
         this.user = user;
+        this.loadOffers();
+      })
+    );
+    
+    this.subs.push(
+      this.searchSubject.pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      ).subscribe(searchTerm => {
+        this.filterParams['search'] = searchTerm;
         this.loadOffers();
       })
     );
@@ -56,6 +79,16 @@ export class StorePage implements OnInit, OnDestroy {
     return this.user?.role === 'client';
   }
 
+  get isGuest(): boolean {
+    return this.authService.isGuest;
+  }
+
+  get activeFilterCount(): number {
+    return Object.values(this.filterParams).filter(
+      v => v !== null && v !== '' && v !== undefined
+    ).length;
+  }
+
   doRefresh(event: any) {
     this.loadOffers(event);
   }
@@ -66,8 +99,8 @@ export class StorePage implements OnInit, OnDestroy {
     this.page = 1;
 
     const call = this.isClient
-      ? this.offerService.getMyOffers()
-      : this.offerService.getOffers(this.searchTerm);
+      ? this.offerService.getMyOffers(this.filterParams)
+      : this.offerService.getOffers(this.filterParams);
 
     call.subscribe({
       next: (data) => {
@@ -99,13 +132,51 @@ export class StorePage implements OnInit, OnDestroy {
   }
 
   onSearch() {
-    clearTimeout(this.searchTimeout);
-    this.searchTimeout = setTimeout(() => {
-      this.loadOffers();
-    }, 300);
+    this.searchSubject.next(this.filterParams['search']);
+  }
+
+  openFilterModal() {
+    this.isFilterModalOpen = true;
+  }
+
+  closeFilterModal() {
+    this.isFilterModalOpen = false;
+  }
+
+  applyFilters() {
+    this.isFilterModalOpen = false;
+    this.loadOffers();
+  }
+
+  resetFilters() {
+    this.filterParams = {
+      search: this.filterParams['search'], // Keep search term
+      category: '',
+      location: '',
+      duration: '',
+      budget_min: null,
+      budget_max: null
+    };
+    this.applyFilters();
+  }
+
+  toggleFilterCategory(cat: string) {
+    this.filterParams['category'] = this.filterParams['category'] === cat ? '' : cat;
+  }
+
+  toggleFilterLocation(loc: string) {
+    this.filterParams['location'] = this.filterParams['location'] === loc ? '' : loc;
+  }
+
+  toggleFilterDuration(dur: string) {
+    this.filterParams['duration'] = this.filterParams['duration'] === dur ? '' : dur;
   }
 
   navigateToPublish() {
+    if (this.isGuest) {
+      this.guestAccessService.showSignupPrompt('Sign up to publish offers.');
+      return;
+    }
     this.router.navigate(['/publish-offer']);
   }
 
@@ -153,6 +224,10 @@ export class StorePage implements OnInit, OnDestroy {
   isLoadingProposals = false;
 
   applyForOffer(offer: Offer) {
+    if (this.isGuest) {
+      this.guestAccessService.showSignupPrompt('Sign up to apply for offers.');
+      return;
+    }
     this.selectedOffer = offer;
     this.proposalData = { cover_letter: '', proposed_price: offer.budget_min || 0, estimated_duration: '1 à 2 semaines' };
     this.isApplyModalOpen = true;
@@ -181,6 +256,10 @@ export class StorePage implements OnInit, OnDestroy {
   }
 
   viewProposals(offer: Offer) {
+    if (this.isGuest) {
+      this.guestAccessService.showSignupPrompt('Sign up to view proposals.');
+      return;
+    }
     this.router.navigate(['/offer-proposals', offer.id]);
   }
 

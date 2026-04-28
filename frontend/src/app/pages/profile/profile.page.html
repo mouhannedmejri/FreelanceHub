@@ -8,59 +8,131 @@
 
   <div *ngIf="!isLoading && profile">
 
-    <!-- ═══ Hero Banner ═══ -->
+    <!-- ═══════════════════════════════════════════════
+         HERO BANNER with overlapping avatar
+         ═══════════════════════════════════════════════ -->
     <div class="hero-banner">
       <div class="hero-bg-shapes">
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
       </div>
 
-      <div class="hero-content">
-        <div class="avatar-large" id="profile-avatar">
-          {{ getInitials() }}
-        </div>
-        <h1 id="profile-name">{{ profile.user.full_name }}</h1>
-        <p class="job-title" *ngIf="profile.profile?.title">
-          {{ profile.profile?.title }}
-        </p>
+      <!-- Edit button on own profile -->
+      <button class="edit-floating-btn" *ngIf="isOwnProfile" (click)="editProfile()" id="edit-profile-btn">
+        <ion-icon name="create-outline"></ion-icon>
+      </button>
+    </div>
 
-        <div class="meta-row">
-          <span *ngIf="profile.profile?.location">
-            <ion-icon name="location-outline"></ion-icon>
-            {{ profile.profile?.location }}
-          </span>
-          <span *ngIf="profile.profile?.hourly_rate">
-            <ion-icon name="cash-outline"></ion-icon>
-            {{ profile.profile?.hourly_rate }}€/h
-          </span>
-        </div>
-
-        <div class="badges-row">
-          <span class="approved-badge" *ngIf="profile.user.is_approved" id="approved-badge">
-            <ion-icon name="checkmark-circle"></ion-icon>
-            Approuvé
-          </span>
-        </div>
-
-        <button class="edit-btn" (click)="editProfile()" id="edit-profile-btn">
-          <ion-icon name="create-outline"></ion-icon>
-          Modifier le profil
-        </button>
+    <!-- Overlapping avatar -->
+    <div class="avatar-overlap-container">
+      <div class="avatar-overlap" id="profile-avatar">
+        {{ getInitials() }}
+        <span class="availability-dot" [ngStyle]="{'background': availabilityColor}"></span>
       </div>
     </div>
 
-    <!-- ═══ Profile Sections ═══ -->
-    <div class="profile-sections">
+    <!-- ═══════════════════════════════════════════════
+         PROFILE INFO
+         ═══════════════════════════════════════════════ -->
+    <div class="profile-info">
+      <h1 class="profile-name" id="profile-name">{{ profile.user.full_name }}</h1>
+      <p class="job-title" *ngIf="profile.profile?.title">{{ profile.profile?.title }}</p>
 
-      <!-- À propos -->
-      <div class="section-card" *ngIf="profile.profile?.bio" id="section-about">
-        <h3>
-          <ion-icon name="information-circle-outline"></ion-icon>
-          À propos
-        </h3>
-        <p>{{ profile.profile?.bio }}</p>
+      <div class="meta-row">
+        <span *ngIf="profile.profile?.location">
+          <ion-icon name="location-outline"></ion-icon>
+          {{ profile.profile?.location }}
+        </span>
+        <span *ngIf="profile.availability" [ngStyle]="{'color': availabilityColor}">
+          <ion-icon name="ellipse"></ion-icon>
+          {{ profile.availability }}
+        </span>
       </div>
 
+      <!-- Badges row -->
+      <div class="badges-row" *ngIf="profile.badges && profile.badges.length > 0">
+        <span class="earned-badge top-rated" *ngIf="profile.badges.includes('Top Rated')">
+          <ion-icon name="trophy"></ion-icon> Top Rated
+        </span>
+        <span class="earned-badge fast-reply" *ngIf="profile.badges.includes('Fast Reply')">
+          <ion-icon name="flash"></ion-icon> Fast Reply
+        </span>
+        <span class="earned-badge approved" *ngIf="profile.user.is_approved" id="approved-badge">
+          <ion-icon name="checkmark-circle"></ion-icon> Approuvé
+        </span>
+      </div>
+
+      <!-- Hourly rate -->
+      <div class="hourly-rate-display" *ngIf="hourlyRate > 0">
+        <span class="rate-value">{{ hourlyRate }}€</span>
+        <span class="rate-label">/heure</span>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row" *ngIf="profile.stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ earningsFormatted }}</span>
+          <span class="stat-label">Revenus</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ profile.stats.hired }}x</span>
+          <span class="stat-label">Engagé</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ profile.stats.rating | number:'1.1-2' }} ★</span>
+          <span class="stat-label">Note</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ followerCount }}</span>
+          <span class="stat-label">Abonnés</span>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-buttons" *ngIf="!isOwnProfile">
+        <button class="action-btn contact-btn" id="contact-btn">
+          <ion-icon name="chatbubble-outline"></ion-icon>
+          Contact Me
+        </button>
+        <button class="action-btn follow-btn" [class.following]="isFollowing" (click)="toggleFollow()" id="follow-btn">
+          <ion-icon [name]="isFollowing ? 'checkmark' : 'person-add-outline'"></ion-icon>
+          {{ isFollowing ? 'Following' : 'Follow' }}
+        </button>
+        <button class="action-btn heart-btn" id="heart-btn">
+          <ion-icon name="heart-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Bio -->
+      <div class="bio-section" *ngIf="profile.profile?.bio">
+        <p class="bio-text" [class.expanded]="bioExpanded">{{ profile.profile?.bio }}</p>
+        <button class="bio-toggle" (click)="toggleBio()">
+          {{ bioExpanded ? 'Voir moins' : 'Voir plus' }}
+          <ion-icon [name]="bioExpanded ? 'chevron-up' : 'chevron-down'"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Skills tags -->
+      <div class="skills-row" *ngIf="profile.profile?.skills?.length">
+        <span class="skill-chip" *ngFor="let skill of profile.profile?.skills">{{ skill }}</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         TABS: Projects | About Me | Reviews
+         ═══════════════════════════════════════════════ -->
+    <div class="profile-tabs">
+      <button [class.active]="currentTab === 'about'" (click)="setTab('about')">About Me</button>
+      <button [class.active]="currentTab === 'projects'" (click)="setTab('projects')">Mes Projets</button>
+      <button [class.active]="currentTab === 'reviews'" (click)="setTab('reviews')">Reviews</button>
+    </div>
+
+    <!-- TAB: About Me -->
+    <div class="tab-content" *ngIf="currentTab === 'about'">
       <!-- Contact -->
       <div class="section-card" id="section-contact">
         <h3>
@@ -77,21 +149,8 @@
         </div>
       </div>
 
-      <!-- Compétences -->
-      <div class="section-card" *ngIf="profile.profile?.skills?.length" id="section-skills">
-        <h3>
-          <ion-icon name="code-outline"></ion-icon>
-          Compétences
-        </h3>
-        <div class="skills-grid">
-          <span class="skill-tag" *ngFor="let skill of profile.profile?.skills">
-            {{ skill }}
-          </span>
-        </div>
-      </div>
-
-      <!-- CV / Portfolio Upload -->
-      <div class="section-card" id="section-cv">
+      <!-- CV Upload -->
+      <div class="section-card" id="section-cv" *ngIf="isOwnProfile">
         <h3>
           <ion-icon name="document-outline"></ion-icon>
           CV / Portfolio
@@ -100,13 +159,7 @@
           <ion-icon name="cloud-upload-outline"></ion-icon>
           <p>Cliquez pour télécharger votre CV</p>
           <span>PDF jusqu'à 5MB</span>
-          <input
-            type="file"
-            #fileInput
-            accept=".pdf"
-            (change)="onFileSelected($event)"
-            hidden
-          />
+          <input type="file" #fileInput accept=".pdf" (change)="onFileSelected($event)" hidden />
         </div>
         <div class="cv-file" *ngIf="profile.profile?.cv_filename" id="cv-filename">
           <ion-icon name="document-text-outline"></ion-icon>
@@ -130,13 +183,11 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Portfolio -->
+    <!-- TAB: Mes Projets (Portfolio) -->
+    <div class="tab-content" *ngIf="currentTab === 'projects'">
       <div class="section-card" *ngIf="profile.profile?.portfolio?.length" id="section-portfolio">
-        <h3>
-          <ion-icon name="images-outline"></ion-icon>
-          Portfolio
-        </h3>
         <div class="portfolio-grid">
           <div class="portfolio-card" *ngFor="let item of profile.profile?.portfolio">
             <img [src]="item.image_url" [alt]="item.title" loading="lazy" />
@@ -151,18 +202,25 @@
         </div>
       </div>
 
-      <!-- Avis (Reviews) -->
+      <div class="empty-card" *ngIf="!profile.profile?.portfolio?.length">
+        <ion-icon name="images-outline"></ion-icon>
+        <p>Aucun projet dans le portfolio pour le moment.</p>
+      </div>
+    </div>
+
+    <!-- TAB: Reviews -->
+    <div class="tab-content" *ngIf="currentTab === 'reviews'">
       <div class="section-card" id="section-reviews">
         <div class="reviews-header">
           <h3>
             <ion-icon name="star-outline"></ion-icon>
             Avis clients
           </h3>
-          <button class="leave-review-btn" (click)="leaveReview()" *ngIf="user?.id !== profile.user.id">
+          <button class="leave-review-btn" (click)="leaveReview()" *ngIf="user?.id !== profile.user.id || isGuest">
             Laisser un avis
           </button>
         </div>
-        
+
         <div class="reviews-list" *ngIf="reviews.length > 0">
           <div class="review-item" *ngFor="let review of reviews">
             <div class="review-top">
@@ -174,11 +232,16 @@
             <p>{{ review.comment }}</p>
           </div>
         </div>
-        
+
         <p class="empty-text" *ngIf="reviews.length === 0">Aucun avis pour le moment.</p>
       </div>
-
     </div>
+
+  </div>
+
+  <div class="loading-profile" *ngIf="!isLoading && !profile">
+    <ion-icon name="person-outline"></ion-icon>
+    <p>Open a freelancer profile from Services to view public details and reviews.</p>
   </div>
 
 </ion-content>
