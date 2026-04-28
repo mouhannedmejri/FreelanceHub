@@ -68,11 +68,12 @@ def get_services():
             s["freelancer"] = None
 
     return jsonify({
-        'services': serialize_list(services),
-        'total': total,
-        'page': page,
-        'per_page': per_page,
-        'has_more': (page * per_page) < total,
+        "data": serialize_list(services),
+        "meta": {
+            "page": page,
+            "total": total,
+            "has_more": (page * per_page) < total
+        }
     }), 200
 
 @services_bp.route('/<service_id>', methods=['GET'])

@@ -1,4 +1,4 @@
-<ion-content [fullscreen]="true" class="messages-content">
+<ion-content [fullscreen]="true" class="messages-content" [scrollY]="false">
   <div class="chat-layout">
     
     <!-- ── LEFT PANEL: Conversation List ────────────────────────────── -->
@@ -12,7 +12,7 @@
           <ion-icon name="search-outline"></ion-icon>
           <input
             type="text"
-            placeholder="Rechercher une conversation..."
+            placeholder="Search conversations..."
             [(ngModel)]="searchTerm"
             (input)="onSearch()"
             id="chat-search-input"
@@ -20,7 +20,7 @@
         </div>
       </div>
 
-      <div class="conversations-list">
+      <div class="conversations-list-container">
         <!-- Loading state -->
         <div class="loading-state" *ngIf="isLoadingConversations && conversations.length === 0">
           <ion-spinner name="crescent"></ion-spinner>
@@ -28,35 +28,60 @@
 
         <!-- Empty state -->
         <div class="empty-state" *ngIf="!isLoadingConversations && conversations.length === 0">
-          <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
-          <p>Aucune conversation trouvée.</p>
+          <img src="assets/images/empty-messages.svg" alt="No messages" onerror="this.style.display='none'" />
+          <ion-icon name="chatbubble-ellipses-outline" *ngIf="true"></ion-icon>
+          <h3>No conversations yet</h3>
+          <button class="browse-cta" routerLink="/home/search">Browse Offers &rarr;</button>
         </div>
 
-        <!-- Items -->
-        <div
-          class="conv-item"
-          *ngFor="let conv of conversations"
-          [class.active]="selectedConversation?.id === conv.id"
-          (click)="selectConversation(conv)"
-          [id]="'conv-item-' + conv.id"
-        >
-          <div class="avatar-wrapper">
-            <div class="avatar">{{ getInitials(conv.other_user.full_name) }}</div>
-            <div class="online-dot" *ngIf="isUserOnline(conv.other_user?.id)"></div>
-          </div>
-          <div class="conv-info">
-            <div class="conv-header">
-              <span class="conv-name">{{ conv.other_user.full_name }}</span>
-              <span class="conv-time">{{ formatTime(conv.last_message_at) }}</span>
-            </div>
-            <div class="conv-footer">
-              <span class="conv-last-msg" [class.unread-text]="conv.unread_count > 0">
-                {{ conv.last_message | slice:0:30 }}{{ conv.last_message.length > 30 ? '...' : '' }}
-              </span>
-              <span class="unread-badge" *ngIf="conv.unread_count > 0">{{ conv.unread_count }}</span>
-            </div>
-          </div>
-        </div>
+        <!-- Items with Swipe -->
+        <ion-list class="conv-list" lines="none" *ngIf="conversations.length > 0">
+          <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+            <ion-refresher-content></ion-refresher-content>
+          </ion-refresher>
+          
+          <ion-item-sliding *ngFor="let conv of conversations">
+            <!-- Mark Read Swipe -->
+            <ion-item-options side="start">
+              <ion-item-option class="swipe-action-blue" (click)="markConvRead(conv)">
+                <ion-icon slot="icon-only" name="checkmark-done-outline"></ion-icon>
+              </ion-item-option>
+            </ion-item-options>
+            
+            <ion-item class="conv-item" [class.active]="selectedConversation?.id === conv.id" (click)="selectConversation(conv)">
+              <div class="avatar-wrapper" slot="start">
+                <div class="avatar">{{ getInitials(conv.other_user?.full_name) }}</div>
+                <div class="online-dot" [class.online]="isUserOnline(conv.other_user?.id)"></div>
+              </div>
+              
+              <ion-label>
+                <div class="conv-header">
+                  <span class="conv-name">{{ conv.other_user?.full_name }}</span>
+                  <span class="conv-time">{{ formatShortTime(conv.last_message_at) }}</span>
+                </div>
+                
+                <div class="context-chip" *ngIf="conv.offer_id">
+                  <ion-icon name="briefcase-outline"></ion-icon>
+                  <span>Re: Offer #{{ conv.offer_id }}</span>
+                </div>
+                
+                <div class="conv-footer">
+                  <span class="conv-last-msg" [class.unread]="conv.unread_count > 0">
+                    {{ conv.last_message }}
+                  </span>
+                  <span class="unread-badge" *ngIf="conv.unread_count > 0">{{ conv.unread_count }}</span>
+                </div>
+              </ion-label>
+            </ion-item>
+            
+            <!-- Delete Swipe -->
+            <ion-item-options side="end">
+              <ion-item-option class="swipe-action-red" (click)="deleteConv(conv)">
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+        </ion-list>
       </div>
     </div>
 
@@ -81,100 +106,125 @@
             <ion-icon name="chevron-back-outline"></ion-icon>
           </button>
           
-          <div class="chat-user-info">
-            <div class="avatar">{{ getInitials(selectedConversation.other_user.full_name) }}</div>
+          <div class="chat-user-info" (click)="viewProfile(selectedConversation.other_user?.id)">
+            <div class="avatar">{{ getInitials(selectedConversation.other_user?.full_name) }}</div>
             <div class="user-details">
-              <span class="user-name">{{ selectedConversation.other_user.full_name }}</span>
-              <span class="user-status">
-                {{ isUserOnline(selectedConversation.other_user.id) ? 'Online' : 'Offline' }}
+              <span class="user-name">{{ selectedConversation.other_user?.full_name }}</span>
+              <span class="user-status" [class.online]="isUserOnline(selectedConversation.other_user?.id)">
+                {{ isUserOnline(selectedConversation.other_user?.id) ? 'Online' : 'Offline' }}
               </span>
             </div>
           </div>
           
-          <button class="menu-btn">
+          <button class="menu-btn" (click)="openChatOptions($event)">
             <ion-icon name="ellipsis-vertical"></ion-icon>
           </button>
         </div>
 
-        <div class="context-card" *ngIf="selectedConversation.offer_id">
-          <ion-icon name="briefcase-outline"></ion-icon>
-          <div>
-            <strong>Linked offer/project</strong>
-            <p>Conversation context ID: {{ selectedConversation.offer_id }}</p>
+        <div class="context-banner" *ngIf="selectedConversation.offer_id">
+          <div class="banner-content">
+            <div class="banner-title">Related to Offer #{{ selectedConversation.offer_id }}</div>
+            <div class="banner-status">Active</div>
           </div>
+          <button class="banner-nav">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </button>
         </div>
 
-        <div class="typing-indicator" *ngIf="getTypingText(selectedConversation.id)">
-          {{ getTypingText(selectedConversation.id) }} is typing...
-        </div>
-
-        <!-- Chat Messages -->
-        <div class="chat-messages" #messagesContainer>
+        <!-- Chat Messages Area -->
+        <div class="chat-scroll-area" #messagesContainer>
           <div class="loading-messages" *ngIf="isLoadingMessages">
-            <ion-spinner name="dots"></ion-spinner>
+            <div class="skeleton-bubble receiver"></div>
+            <div class="skeleton-bubble receiver"></div>
+            <div class="skeleton-bubble sender"></div>
+            <div class="skeleton-bubble receiver"></div>
           </div>
 
-          <div class="message-group" *ngFor="let group of groupedMessages">
+          <div class="message-group-container" *ngFor="let group of groupedMessages; let i = index">
             <div class="date-divider">
               <span>{{ group.date }}</span>
             </div>
             
             <div 
-              class="message-bubble-wrapper"
-              *ngFor="let msg of group.messages"
+              class="chat-bubble-row"
+              *ngFor="let msg of group.messages; let j = index"
               [class.sent]="msg.sender_id === currentUser?.id"
               [class.received]="msg.sender_id !== currentUser?.id"
-              (touchstart)="onMessageTouchStart($event)"
-              (touchend)="onMessageTouchEnd($event, msg)"
+              [class.last-in-group]="isLastInGroup(group.messages, j)"
             >
-              <div class="reply-quote" *ngIf="msg.reply_to_message_id">
-                Replying to message #{{ msg.reply_to_message_id }}
+              <div class="bubble-avatar" *ngIf="msg.sender_id !== currentUser?.id && isLastInGroup(group.messages, j)">
+                {{ getInitials(selectedConversation.other_user?.full_name) }}
               </div>
-              <div class="message-bubble">
-                <p (contextmenu)="toggleMessageTimestamp(msg.id); $event.preventDefault()">{{ msg.content }}</p>
+              <div class="bubble-avatar-placeholder" *ngIf="msg.sender_id !== currentUser?.id && !isLastInGroup(group.messages, j)"></div>
+
+              <div class="bubble-content" (press)="onMessageLongPress(msg)">
+                <div class="reply-quote" *ngIf="msg.reply_to_message_id">
+                  Replying to message #{{ msg.reply_to_message_id }}
+                </div>
+                <div class="bubble-text">{{ msg.content }}</div>
+                
+                <div class="bubble-meta" [class.visible]="isTimestampVisible(msg.id)">
+                  <span class="time">{{ formatTime(msg.created_at) }}</span>
+                  <span class="status-tick" *ngIf="msg.sender_id === currentUser?.id">
+                    <ng-container [ngSwitch]="getMessageTickState(msg)">
+                      <span *ngSwitchCase="'sent'" class="tick gray">✓</span>
+                      <span *ngSwitchCase="'delivered'" class="tick gray">✓✓</span>
+                      <span *ngSwitchCase="'read'" class="tick purple">✓✓</span>
+                    </ng-container>
+                  </span>
+                </div>
               </div>
-              <span class="message-time" *ngIf="isTimestampVisible(msg.id)">{{ formatTime(msg.created_at) }}</span>
-              <span class="message-tick" *ngIf="msg.sender_id === currentUser?.id">
-                <ng-container [ngSwitch]="getMessageTickState(msg)">
-                  <span *ngSwitchCase="'sent'">✓</span>
-                  <span *ngSwitchCase="'delivered'">✓✓</span>
-                  <span *ngSwitchCase="'read'" class="read">✓✓</span>
-                </ng-container>
-              </span>
+            </div>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div class="chat-bubble-row received typing-row" *ngIf="getTypingText(selectedConversation.id)">
+            <div class="bubble-avatar">{{ getInitials(selectedConversation.other_user?.full_name) }}</div>
+            <div class="bubble-content">
+              <div class="typing-dots">
+                <span></span><span></span><span></span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Chat Input -->
-        <div class="chat-input-area">
-          <button class="attach-btn" (click)="onAttachClick()">
-            <ion-icon name="attach-outline"></ion-icon>
-          </button>
-          <button class="attach-btn" (click)="onEmojiClick()">
-            <ion-icon name="happy-outline"></ion-icon>
+        <!-- Composer Bar -->
+        <div class="composer-bar">
+          <button class="action-icon" (click)="onAttachClick()">
+            <ion-icon name="add-circle-outline"></ion-icon>
           </button>
           
-          <div class="input-box">
-            <div class="reply-preview" *ngIf="replyToMessage">
-              Replying to: {{ replyToMessage.content | slice:0:60 }}...
-              <button (click)="clearReply()">x</button>
+          <div class="composer-input-wrapper">
+            <div class="quoted-preview" *ngIf="replyToMessage">
+              <div class="quoted-content">
+                <strong>{{ replyToMessage.sender_id === currentUser?.id ? 'You' : selectedConversation.other_user?.full_name }}</strong>
+                <p>{{ replyToMessage.content | slice:0:50 }}{{ (replyToMessage.content?.length || 0) > 50 ? '...' : '' }}</p>
+              </div>
+              <button class="close-quote" (click)="clearReply()">
+                <ion-icon name="close-circle"></ion-icon>
+              </button>
             </div>
+            
             <textarea 
-              placeholder="Écrivez votre message..." 
+              class="composer-textarea"
+              placeholder="Message..." 
               rows="1"
               [(ngModel)]="newMessageContent"
               (keydown)="onKeydown($event)"
-              id="message-input"
             ></textarea>
+            
+            <button class="action-icon inside-input" (click)="onEmojiClick()">
+              <ion-icon name="happy-outline"></ion-icon>
+            </button>
           </div>
           
           <button 
-            class="send-btn" 
+            class="send-circle-btn" 
+            [class.active]="newMessageContent.trim().length > 0"
             [disabled]="!newMessageContent.trim() || isSending"
             (click)="sendMessage()"
-            id="send-message-btn"
           >
-            <ion-icon name="send"></ion-icon>
+            <ion-icon name="arrow-up"></ion-icon>
           </button>
         </div>
       </ng-container>

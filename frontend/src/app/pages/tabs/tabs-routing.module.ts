@@ -13,10 +13,10 @@ const routes: Routes = [
           import('../../home/home.module').then((m) => m.HomePageModule),
       },
       {
-        path: 'services',
+        path: 'search',
         loadChildren: () =>
-          import('../services/services.module').then(
-            (m) => m.ServicesPageModule
+          import('../search/search.module').then(
+            (m) => m.SearchPageModule
           ),
       },
       {

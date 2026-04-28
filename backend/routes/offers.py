@@ -12,6 +12,8 @@ offers_bp = Blueprint('offers', __name__, url_prefix='/api/offers')
 def get_offers():
     """Return all active offers (freelancer/visitor view), optionally filtered by search."""
     search = request.args.get('search', '').strip()
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
     category_param = request.args.get('category', '').strip()
     location_param = request.args.get('location', '').strip()
     duration_param = request.args.get('duration', '').strip()
@@ -48,7 +50,11 @@ def get_offers():
             {"skills": {"$elemMatch": {"$regex": search, "$options": "i"}}}
         ]
 
-    offers = list(mongo.db.offers.find(query).sort("created_at", -1))
+    total = mongo.db.offers.count_documents(query)
+    offers = list(mongo.db.offers.find(query)
+                  .sort("created_at", -1)
+                  .skip((page - 1) * limit)
+                  .limit(limit))
     
     # populate client_name
     for o in offers:
@@ -56,8 +62,12 @@ def get_offers():
         o["client_name"] = client.get("full_name") if client else ""
 
     return jsonify({
-        'offers': serialize_list(offers),
-        'total': len(offers),
+        "data": serialize_list(offers),
+        "meta": {
+            "page": page,
+            "total": total,
+            "has_more": (page * limit) < total
+        }
     }), 200
 
 @offers_bp.route('/mine', methods=['GET'])
@@ -66,6 +76,8 @@ def get_my_offers():
     """Return offers created by the authenticated client."""
     client_id = get_jwt_identity()
     search = request.args.get('search', '').strip()
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
     category_param = request.args.get('category', '').strip()
     location_param = request.args.get('location', '').strip()
     duration_param = request.args.get('duration', '').strip()
@@ -102,15 +114,23 @@ def get_my_offers():
             {"skills": {"$elemMatch": {"$regex": search, "$options": "i"}}}
         ]
 
-    offers = list(mongo.db.offers.find(query).sort("created_at", -1))
+    total = mongo.db.offers.count_documents(query)
+    offers = list(mongo.db.offers.find(query)
+                  .sort("created_at", -1)
+                  .skip((page - 1) * limit)
+                  .limit(limit))
     
     for o in offers:
         client = mongo.db.users.find_one({"_id": ObjectId(o["client_id"])})
         o["client_name"] = client.get("full_name") if client else ""
 
     return jsonify({
-        'offers': serialize_list(offers),
-        'total': len(offers),
+        "data": serialize_list(offers),
+        "meta": {
+            "page": page,
+            "total": total,
+            "has_more": (page * limit) < total
+        }
     }), 200
 
 @offers_bp.route('/<offer_id>', methods=['GET'])
@@ -210,6 +230,8 @@ def create_proposal(offer_id):
 def get_offer_proposals(offer_id):
     """Client sees proposals for their offer."""
     user_id = get_jwt_identity()
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
 
     offer = mongo.db.offers.find_one({"_id": ObjectId(offer_id)})
     if not offer:
@@ -218,10 +240,22 @@ def get_offer_proposals(offer_id):
     if offer.get("client_id") != user_id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    proposals = list(mongo.db.proposals.find({"offer_id": offer_id}).sort("created_at", -1))
+    query = {"offer_id": offer_id}
+    total = mongo.db.proposals.count_documents(query)
+    proposals = list(mongo.db.proposals.find(query)
+                     .sort("created_at", -1)
+                     .skip((page - 1) * limit)
+                     .limit(limit))
     
     for p in proposals:
         freelancer = mongo.db.users.find_one({"_id": ObjectId(p["freelancer_id"])})
         p["freelancer"] = serialize(freelancer) if freelancer else None
 
-    return jsonify({'proposals': serialize_list(proposals)}), 200
+    return jsonify({
+        "data": serialize_list(proposals),
+        "meta": {
+            "page": page,
+            "total": total,
+            "has_more": (page * limit) < total
+        }
+    }), 200

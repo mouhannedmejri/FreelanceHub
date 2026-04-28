@@ -13,6 +13,8 @@ def get_products():
     """List digital products with optional filtering."""
     category = request.args.get('category', '').strip()
     search = request.args.get('search', '').strip()
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
 
     query = {}
 
@@ -23,13 +25,24 @@ def get_products():
         regex = re.compile(search, re.IGNORECASE)
         query["title"] = regex
 
-    products = list(mongo.db.store_products.find(query).sort("created_at", -1))
+    total = mongo.db.store_products.count_documents(query)
+    products = list(mongo.db.store_products.find(query)
+                    .sort("created_at", -1)
+                    .skip((page - 1) * limit)
+                    .limit(limit))
     
     for p in products:
         seller = mongo.db.users.find_one({"_id": ObjectId(p["seller_id"])})
         p["seller_name"] = seller.get("full_name") if seller else ""
     
-    return jsonify({'products': serialize_list(products)}), 200
+    return jsonify({
+        "data": serialize_list(products),
+        "meta": {
+            "page": page,
+            "total": total,
+            "has_more": (page * limit) < total
+        }
+    }), 200
 
 
 @store_bp.route('/products/<product_id>', methods=['GET'])
