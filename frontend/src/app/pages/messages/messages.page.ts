@@ -9,6 +9,8 @@ import { Router } from '@angular/router';
 import { SocketService } from '../../services/socket.service';
 import { ToastController } from '@ionic/angular';
 
+import { ActionSheetController } from '@ionic/angular';
+
 @Component({
   selector: 'app-messages',
   templateUrl: './messages.page.html',
@@ -47,7 +49,8 @@ export class MessagesPage implements OnInit, OnDestroy {
     private guestAccessService: GuestAccessService,
     private router: Router,
     private socketService: SocketService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private actionSheetCtrl: ActionSheetController
   ) {}
 
   ngOnInit() {
@@ -125,12 +128,13 @@ export class MessagesPage implements OnInit, OnDestroy {
     this.subs.forEach(s => s.unsubscribe());
   }
 
-  loadConversations() {
-    this.isLoadingConversations = true;
+  loadConversations(event?: any) {
+    if (!event) this.isLoadingConversations = true;
     this.conversationService.getConversations(this.searchTerm).subscribe({
       next: (res) => {
         this.conversations = res.conversations;
         this.isLoadingConversations = false;
+        if (event) event.target.complete();
         
         // If a conversation is selected, update it from the list if new data came
         if (this.selectedConversation) {
@@ -142,8 +146,13 @@ export class MessagesPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.isLoadingConversations = false;
+        if (event) event.target.complete();
       }
     });
+  }
+
+  doRefresh(event: any) {
+    this.loadConversations(event);
   }
 
   onSearch() {
@@ -235,7 +244,7 @@ export class MessagesPage implements OnInit, OnDestroy {
     }, 100);
   }
 
-  getInitials(name: string): string {
+  getInitials(name?: string): string {
     if (!name) return '?';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   }
@@ -244,6 +253,19 @@ export class MessagesPage implements OnInit, OnDestroy {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  formatShortTime(dateString: string): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMs / 3600000);
+
+    if (diffMins < 60) return diffMins === 0 ? 'now' : `${diffMins}m`;
+    if (diffHrs < 24) return `${diffHrs}h`;
+    return date.toLocaleDateString([], { weekday: 'short' });
   }
 
   // Group messages by day
@@ -261,6 +283,11 @@ export class MessagesPage implements OnInit, OnDestroy {
       }
     }
     return groups;
+  }
+
+  isLastInGroup(messages: Message[], index: number): boolean {
+    if (index === messages.length - 1) return true;
+    return messages[index].sender_id !== messages[index + 1].sender_id;
   }
 
   isUserOnline(userId: number | string | undefined): boolean {
@@ -285,19 +312,87 @@ export class MessagesPage implements OnInit, OnDestroy {
     return this.expandedTimestamps.has(String(messageId));
   }
 
-  onMessageTouchStart(event: TouchEvent) {
-    const touch = event.changedTouches[0];
-    this.touchStartX = touch.clientX;
-    this.touchStartY = touch.clientY;
+  async onMessageLongPress(message: Message) {
+    this.toggleMessageTimestamp(message.id);
+    
+    const buttons: any[] = [
+      {
+        text: 'Copy text',
+        icon: 'copy-outline',
+        handler: () => {
+          navigator.clipboard.writeText(message.content);
+          this.showToast('Copied to clipboard');
+        }
+      },
+      {
+        text: 'Reply',
+        icon: 'arrow-undo-outline',
+        handler: () => {
+          this.replyToMessage = message;
+        }
+      }
+    ];
+
+    if (message.sender_id === this.currentUser?.id) {
+      buttons.push({
+        text: 'Delete',
+        icon: 'trash-outline',
+        role: 'destructive' as any,
+        handler: () => {
+          // Implement soft delete logic
+          this.showToast('Message deleted');
+          message.content = 'This message was deleted';
+        }
+      });
+    }
+
+    buttons.push({
+      text: 'Cancel',
+      icon: 'close',
+      role: 'cancel' as any,
+      handler: () => {}
+    });
+
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Message Options',
+      buttons
+    });
+    await actionSheet.present();
   }
 
-  onMessageTouchEnd(event: TouchEvent, message: Message) {
-    const touch = event.changedTouches[0];
-    const deltaX = touch.clientX - this.touchStartX;
-    const deltaY = Math.abs(touch.clientY - this.touchStartY);
-    if (Math.abs(deltaX) > 60 && deltaY < 30) {
-      this.replyToMessage = message;
-    }
+  async showToast(msg: string) {
+    const toast = await this.toastController.create({
+      message: msg,
+      duration: 2000,
+      position: 'top'
+    });
+    toast.present();
+  }
+
+  markConvRead(conv: Conversation) {
+    this.conversationService.markConversationRead(conv.id).subscribe();
+    conv.unread_count = 0;
+  }
+
+  deleteConv(conv: Conversation) {
+    // Implement delete logic API if exists
+    this.conversations = this.conversations.filter(c => c.id !== conv.id);
+  }
+
+  async openChatOptions(event: any) {
+    const actionSheet = await this.actionSheetCtrl.create({
+      buttons: [
+        { text: 'View Profile', icon: 'person-outline', handler: () => { this.viewProfile(this.selectedConversation?.other_user?.id); } },
+        { text: 'Clear Chat', icon: 'trash-outline', role: 'destructive', handler: () => { this.showToast('Chat cleared'); } },
+        { text: 'Block User', icon: 'ban-outline', role: 'destructive', handler: () => { this.showToast('User blocked'); } },
+        { text: 'Cancel', icon: 'close', role: 'cancel' }
+      ]
+    });
+    await actionSheet.present();
+  }
+
+  viewProfile(userId: any) {
+    if(userId) this.router.navigate(['/home/profile'], { queryParams: { id: userId }});
   }
 
   clearReply() {

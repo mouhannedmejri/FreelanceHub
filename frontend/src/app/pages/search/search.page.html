@@ -1,0 +1,88 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Recherche</ion-title>
+  </ion-toolbar>
+  <ion-toolbar class="search-toolbar">
+    <ion-searchbar 
+      [(ngModel)]="searchQuery" 
+      (ionInput)="onSearch()" 
+      placeholder="Rechercher..."
+      animated="true"
+      color="light">
+    </ion-searchbar>
+  </ion-toolbar>
+  <ion-toolbar class="filter-toolbar">
+    <div class="filter-tabs">
+      <button [class.active]="filterType === ''" (click)="setFilter('')">Tout</button>
+      <button [class.active]="filterType === 'offers'" (click)="setFilter('offers')">Offres</button>
+      <button [class.active]="filterType === 'services'" (click)="setFilter('services')">Services</button>
+      <button [class.active]="filterType === 'users'" (click)="setFilter('users')">Utilisateurs</button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="search-content">
+  <!-- Loading State -->
+  <div *ngIf="loading && results.length === 0" class="skeleton-list">
+    <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5]">
+      <div class="skeleton-header">
+        <div class="skeleton-avatar"></div>
+        <div class="skeleton-line w50"></div>
+      </div>
+      <div class="skeleton-line w80"></div>
+      <div class="skeleton-line w60"></div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && results.length === 0">
+    <ion-icon name="search-outline"></ion-icon>
+    <h3>Aucun résultat</h3>
+    <p>Essayez avec d'autres mots-clés ou modifiez vos filtres.</p>
+  </div>
+
+  <!-- Results List -->
+  <div class="results-list" *ngIf="results.length > 0">
+    <div *ngFor="let item of results" class="result-card" (click)="goToDetail(item)">
+      <!-- User Result -->
+      <ng-container *ngIf="item.result_type === 'user'">
+        <div class="card-header">
+          <div class="avatar">{{ item.full_name?.charAt(0) | uppercase }}</div>
+          <div class="info">
+            <div class="title">{{ item.full_name }}</div>
+            <div class="subtitle">{{ item.role | titlecase }}</div>
+          </div>
+          <div class="badge user-badge">Profil</div>
+        </div>
+      </ng-container>
+
+      <!-- Service Result -->
+      <ng-container *ngIf="item.result_type === 'service'">
+        <div class="card-header">
+          <div class="info">
+            <div class="title">{{ item.title }}</div>
+            <div class="subtitle">À partir de {{ item.price }}€</div>
+          </div>
+          <div class="badge service-badge">Service</div>
+        </div>
+        <div class="description">{{ item.description }}</div>
+      </ng-container>
+
+      <!-- Offer Result -->
+      <ng-container *ngIf="item.result_type === 'offer'">
+        <div class="card-header">
+          <div class="info">
+            <div class="title">{{ item.title }}</div>
+            <div class="subtitle">Budget: {{ item.budget_min }}€ - {{ item.budget_max }}€</div>
+          </div>
+          <div class="badge offer-badge">Mission</div>
+        </div>
+        <div class="description">{{ item.description }}</div>
+      </ng-container>
+    </div>
+  </div>
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!hasMore">
+    <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Chargement..."></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>
