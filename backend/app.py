@@ -24,11 +24,38 @@ active_users = {}
 sid_to_user = {}
 
 def serialize(doc):
-    if doc is None: return None
-    if "_id" in doc:
-        doc["id"] = str(doc["_id"])
-        del doc["_id"]
-    return doc
+    """Convert a MongoDB document to a JSON-safe dict.
+
+    - Renames ``_id`` to ``id`` (string).
+    - Converts every remaining ``ObjectId`` value to ``str``.
+    - Converts every ``datetime`` value to an ISO-8601 string.
+    """
+    import datetime as _dt
+
+    if doc is None:
+        return None
+
+    out = {}
+    for key, value in doc.items():
+        if key == "_id":
+            out["id"] = str(value)
+        elif isinstance(value, ObjectId):
+            out[key] = str(value)
+        elif isinstance(value, (_dt.datetime, _dt.date)):
+            out[key] = value.isoformat()
+        elif isinstance(value, dict):
+            out[key] = serialize(value)
+        elif isinstance(value, list):
+            out[key] = [
+                serialize(v) if isinstance(v, dict)
+                else str(v) if isinstance(v, ObjectId)
+                else v.isoformat() if isinstance(v, (_dt.datetime, _dt.date))
+                else v
+                for v in value
+            ]
+        else:
+            out[key] = value
+    return out
 
 def serialize_list(docs):
     return [serialize(d) for d in docs]

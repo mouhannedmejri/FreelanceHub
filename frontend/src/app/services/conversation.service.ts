@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Observable, BehaviorSubject, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Conversation, ConversationsResponse, MessagesResponse, Message } from '../models/conversation.model';
 import { SocketService } from './socket.service';
@@ -35,7 +35,8 @@ export class ConversationService {
     }
     return this.http.get<ConversationsResponse>(`${environment.apiUrl}/conversations/`, { params }).pipe(
       tap(res => {
-        const totalUnread = res.conversations.reduce((acc, curr) => acc + curr.unread_count, 0);
+        const convs = res?.conversations || [];
+        const totalUnread = convs.reduce((acc, curr) => acc + (curr.unread_count || 0), 0);
         this.unreadCountSubject.next(totalUnread);
       })
     );
@@ -45,7 +46,22 @@ export class ConversationService {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('per_page', perPage.toString());
-    return this.http.get<MessagesResponse>(`${environment.apiUrl}/conversations/${conversationId}/messages`, { params });
+    return this.http.get<any>(`${environment.apiUrl}/conversations/${conversationId}/messages`, { params }).pipe(
+      map(res => {
+        // Defensively handle multiple possible response shapes
+        const messages: Message[] = res?.messages || res?.data || (Array.isArray(res) ? res : []);
+        return {
+          messages,
+          total: res?.total || messages.length,
+          page: res?.page || page,
+          per_page: res?.per_page || perPage,
+        } as MessagesResponse;
+      }),
+      catchError(err => {
+        console.error('Failed to load messages:', err);
+        return of({ messages: [], total: 0, page, per_page: perPage } as MessagesResponse);
+      })
+    );
   }
 
   startConversation(payload: { user_id?: number | string, offer_id?: number | string }): Observable<{ conversation: Conversation }> {
