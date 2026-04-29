@@ -1,6 +1,6 @@
 # FreelanceHub Mobile Application Documentation
 
-## 1) Project Overview
+## 1. Project Overview
 
 FreelanceHub is a role-based freelance marketplace built as an Ionic + Angular client application backed by a Flask REST API. The platform supports three roles:
 
@@ -12,7 +12,7 @@ The application is designed around a mobile-first experience (Ionic UI), with AP
 
 ---
 
-## 2) Technology Stack
+## 2. Technology Stack
 
 ### Frontend
 
