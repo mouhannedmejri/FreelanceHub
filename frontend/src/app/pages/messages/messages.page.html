@@ -157,7 +157,7 @@
               </div>
               <div class="bubble-avatar-placeholder" *ngIf="msg.sender_id !== currentUser?.id && !isLastInGroup(group.messages, j)"></div>
 
-              <div class="bubble-content" (press)="onMessageLongPress(msg)">
+              <div class="bubble-content" (contextmenu)="onMessageLongPress(msg); $event.preventDefault()">
                 <div class="reply-quote" *ngIf="msg.reply_to_message_id">
                   Replying to message #{{ msg.reply_to_message_id }}
                 </div>

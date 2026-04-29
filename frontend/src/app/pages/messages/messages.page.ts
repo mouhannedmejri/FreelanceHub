@@ -252,12 +252,14 @@ export class MessagesPage implements OnInit, OnDestroy {
   formatTime(dateString: string): string {
     if (!dateString) return '';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   formatShortTime(dateString: string): string {
     if (!dateString) return '';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -274,7 +276,11 @@ export class MessagesPage implements OnInit, OnDestroy {
     let currentDate = '';
     
     for (const msg of this.messages) {
-      const msgDate = new Date(msg.created_at).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' });
+      if (!msg.created_at) continue;
+      const dateObj = new Date(msg.created_at);
+      if (isNaN(dateObj.getTime())) continue; // Skip invalid dates
+      
+      const msgDate = dateObj.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' });
       if (msgDate !== currentDate) {
         currentDate = msgDate;
         groups.push({ date: msgDate, messages: [msg] });

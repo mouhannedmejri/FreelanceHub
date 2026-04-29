@@ -102,6 +102,8 @@ def get_profile(user_id):
     availability = "Offline"
     last_login = user.get("last_login_at")
     if last_login:
+        if last_login.tzinfo is None:
+            last_login = last_login.replace(tzinfo=datetime.timezone.utc)
         now = datetime.datetime.now(datetime.timezone.utc)
         diff = (now - last_login).total_seconds()
         if diff < 300:  # 5 minutes
