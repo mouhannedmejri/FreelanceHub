@@ -74,7 +74,8 @@ const routes: Routes = [
     loadChildren: () => import('./pages/freelancer-dashboard/freelancer-dashboard.module').then( m => m.FreelancerDashboardPageModule),
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['freelancer'] }
-  },  {
+  },
+  {
     path: 'search',
     loadChildren: () => import('./pages/search/search.module').then( m => m.SearchPageModule)
   }
