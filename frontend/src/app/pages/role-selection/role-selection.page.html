@@ -1,0 +1,69 @@
+<ion-content class="role-content" [fullscreen]="true">
+  <div class="role-container">
+
+    <!-- Header -->
+    <div class="role-header">
+      <div class="header-icon-wrap">
+        <ion-icon name="diamond-outline"></ion-icon>
+      </div>
+      <h1 class="header-title">How will you use<br><span class="brand">FreelanceHub</span>?</h1>
+      <p class="header-subtitle">Choose your path. You can always change this later.</p>
+    </div>
+
+    <!-- Role Cards -->
+    <div class="role-cards-grid">
+      <button
+        *ngFor="let option of options; let i = index"
+        class="role-card"
+        [class.selected]="selectedIntent === option.intent"
+        (click)="selectOption(option)"
+        [id]="'role-card-' + option.intent"
+      >
+        <!-- Selection indicator -->
+        <div class="card-check" *ngIf="selectedIntent === option.intent">
+          <ion-icon name="checkmark-circle"></ion-icon>
+        </div>
+
+        <!-- Badge -->
+        <span class="card-badge" [style.background]="option.accentColor + '20'" [style.color]="option.accentColor" [style.border-color]="option.accentColor + '30'">
+          {{ option.badgeText }}
+        </span>
+
+        <!-- Icon -->
+        <div class="card-icon" [style.background]="option.gradient">
+          <ion-icon [name]="option.icon"></ion-icon>
+        </div>
+
+        <!-- Text -->
+        <h3 class="card-title">{{ option.title }}</h3>
+        <span class="card-subtitle" [style.color]="option.accentColor">{{ option.subtitle }}</span>
+        <p class="card-desc">{{ option.description }}</p>
+
+        <!-- Arrow hint -->
+        <div class="card-arrow" [style.color]="option.accentColor">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </div>
+      </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="role-actions">
+      <button
+        class="continue-btn"
+        [disabled]="!selectedIntent"
+        (click)="continueWithSelection()"
+        id="role-continue-btn"
+      >
+        <ion-icon name="arrow-forward-outline"></ion-icon>
+        Continue
+      </button>
+
+      <div class="action-links">
+        <button class="link-btn" (click)="goToLogin()" id="role-login-link">
+          Already have an account? <span>Sign In</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

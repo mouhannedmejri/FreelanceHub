@@ -239,7 +239,7 @@ export class StorePage implements OnInit, OnDestroy {
 
   submitProposal() {
     if (!this.selectedOffer) return;
-    this.proposalService.submitProposal(this.selectedOffer.id, this.proposalData).subscribe({
+    this.proposalService.submitProposal(Number(this.selectedOffer.id), this.proposalData).subscribe({
       next: async () => {
         this.isApplyModalOpen = false;
         const toast = await this.toastController.create({

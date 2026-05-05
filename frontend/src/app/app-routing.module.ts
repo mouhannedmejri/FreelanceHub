@@ -4,8 +4,23 @@ import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 import { GuestAllowedGuard } from './guards/guest-allowed.guard';
 import { AuthRequiredGuard } from './guards/auth-required.guard';
+import { WelcomeGuard } from './guards/welcome.guard';
 
 const routes: Routes = [
+  {
+    path: 'welcome',
+    loadChildren: () =>
+      import('./pages/welcome-slides/welcome-slides.module').then(
+        (m) => m.WelcomeSlidesPageModule
+      ),
+  },
+  {
+    path: 'role-selection',
+    loadChildren: () =>
+      import('./pages/role-selection/role-selection.module').then(
+        (m) => m.RoleSelectionPageModule
+      ),
+  },
   {
     path: 'auth',
     loadChildren: () =>
@@ -23,7 +38,7 @@ const routes: Routes = [
     path: 'home',
     loadChildren: () =>
       import('./pages/tabs/tabs.module').then((m) => m.TabsPageModule),
-    canActivate: [GuestAllowedGuard],
+    canActivate: [WelcomeGuard, GuestAllowedGuard],
   },
   {
     path: 'notifications',

@@ -1,11 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { ConversationService } from '../../services/conversation.service';
+import { OnboardingStateService } from '../../services/onboarding-state.service';
 import { User } from '../../models/user.model';
 import { Subscription } from 'rxjs';
 import { GuestAccessService } from '../../services/guest-access.service';
+import { QuickTourComponent } from '../../components/quick-tour/quick-tour.component';
 
 @Component({
   selector: 'app-tabs',
@@ -25,7 +28,9 @@ export class TabsPage implements OnInit, OnDestroy {
     private authService: AuthService,
     private notificationService: NotificationService,
     private conversationService: ConversationService,
+    private onboardingState: OnboardingStateService,
     private guestAccessService: GuestAccessService,
+    private modalCtrl: ModalController,
     private router: Router
   ) {}
 
@@ -51,6 +56,11 @@ export class TabsPage implements OnInit, OnDestroy {
     if (this.authService.isAuthenticated) {
       this.notificationService.loadNotifications().subscribe();
       this.conversationService.getConversations().subscribe();
+    }
+
+    // Auto-show quick tour on first visit
+    if (!this.onboardingState.isTourCompleted) {
+      setTimeout(() => this.openQuickTour(), 1200);
     }
   }
 
@@ -167,5 +177,15 @@ export class TabsPage implements OnInit, OnDestroy {
       'Sign in to access messages',
       { type: 'view_messages', route: '/home/messages' }
     );
+  }
+
+  async openQuickTour() {
+    this.drawerOpen = false;
+    const modal = await this.modalCtrl.create({
+      component: QuickTourComponent,
+      cssClass: 'auth-modal-overlay',
+      backdropDismiss: true,
+    });
+    await modal.present();
   }
 }

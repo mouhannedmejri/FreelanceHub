@@ -4,10 +4,10 @@
 <!-- Sidebar Drawer -->
 <div class="drawer" [class.open]="drawerOpen">
   <div class="drawer-header">
-    <div class="drawer-avatar">{{ userInitials }}</div>
+    <div class="drawer-avatar">{{ user ? userInitials : '?' }}</div>
     <div class="drawer-user-info">
-      <span class="drawer-name">{{ user?.full_name }}</span>
-      <span class="drawer-role">{{ roleLabel }}</span>
+      <span class="drawer-name">{{ user?.full_name || 'Guest Explorer' }}</span>
+      <span class="drawer-role">{{ user ? roleLabel : 'Browsing as Guest' }}</span>
     </div>
   </div>
 
@@ -28,7 +28,11 @@
       <ion-icon name="globe-outline"></ion-icon>
       <span>Langue</span>
     </div>
-    <div class="drawer-item">
+    <div class="drawer-item" (click)="openQuickTour()" id="drawer-quick-tour">
+      <ion-icon name="map-outline"></ion-icon>
+      <span>Quick Tour</span>
+    </div>
+    <div class="drawer-item" (click)="closeDrawer()">
       <ion-icon name="help-circle-outline"></ion-icon>
       <span>Aide</span>
     </div>

@@ -1,0 +1,58 @@
+<div class="tour-modal">
+  <!-- Close / Skip -->
+  <button class="tour-close" (click)="skip()" id="tour-skip-btn">
+    <ion-icon name="close-outline"></ion-icon>
+  </button>
+
+  <!-- Progress bar -->
+  <div class="tour-progress-bar">
+    <div class="tour-progress-fill" [style.width.%]="progress"></div>
+  </div>
+
+  <!-- Step counter -->
+  <span class="tour-counter">{{ currentStep + 1 }} / {{ steps.length }}</span>
+
+  <!-- Step Content -->
+  <div class="tour-step" [class.step-enter]="true">
+
+    <!-- Icon -->
+    <div class="tour-icon-wrap" [style.background]="currentStepData.gradient">
+      <ion-icon [name]="currentStepData.icon"></ion-icon>
+    </div>
+
+    <!-- Text -->
+    <h2 class="tour-title">{{ currentStepData.title }}</h2>
+    <p class="tour-desc">{{ currentStepData.description }}</p>
+
+    <!-- Tip card -->
+    <div class="tour-tip">
+      <ion-icon name="bulb-outline" class="tip-icon"></ion-icon>
+      <span>{{ currentStepData.tip }}</span>
+    </div>
+
+  </div>
+
+  <!-- Dot indicators -->
+  <div class="tour-dots">
+    <button
+      *ngFor="let step of steps; let i = index"
+      class="tour-dot"
+      [class.active]="currentStep === i"
+      [class.completed]="i < currentStep"
+      (click)="goToStep(i)"
+    ></button>
+  </div>
+
+  <!-- Navigation -->
+  <div class="tour-nav">
+    <button class="tour-back-btn" (click)="prevStep()" [class.hidden]="isFirstStep" id="tour-back-btn">
+      <ion-icon name="arrow-back-outline"></ion-icon>
+      Back
+    </button>
+
+    <button class="tour-next-btn" (click)="nextStep()" id="tour-next-btn">
+      {{ isLastStep ? 'Finish Tour' : 'Next' }}
+      <ion-icon [name]="isLastStep ? 'checkmark-outline' : 'arrow-forward-outline'"></ion-icon>
+    </button>
+  </div>
+</div>

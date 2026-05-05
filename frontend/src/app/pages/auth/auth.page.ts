@@ -39,6 +39,12 @@ export class AuthPage implements OnInit {
       this.activeTab = tab;
     }
 
+    // Pre-select role if coming from role-selection page
+    const role = this.route.snapshot.queryParamMap.get('role');
+    if (role === 'client' || role === 'freelancer') {
+      this.registerRole = role;
+    }
+
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.router.navigate(['/home'], { replaceUrl: true });
