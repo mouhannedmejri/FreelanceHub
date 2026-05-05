@@ -71,6 +71,10 @@ export class StorePage implements OnInit, OnDestroy {
     );
   }
 
+  ionViewWillEnter() {
+    this.loadOffers();
+  }
+
   ngOnDestroy() {
     this.subs.forEach((s) => s.unsubscribe());
   }

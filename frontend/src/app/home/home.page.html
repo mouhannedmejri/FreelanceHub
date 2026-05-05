@@ -204,9 +204,9 @@
           </span>
         </div>
 
-        <button class="apply-btn" id="apply-btn-{{ job.id }}">
-          <ion-icon name="send-outline"></ion-icon>
-          Postuler
+        <button class="apply-btn" [class.guest-apply]="!user" (click)="handleApply(job)" id="apply-btn-{{ job.id }}">
+          <ion-icon [name]="user ? 'send-outline' : 'lock-closed-outline'"></ion-icon>
+          {{ user ? 'Postuler' : 'Login to Apply' }}
         </button>
       </div>
     </div>
@@ -217,7 +217,7 @@
 
 </ion-content>
 
-<!-- Fixed Bottom CTA for logged-out users -->
+<!-- Fixed Bottom CTA for guests -->
 <div class="cta-bar" *ngIf="!user">
   <button class="cta-register" (click)="goToAuth('register')" id="cta-register-btn">
     Créer un compte
