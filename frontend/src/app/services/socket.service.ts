@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { io, Socket } from 'socket.io-client';
 import { environment } from '../../environments/environment';
+
+// @ts-ignore — socket.io-client may not have type declarations installed
+declare const require: any;
+let io: any;
+try { io = require('socket.io-client').io; } catch (e) { io = null; }
+
+type Socket = any;
 
 type TypingEvent = {
   conversation_id: string;
@@ -40,9 +46,9 @@ export class SocketService {
       auth: { token },
     });
 
-    this.socket.on('message:new', (payload) => this.messageNewSubject.next(payload));
-    this.socket.on('message:read', (payload) => this.messageReadSubject.next(payload));
-    this.socket.on('message:delivered', (payload) => this.messageDeliveredSubject.next(payload));
+    this.socket.on('message:new', (payload: any) => this.messageNewSubject.next(payload));
+    this.socket.on('message:read', (payload: any) => this.messageReadSubject.next(payload));
+    this.socket.on('message:delivered', (payload: any) => this.messageDeliveredSubject.next(payload));
     this.socket.on('user:typing', (payload: TypingEvent) => this.typingSubject.next(payload));
     this.socket.on('user:online', (payload: { user_id: string; online: boolean }) => {
       const next = new Set(this.onlineUsersSubject.value);

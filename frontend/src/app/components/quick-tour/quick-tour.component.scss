@@ -1,0 +1,258 @@
+:host {
+  --primary: #7c3aed;
+  --primary-light: #a78bfa;
+  --bg: #0f0b1a;
+  --card-bg: rgba(30, 22, 54, 0.95);
+  --card-border: rgba(124, 58, 237, 0.15);
+  --text: #f1f0f5;
+  --text-muted: #a09ab5;
+}
+
+.tour-modal {
+  background: var(--card-bg);
+  border-radius: 28px 28px 0 0;
+  padding: 20px 24px calc(28px + env(safe-area-inset-bottom));
+  max-height: 88vh;
+  overflow-y: auto;
+  position: relative;
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--card-border);
+  border-bottom: none;
+  animation: slideUp 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(60px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Close ────────────────────────────────── */
+
+.tour-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: rgba(15, 11, 26, 0.6);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.25s;
+
+  ion-icon { font-size: 20px; }
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--text);
+  }
+}
+
+/* ── Progress Bar ─────────────────────────── */
+
+.tour-progress-bar {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(124, 58, 237, 0.15);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.tour-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  transition: width 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.tour-counter {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* ── Step Content ─────────────────────────── */
+
+.tour-step {
+  text-align: center;
+  animation: stepFade 0.35s ease;
+}
+
+@keyframes stepFade {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.tour-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s;
+
+  ion-icon {
+    font-size: 34px;
+    color: #fff;
+  }
+}
+
+.tour-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text);
+  margin: 0 0 10px;
+  letter-spacing: -0.3px;
+}
+
+.tour-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0 0 20px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Tip Card ─────────────────────────────── */
+
+.tour-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.tip-icon {
+  font-size: 20px;
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tour-tip span {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* ── Dots ──────────────────────────────────── */
+
+.tour-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: rgba(124, 58, 237, 0.2);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &.active {
+    width: 24px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+  }
+
+  &.completed {
+    background: rgba(124, 58, 237, 0.5);
+  }
+}
+
+/* ── Navigation ───────────────────────────── */
+
+.tour-nav {
+  display: flex;
+  gap: 12px;
+}
+
+.tour-back-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+
+  ion-icon { font-size: 18px; }
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--text);
+  }
+
+  &.hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.tour-next-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.3);
+
+  ion-icon {
+    font-size: 18px;
+    transition: transform 0.25s;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.45);
+
+    ion-icon { transform: translateX(3px); }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
