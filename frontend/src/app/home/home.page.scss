@@ -481,6 +481,23 @@
   &:active {
     transform: translateY(0);
   }
+
+  &.guest-apply {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(168, 85, 247, 0.15));
+    border: 1px solid rgba(124, 58, 237, 0.35);
+    box-shadow: none;
+    color: #c4b5fd;
+
+    ion-icon {
+      font-size: 14px;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(168, 85, 247, 0.25));
+      border-color: rgba(124, 58, 237, 0.5);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.2);
+    }
+  }
 }
 
 /* ── CTA Bar (Logged-out) ─────────────────── */

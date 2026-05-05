@@ -1,0 +1,168 @@
+<div class="auth-modal">
+  <!-- Close button -->
+  <button class="modal-close" (click)="dismiss()" id="auth-modal-close-btn">
+    <ion-icon name="close-outline"></ion-icon>
+  </button>
+
+  <!-- Header message -->
+  <div class="modal-header">
+    <div class="modal-icon-wrap">
+      <ion-icon name="lock-closed-outline"></ion-icon>
+    </div>
+    <h2>{{ message }}</h2>
+    <p class="modal-subtitle">Join FreelanceHub to unlock all features</p>
+  </div>
+
+  <!-- Tab Switcher -->
+  <div class="modal-tab-switcher">
+    <button
+      class="modal-tab-btn"
+      [class.active]="activeTab === 'login'"
+      (click)="switchTab('login')"
+      id="modal-login-tab-btn"
+    >
+      Sign In
+    </button>
+    <button
+      class="modal-tab-btn"
+      [class.active]="activeTab === 'register'"
+      (click)="switchTab('register')"
+      id="modal-register-tab-btn"
+    >
+      Sign Up
+    </button>
+  </div>
+
+  <!-- Login Form -->
+  <div class="modal-tab-content" *ngIf="activeTab === 'login'">
+    <div class="modal-form-group">
+      <div class="modal-input-wrapper">
+        <ion-icon name="mail-outline" class="modal-input-icon"></ion-icon>
+        <input
+          type="email"
+          class="modal-form-input"
+          placeholder="Email address"
+          [(ngModel)]="loginEmail"
+          id="modal-login-email"
+        />
+      </div>
+    </div>
+
+    <div class="modal-form-group">
+      <div class="modal-input-wrapper">
+        <ion-icon name="lock-closed-outline" class="modal-input-icon"></ion-icon>
+        <input
+          type="password"
+          class="modal-form-input"
+          placeholder="Password"
+          [(ngModel)]="loginPassword"
+          id="modal-login-password"
+        />
+      </div>
+    </div>
+
+    <button class="modal-primary-btn" (click)="onLogin()" id="modal-login-submit-btn">
+      <ion-icon name="log-in-outline"></ion-icon>
+      Sign In
+    </button>
+
+    <p class="modal-switch-text">
+      Don't have an account?
+      <button (click)="switchTab('register')">Sign Up</button>
+    </p>
+  </div>
+
+  <!-- Register Form -->
+  <div class="modal-tab-content" *ngIf="activeTab === 'register'">
+    <div class="modal-form-group">
+      <div class="modal-input-wrapper">
+        <ion-icon name="person-outline" class="modal-input-icon"></ion-icon>
+        <input
+          type="text"
+          class="modal-form-input"
+          placeholder="Full Name"
+          [(ngModel)]="registerFullName"
+          id="modal-register-name"
+        />
+      </div>
+    </div>
+
+    <div class="modal-form-group">
+      <div class="modal-input-wrapper">
+        <ion-icon name="mail-outline" class="modal-input-icon"></ion-icon>
+        <input
+          type="email"
+          class="modal-form-input"
+          placeholder="Email address"
+          [(ngModel)]="registerEmail"
+          id="modal-register-email"
+        />
+      </div>
+    </div>
+
+    <div class="modal-form-group">
+      <div class="modal-input-wrapper">
+        <ion-icon name="lock-closed-outline" class="modal-input-icon"></ion-icon>
+        <input
+          type="password"
+          class="modal-form-input"
+          placeholder="Password"
+          [(ngModel)]="registerPassword"
+          id="modal-register-password"
+        />
+      </div>
+    </div>
+
+    <div class="modal-form-group">
+      <div class="modal-input-wrapper">
+        <ion-icon name="lock-closed-outline" class="modal-input-icon"></ion-icon>
+        <input
+          type="password"
+          class="modal-form-input"
+          placeholder="Confirm Password"
+          [(ngModel)]="registerConfirmPassword"
+          id="modal-register-confirm-password"
+        />
+      </div>
+    </div>
+
+    <div class="modal-form-group">
+      <label class="modal-form-label">I am a...</label>
+      <div class="modal-role-selector">
+        <button
+          class="modal-role-card"
+          [class.selected]="registerRole === 'freelancer'"
+          (click)="selectRole('freelancer')"
+          id="modal-role-freelancer"
+        >
+          <ion-icon name="briefcase-outline"></ion-icon>
+          <span>Freelancer</span>
+        </button>
+        <button
+          class="modal-role-card"
+          [class.selected]="registerRole === 'client'"
+          (click)="selectRole('client')"
+          id="modal-role-client"
+        >
+          <ion-icon name="person-outline"></ion-icon>
+          <span>Client</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="modal-primary-btn" (click)="onRegister()" id="modal-register-submit-btn">
+      <ion-icon name="person-add-outline"></ion-icon>
+      Create Account
+    </button>
+
+    <p class="modal-switch-text">
+      Already have an account?
+      <button (click)="switchTab('login')">Sign In</button>
+    </p>
+  </div>
+
+  <!-- Continue as guest -->
+  <button class="modal-guest-btn" (click)="dismiss()" id="modal-continue-guest-btn">
+    Continue as Guest
+  </button>
+</div>

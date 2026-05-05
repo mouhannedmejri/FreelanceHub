@@ -1,6 +1,6 @@
 export interface Offer {
-  id: number;
-  client_id: number;
+  id: number | string;
+  client_id: number | string;
   client_name: string;
   title: string;
   description: string;

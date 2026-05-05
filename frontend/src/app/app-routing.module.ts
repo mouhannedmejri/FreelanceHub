@@ -2,7 +2,8 @@ import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
-import { GuestGuard } from './guards/guest.guard';
+import { GuestAllowedGuard } from './guards/guest-allowed.guard';
+import { AuthRequiredGuard } from './guards/auth-required.guard';
 
 const routes: Routes = [
   {
@@ -22,7 +23,7 @@ const routes: Routes = [
     path: 'home',
     loadChildren: () =>
       import('./pages/tabs/tabs.module').then((m) => m.TabsPageModule),
-    canActivate: [GuestGuard],
+    canActivate: [GuestAllowedGuard],
   },
   {
     path: 'notifications',
@@ -30,7 +31,7 @@ const routes: Routes = [
       import('./pages/notifications/notifications.module').then(
         (m) => m.NotificationsPageModule
       ),
-    canActivate: [AuthGuard],
+    canActivate: [AuthRequiredGuard],
   },
   {
     path: 'publish-offer',
@@ -38,46 +39,47 @@ const routes: Routes = [
       import('./pages/publish-offer/publish-offer.module').then(
         (m) => m.PublishOfferPageModule
       ),
-    canActivate: [AuthGuard, RoleGuard],
+    canActivate: [AuthRequiredGuard, RoleGuard],
     data: { roles: ['client'] }
   },
   {
     path: 'offer-proposals/:id',
     loadChildren: () => import('./pages/offer-proposals/offer-proposals.module').then( m => m.OfferProposalsPageModule),
-    canActivate: [AuthGuard, RoleGuard],
+    canActivate: [AuthRequiredGuard, RoleGuard],
     data: { roles: ['client'] }
   },
   {
     path: 'admin-dashboard',
     loadChildren: () => import('./pages/admin-dashboard/admin-dashboard.module').then( m => m.AdminDashboardPageModule),
-    canActivate: [AuthGuard, RoleGuard],
+    canActivate: [AuthRequiredGuard, RoleGuard],
     data: { roles: ['admin'] }
   },
   {
     path: '',
-    redirectTo: 'auth',
+    redirectTo: 'home',
     pathMatch: 'full',
   },
   {
     path: 'client-dashboard',
     loadChildren: () => import('./pages/client-dashboard/client-dashboard.module').then( m => m.ClientDashboardPageModule),
-    canActivate: [AuthGuard, RoleGuard],
+    canActivate: [AuthRequiredGuard, RoleGuard],
     data: { roles: ['client'] }
   },
   {
     path: 'project-detail/:id',
     loadChildren: () => import('./pages/project-detail/project-detail.module').then( m => m.ProjectDetailPageModule),
-    canActivate: [AuthGuard],
+    canActivate: [AuthRequiredGuard],
   },
   {
     path: 'freelancer-dashboard',
     loadChildren: () => import('./pages/freelancer-dashboard/freelancer-dashboard.module').then( m => m.FreelancerDashboardPageModule),
-    canActivate: [AuthGuard, RoleGuard],
+    canActivate: [AuthRequiredGuard, RoleGuard],
     data: { roles: ['freelancer'] }
   },
   {
     path: 'search',
-    loadChildren: () => import('./pages/search/search.module').then( m => m.SearchPageModule)
+    loadChildren: () => import('./pages/search/search.module').then( m => m.SearchPageModule),
+    canActivate: [GuestAllowedGuard]
   }
 
 ];

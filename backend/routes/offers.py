@@ -62,7 +62,8 @@ def get_offers():
         o["client_name"] = client.get("full_name") if client else ""
 
     return jsonify({
-        "data": serialize_list(offers),
+        "offers": serialize_list(offers),
+        "total": total,
         "meta": {
             "page": page,
             "total": total,
@@ -125,7 +126,8 @@ def get_my_offers():
         o["client_name"] = client.get("full_name") if client else ""
 
     return jsonify({
-        "data": serialize_list(offers),
+        "offers": serialize_list(offers),
+        "total": total,
         "meta": {
             "page": page,
             "total": total,
@@ -136,7 +138,10 @@ def get_my_offers():
 @offers_bp.route('/<offer_id>', methods=['GET'])
 def get_offer(offer_id):
     """Return a single offer by ID."""
-    offer = mongo.db.offers.find_one({"_id": ObjectId(offer_id)})
+    try:
+        offer = mongo.db.offers.find_one({"_id": ObjectId(offer_id)})
+    except Exception:
+        return jsonify({'error': 'Invalid offer ID'}), 400
     if not offer:
         return jsonify({'error': 'Offer not found'}), 404
         
@@ -252,7 +257,8 @@ def get_offer_proposals(offer_id):
         p["freelancer"] = serialize(freelancer) if freelancer else None
 
     return jsonify({
-        "data": serialize_list(proposals),
+        "proposals": serialize_list(proposals),
+        "total": total,
         "meta": {
             "page": page,
             "total": total,

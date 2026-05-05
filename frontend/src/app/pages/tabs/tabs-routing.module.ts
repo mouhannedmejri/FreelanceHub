@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { TabsPage } from './tabs.page';
+import { GuestAllowedGuard } from '../../guards/guest-allowed.guard';
+import { AuthRequiredGuard } from '../../guards/auth-required.guard';
 
 const routes: Routes = [
   {
@@ -11,6 +13,7 @@ const routes: Routes = [
         path: 'dashboard',
         loadChildren: () =>
           import('../../home/home.module').then((m) => m.HomePageModule),
+        canActivate: [GuestAllowedGuard],
       },
       {
         path: 'search',
@@ -18,6 +21,7 @@ const routes: Routes = [
           import('../search/search.module').then(
             (m) => m.SearchPageModule
           ),
+        canActivate: [GuestAllowedGuard],
       },
       {
         path: 'messages',
@@ -25,16 +29,19 @@ const routes: Routes = [
           import('../messages/messages.module').then(
             (m) => m.MessagesPageModule
           ),
+        canActivate: [AuthRequiredGuard],
       },
       {
         path: 'store',
         loadChildren: () =>
           import('../store/store.module').then((m) => m.StorePageModule),
+        canActivate: [GuestAllowedGuard],
       },
       {
         path: 'digital-store',
         loadChildren: () =>
           import('../digital-store/digital-store.module').then((m) => m.DigitalStorePageModule),
+        canActivate: [GuestAllowedGuard],
       },
       {
         path: 'profile',
@@ -42,6 +49,7 @@ const routes: Routes = [
           import('../profile/profile.module').then(
             (m) => m.ProfilePageModule
           ),
+        canActivate: [GuestAllowedGuard],
       },
       {
         path: '',

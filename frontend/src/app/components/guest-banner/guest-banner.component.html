@@ -1,0 +1,17 @@
+<div class="guest-banner" *ngIf="visible">
+  <div class="banner-content">
+    <div class="banner-text">
+      <ion-icon name="eye-outline" class="banner-icon"></ion-icon>
+      <span>Browsing as Guest</span>
+    </div>
+    <div class="banner-actions">
+      <button class="banner-signup-btn" (click)="openSignUp()" id="guest-banner-signup-btn">
+        <ion-icon name="person-add-outline"></ion-icon>
+        Sign Up Free
+      </button>
+      <button class="banner-dismiss-btn" (click)="dismissBanner()" id="guest-banner-dismiss-btn">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+  </div>
+</div>

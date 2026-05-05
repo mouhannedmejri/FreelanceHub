@@ -97,9 +97,13 @@ export class TabsPage implements OnInit, OnDestroy {
     this.drawerOpen = false;
   }
 
-  openNotifications() {
-    if (this.authService.isGuest) {
-      this.guestAccessService.showSignupPrompt('Sign up to view notifications.');
+  async openNotifications() {
+    if (!this.authService.isAuthenticated) {
+      const authed = await this.guestAccessService.showAuthModal(
+        'Sign in to view notifications',
+        { type: 'view_notifications', route: '/notifications' }
+      );
+      if (authed) this.router.navigate(['/notifications']);
       return;
     }
     this.router.navigate(['/notifications']);
@@ -122,19 +126,24 @@ export class TabsPage implements OnInit, OnDestroy {
   }
 
   async openDashboard() {
-    if (!this.user || this.authService.isGuest) {
-      await this.guestAccessService.showSignupPrompt('Sign up to access role dashboards.');
-      return;
+    if (!this.user || !this.authService.isAuthenticated) {
+      const authed = await this.guestAccessService.showAuthModal(
+        'Sign in to access your dashboard',
+        { type: 'view_dashboard', route: '/home/dashboard' }
+      );
+      if (!authed) return;
+      // Reload user after auth
+      this.user = this.authService.currentUser;
     }
-    if (this.user.role === 'client') {
+    if (this.user?.role === 'client') {
       this.navigateFromDrawer('/client-dashboard');
       return;
     }
-    if (this.user.role === 'freelancer') {
+    if (this.user?.role === 'freelancer') {
       this.navigateFromDrawer('/freelancer-dashboard');
       return;
     }
-    if (this.user.role === 'admin') {
+    if (this.user?.role === 'admin') {
       this.navigateFromDrawer('/admin-dashboard');
       return;
     }
@@ -154,6 +163,9 @@ export class TabsPage implements OnInit, OnDestroy {
       return;
     }
     ev.preventDefault();
-    await this.guestAccessService.showSignupPrompt('Sign up to send messages.');
+    await this.guestAccessService.showAuthModal(
+      'Sign in to access messages',
+      { type: 'view_messages', route: '/home/messages' }
+    );
   }
 }

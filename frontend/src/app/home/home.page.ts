@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth.service';
 import { HomeService, HomeStats } from '../services/home.service';
 import { ProjectService } from '../services/project.service';
 import { ProfileService } from '../services/profile.service';
+import { GuestAccessService } from '../services/guest-access.service';
 import { User } from '../models/user.model';
 import { UpcomingMilestone } from '../models/project.model';
 import { Subscription } from 'rxjs';
@@ -78,6 +79,7 @@ export class HomePage implements OnInit, OnDestroy {
     private homeService: HomeService,
     private projectService: ProjectService,
     private profileService: ProfileService,
+    private guestAccessService: GuestAccessService,
     private router: Router
   ) { }
 
@@ -168,5 +170,21 @@ export class HomePage implements OnInit, OnDestroy {
       case 'service': return '#10b981';
       default: return '#3b82f6';
     }
+  }
+
+  async handleApply(job: RecommendedJob) {
+    if (!this.authService.isAuthenticated) {
+      const authed = await this.guestAccessService.showAuthModal(
+        'Sign in to apply for this offer',
+        {
+          type: 'apply_to_offer',
+          targetId: String(job.id),
+          route: `/project-detail/${job.id}`,
+        }
+      );
+      if (!authed) return;
+    }
+    // Navigate to project detail or trigger proposal flow
+    this.router.navigate(['/project-detail', job.id]);
   }
 }

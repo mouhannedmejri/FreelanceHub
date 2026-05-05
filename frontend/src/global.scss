@@ -63,3 +63,19 @@ ion-header ion-toolbar {
 *:focus {
   outline: none;
 }
+
+/* ── Auth Modal Overlay ────────────────── */
+
+.auth-modal-overlay {
+  --background: transparent;
+  --backdrop-opacity: 0.7;
+
+  &::part(content) {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 92vh;
+    border-radius: 28px 28px 0 0;
+  }
+}
