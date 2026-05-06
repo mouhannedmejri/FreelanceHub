@@ -334,3 +334,201 @@ def update_claim(current_user, claim_id):
     
     updated_claim = mongo.db.claims.find_one({"_id": ObjectId(claim_id)})
     return jsonify({"claim": serialize(updated_claim)}), 200
+
+
+# ─── REVENUE ANALYTICS ─────────────────────────────────────────────
+
+@admin_bp.route('/revenue/stats', methods=['GET'])
+@admin_required
+def revenue_stats(current_user):
+    """Comprehensive revenue analytics for admin dashboard."""
+    from payment_config import SUBSCRIPTION_PLANS
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    # Revenue by month (from transactions)
+    monthly_pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {
+            "_id": {
+                "year": {"$year": "$created_at"},
+                "month": {"$month": "$created_at"}
+            },
+            "total_gross": {"$sum": "$gross_amount"},
+            "total_commission": {"$sum": "$platform_commission"},
+            "total_net_to_sellers": {"$sum": "$net_to_seller"},
+            "transaction_count": {"$sum": 1}
+        }},
+        {"$sort": {"_id.year": -1, "_id.month": -1}},
+        {"$limit": 12}
+    ]
+    revenue_by_month = list(mongo.db.transactions.aggregate(monthly_pipeline))
+
+    # Revenue by type
+    type_pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {
+            "_id": "$type",
+            "total_commission": {"$sum": "$platform_commission"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    revenue_by_type = list(mongo.db.transactions.aggregate(type_pipeline))
+
+    # Subscription stats
+    active_subs = mongo.db.subscriptions.count_documents({"status": "active"})
+    pro_subs = mongo.db.subscriptions.count_documents({"status": "active", "plan": "pro"})
+    business_subs = mongo.db.subscriptions.count_documents({"status": "active", "plan": "business"})
+
+    # MRR (Monthly Recurring Revenue)
+    mrr = (pro_subs * SUBSCRIPTION_PLANS['pro']['price']) + \
+          (business_subs * SUBSCRIPTION_PLANS['business']['price'])
+
+    # Total platform earnings
+    total_pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {
+            "_id": None,
+            "total_commission": {"$sum": "$platform_commission"},
+            "total_volume": {"$sum": "$gross_amount"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    total_result = list(mongo.db.transactions.aggregate(total_pipeline))
+    totals = total_result[0] if total_result else {"total_commission": 0, "total_volume": 0, "count": 0}
+
+    # Today's stats
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_pipeline = [
+        {"$match": {"status": "completed", "created_at": {"$gte": today_start}}},
+        {"$group": {
+            "_id": None,
+            "commission": {"$sum": "$platform_commission"},
+            "volume": {"$sum": "$gross_amount"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    today_result = list(mongo.db.transactions.aggregate(today_pipeline))
+    today = today_result[0] if today_result else {"commission": 0, "volume": 0, "count": 0}
+
+    # Pending withdrawals
+    pending_withdrawals = mongo.db.withdrawals.count_documents({"status": "pending"})
+    pending_amount_pipeline = [
+        {"$match": {"status": "pending"}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]
+    pending_amount_result = list(mongo.db.withdrawals.aggregate(pending_amount_pipeline))
+    pending_withdrawal_amount = pending_amount_result[0]["total"] if pending_amount_result else 0
+
+    return jsonify({
+        "revenue_by_month": serialize_list(revenue_by_month),
+        "revenue_by_type": serialize_list(revenue_by_type),
+        "subscriptions": {
+            "active": active_subs,
+            "pro": pro_subs,
+            "business": business_subs,
+            "mrr": round(mrr, 2)
+        },
+        "totals": {
+            "platform_commission": totals.get("total_commission", 0),
+            "transaction_volume": totals.get("total_volume", 0),
+            "transaction_count": totals.get("count", 0)
+        },
+        "today": {
+            "commission": today.get("commission", 0),
+            "volume": today.get("volume", 0),
+            "count": today.get("count", 0)
+        },
+        "withdrawals": {
+            "pending_count": pending_withdrawals,
+            "pending_amount": pending_withdrawal_amount
+        }
+    }), 200
+
+
+@admin_bp.route('/revenue/transactions', methods=['GET'])
+@admin_required
+def revenue_transactions(current_user):
+    """Get all platform transactions with filtering."""
+    tx_type = request.args.get('type', '').strip()
+    status = request.args.get('status', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+
+    query = {}
+    if tx_type:
+        query["type"] = tx_type
+    if status:
+        query["status"] = status
+
+    total = mongo.db.transactions.count_documents(query)
+    transactions = list(
+        mongo.db.transactions.find(query)
+        .sort("created_at", -1)
+        .skip((page - 1) * per_page)
+        .limit(per_page)
+    )
+
+    for tx in transactions:
+        buyer = mongo.db.users.find_one({"_id": ObjectId(tx["buyer_id"])}) if tx.get("buyer_id") and tx["buyer_id"] != "platform" else None
+        seller = mongo.db.users.find_one({"_id": ObjectId(tx["seller_id"])}) if tx.get("seller_id") and tx["seller_id"] != "platform" else None
+        tx["buyer_name"] = buyer.get("full_name", "") if buyer else "Platform"
+        tx["seller_name"] = seller.get("full_name", "") if seller else "Platform"
+
+    return jsonify({
+        "transactions": serialize_list(transactions),
+        "total": total,
+        "page": page,
+        "per_page": per_page
+    }), 200
+
+
+@admin_bp.route('/revenue/withdrawals', methods=['GET'])
+@admin_required
+def get_withdrawals(current_user):
+    """Get all withdrawal requests."""
+    status = request.args.get('status', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+
+    query = {}
+    if status:
+        query["status"] = status
+
+    total = mongo.db.withdrawals.count_documents(query)
+    withdrawals = list(
+        mongo.db.withdrawals.find(query)
+        .sort("requested_at", -1)
+        .skip((page - 1) * per_page)
+        .limit(per_page)
+    )
+
+    for w in withdrawals:
+        user = mongo.db.users.find_one({"_id": ObjectId(w["user_id"])})
+        w["user_name"] = user.get("full_name", "") if user else ""
+
+    return jsonify({
+        "withdrawals": serialize_list(withdrawals),
+        "total": total,
+        "page": page,
+        "per_page": per_page
+    }), 200
+
+
+@admin_bp.route('/revenue/withdrawals/<withdrawal_id>', methods=['PATCH'])
+@admin_required
+def process_withdrawal(current_user, withdrawal_id):
+    """Approve or reject a withdrawal."""
+    data = request.get_json()
+    status = data.get("status")  # completed, rejected
+
+    if status not in ["completed", "rejected"]:
+        return jsonify({"error": "Invalid status"}), 400
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    update = {"status": status, "processed_at": now, "processed_by": str(current_user["_id"])}
+    if status == "rejected":
+        update["rejection_reason"] = data.get("reason", "")
+
+    mongo.db.withdrawals.update_one({"_id": ObjectId(withdrawal_id)}, {"$set": update})
+    return jsonify({"message": f"Withdrawal {status}"}), 200

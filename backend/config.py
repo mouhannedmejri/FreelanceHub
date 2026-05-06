@@ -12,3 +12,9 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = 86400  # 24 hours in seconds
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # Allow multi-image portfolio uploads (10 x 5MB)
+
+    # Stripe Payment Configuration
+    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+    STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
