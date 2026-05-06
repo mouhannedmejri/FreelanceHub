@@ -115,6 +115,10 @@ const routes: Routes = [
     path: 'my-purchases',
     loadChildren: () => import('./pages/my-purchases/my-purchases.module').then( m => m.MyPurchasesPageModule),
     canActivate: [AuthRequiredGuard]
+  },
+  {
+    path: 'pricing',
+    loadChildren: () => import('./pages/pricing/pricing.module').then( m => m.PricingPageModule)
   }
 
 
