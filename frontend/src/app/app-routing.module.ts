@@ -121,6 +121,11 @@ const routes: Routes = [
     path: 'digital-store',
     loadChildren: () => import('./pages/digital-store/digital-store.module').then( m => m.DigitalStorePageModule),
     canActivate: [GuestAllowedGuard]
+    
+  },
+  {
+    path: 'pricing',
+    loadChildren: () => import('./pages/pricing/pricing.module').then( m => m.PricingPageModule)
   }
 
 
