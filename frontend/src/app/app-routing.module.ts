@@ -105,7 +105,18 @@ const routes: Routes = [
     path: 'freelancer/:username',
     loadChildren: () => import('./pages/profile/profile.module').then( m => m.ProfilePageModule),
     canActivate: [GuestAllowedGuard]
+  },  {
+    path: 'seller-dashboard',
+    loadChildren: () => import('./pages/seller-dashboard/seller-dashboard.module').then( m => m.SellerDashboardPageModule),
+    canActivate: [AuthRequiredGuard, RoleGuard],
+    data: { roles: ['freelancer'] }
+  },
+  {
+    path: 'my-purchases',
+    loadChildren: () => import('./pages/my-purchases/my-purchases.module').then( m => m.MyPurchasesPageModule),
+    canActivate: [AuthRequiredGuard]
   }
+
 
 ];
 

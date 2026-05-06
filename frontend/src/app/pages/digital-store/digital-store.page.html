@@ -1,105 +1,336 @@
-<ion-content class="store-content" [fullscreen]="true">
-  <ion-header collapse="condenses">
-    <ion-toolbar>
-      <ion-title size="large">Store</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="store-content">
 
   <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
-  
-  <div class="store-header">
-    <div class="header-bg-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-    </div>
-    <div class="header-content">
-      <h1>Store de produits numériques</h1>
-      <p>Achetez des ressources premium créées par nos meilleurs freelances pour accélérer vos projets.</p>
-      
-      <div class="search-bar">
+
+  <!-- ═══ HERO HEADER ═══ -->
+  <div class="store-hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <h1>Digital Store</h1>
+      <p>Templates, assets & scripts premium créés par nos freelancers experts</p>
+
+      <div class="search-bar" id="store-search-bar">
         <ion-icon name="search-outline"></ion-icon>
-        <input 
-          type="text" 
-          placeholder="Rechercher un produit..." 
-          [(ngModel)]="searchTerm" 
-          (input)="onSearch()"
-        />
+        <input type="text" placeholder="Rechercher un produit..." [(ngModel)]="searchTerm" (input)="onSearch()" id="store-search-input" />
+        <button class="filter-toggle" (click)="openFilterModal()" id="store-filter-btn">
+          <ion-icon name="options-outline"></ion-icon>
+          <span class="filter-badge" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+        </button>
+      </div>
+
+      <div class="hero-actions" *ngIf="!isGuest">
+        <button class="hero-action-btn" *ngIf="isFreelancer" (click)="navigateToSellerDashboard()" id="seller-dashboard-btn">
+          <ion-icon name="storefront-outline"></ion-icon> Mon Dashboard
+        </button>
+        <button class="hero-action-btn secondary" (click)="navigateToMyPurchases()" id="my-purchases-btn">
+          <ion-icon name="bag-handle-outline"></ion-icon> Mes Achats
+        </button>
       </div>
     </div>
   </div>
 
-  <div class="filters-container">
-    <div class="filter-pills">
-      <button 
-        *ngFor="let cat of categories" 
-        class="pill-btn" 
-        [class.active]="activeCategory === cat.id"
-        (click)="filterByCategory(cat.id)"
-      >
-        <ion-icon [name]="cat.icon"></ion-icon>
-        {{ cat.label }}
-      </button>
-    </div>
-    
-    <div class="results-header">
-      <span class="count">{{ displayedProducts.length }} produits trouvés</span>
-      <button class="icon-btn">
-        <ion-icon name="options-outline"></ion-icon>
-        Filtres
-      </button>
+  <!-- ═══ CATEGORY PILLS ═══ -->
+  <div class="categories-scroll">
+    <button *ngFor="let cat of categories" class="cat-pill" [class.active]="activeCategory === cat.id" (click)="filterByCategory(cat.id)" [id]="'cat-' + cat.id">
+      <ion-icon [name]="cat.icon"></ion-icon>
+      <span>{{ cat.label }}</span>
+    </button>
+  </div>
+
+  <!-- ═══ SORT BAR ═══ -->
+  <div class="sort-bar">
+    <span class="result-count">{{ totalProducts }} produits</span>
+    <div class="sort-pills">
+      <button *ngFor="let s of sortOptions" class="sort-pill" [class.active]="activeSort === s.id" (click)="setSort(s.id)">{{ s.label }}</button>
     </div>
   </div>
 
-  <div class="loading-state" *ngIf="isLoading">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Chargement des produits...</p>
+  <!-- ═══ FEATURED CAROUSEL ═══ -->
+  <div class="featured-section" *ngIf="featuredProducts.length > 0 && !activeCategory && !searchTerm">
+    <h2 class="section-title"><ion-icon name="star-outline"></ion-icon> Produits Vedettes</h2>
+    <div class="featured-scroll">
+      <div class="featured-card" *ngFor="let fp of featuredProducts" (click)="openProduct(fp)">
+        <div class="featured-img">
+          <img [src]="fp.image_url || 'assets/placeholder-product.png'" [alt]="fp.title" />
+          <div class="featured-badge">⭐ Featured</div>
+          <div class="featured-price">
+            <span class="old-price" *ngIf="hasDiscount(fp)">{{ fp.price }}€</span>
+            {{ getEffectivePrice(fp) }}€
+          </div>
+        </div>
+        <div class="featured-info">
+          <h3>{{ fp.title }}</h3>
+          <span class="featured-seller">par {{ fp.seller_name }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="products-grid" *ngIf="!isLoading">
-    <div class="product-card" *ngFor="let product of displayedProducts">
+  <!-- ═══ LOADING SKELETON ═══ -->
+  <div class="products-grid" *ngIf="isLoading && displayedProducts.length === 0">
+    <div class="product-card skeleton-card" *ngFor="let i of [1,2,3,4]">
+      <div class="product-image skeleton-shimmer"></div>
+      <div class="product-info">
+        <div class="skeleton-line wide"></div>
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PRODUCTS GRID ═══ -->
+  <div class="products-grid" *ngIf="displayedProducts.length > 0">
+    <div class="product-card" *ngFor="let product of displayedProducts; let idx = index" [id]="'product-' + product.id" [style.animation-delay]="idx * 0.05 + 's'" (click)="openProduct(product)">
+
       <div class="product-image">
-        <img [src]="product.image_url" [alt]="product.title" loading="lazy" />
-        <div class="version-badge">v{{ product.version }}</div>
+        <img [src]="product.image_url || 'assets/placeholder-product.png'" [alt]="product.title" loading="lazy" />
+        <div class="card-badges">
+          <span class="version-badge" *ngIf="product.version">v{{ product.version }}</span>
+          <span class="sale-badge" *ngIf="hasDiscount(product)">-{{ getDiscountPercent(product) }}%</span>
+          <span class="free-badge" *ngIf="product.price === 0">Gratuit</span>
+        </div>
+        <div class="card-category">
+          <ion-icon [name]="getCategoryIcon(product.main_category)"></ion-icon>
+          {{ getCategoryLabel(product.main_category) }}
+        </div>
       </div>
-      
+
       <div class="product-info">
         <h3 class="product-title">{{ product.title }}</h3>
-        <p class="product-desc">{{ product.description }}</p>
-        
+        <p class="product-seller">par {{ product.seller_name }}</p>
+
         <div class="rating-row">
           <div class="stars">
-            <ion-icon name="star"></ion-icon>
-            <span>{{ product.rating }}</span>
+            <ion-icon name="star" *ngFor="let s of getStarArray(product.rating); let i = index" [class.filled]="s === 1"></ion-icon>
+            <span>{{ product.rating | number:'1.1-1' }}</span>
           </div>
-          <div class="sales">
-            <ion-icon name="cart-outline"></ion-icon>
-            <span>{{ product.sales_count }} ventes</span>
-          </div>
+          <span class="sales-count">
+            <ion-icon name="download-outline"></ion-icon>
+            {{ product.sales_count }}
+          </span>
         </div>
 
-        <div class="skills-row" *ngIf="product.skills?.length">
-          <span class="skill-tag" *ngFor="let skill of product.skills | slice:0:3">{{ skill }}</span>
-          <span class="skill-tag" *ngIf="product.skills.length > 3">+{{ product.skills.length - 3 }}</span>
+        <div class="tags-row" *ngIf="product.tags?.length">
+          <span class="tag" *ngFor="let t of product.tags | slice:0:2">{{ t }}</span>
         </div>
       </div>
-      
+
       <div class="product-footer">
-        <div class="price">{{ product.price }}€</div>
-        <button class="buy-btn" (click)="onBuyClick()">{{ isGuest ? 'Sign up to buy' : 'Acheter' }}</button>
+        <div class="price-block">
+          <span class="old-price" *ngIf="hasDiscount(product)">{{ product.price }}€</span>
+          <span class="current-price" [class.free]="product.price === 0">
+            {{ product.price === 0 ? 'Gratuit' : getEffectivePrice(product) + '€' }}
+          </span>
+        </div>
+        <button class="buy-btn" (click)="buyProduct(product); $event.stopPropagation()" [id]="'buy-' + product.id">
+          {{ isGuest ? 'Sign up' : (product.price === 0 ? 'Obtenir' : 'Acheter') }}
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- ═══ EMPTY STATE ═══ -->
   <div class="empty-state" *ngIf="!isLoading && displayedProducts.length === 0">
     <ion-icon name="cube-outline"></ion-icon>
     <h3>Aucun produit trouvé</h3>
     <p>Essayez de modifier vos filtres ou votre recherche.</p>
+    <button class="reset-btn" (click)="resetFilters()">Réinitialiser les filtres</button>
   </div>
 
   <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!hasMore" threshold="200px">
     <ion-infinite-scroll-content loadingSpinner="crescent" loadingText="Chargement..."></ion-infinite-scroll-content>
   </ion-infinite-scroll>
+
+  <!-- ═══ PRODUCT DETAIL MODAL ═══ -->
+  <ion-modal [isOpen]="isProductDetailOpen" (didDismiss)="closeProductDetail()" id="product-detail-modal">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="dark">
+          <ion-buttons slot="start">
+            <ion-button (click)="closeProductDetail()">
+              <ion-icon name="arrow-back-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+          <ion-title>Détails du produit</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="detail-content" *ngIf="selectedProduct">
+
+        <!-- Image Carousel -->
+        <div class="image-carousel">
+          <img [src]="getProductImages(selectedProduct)[activeImageIndex]" [alt]="selectedProduct.title" class="main-image" />
+          <div class="image-thumbs" *ngIf="getProductImages(selectedProduct).length > 1">
+            <img *ngFor="let img of getProductImages(selectedProduct); let i = index" [src]="img" [class.active]="i === activeImageIndex" (click)="setActiveImage(i)" />
+          </div>
+        </div>
+
+        <div class="detail-body">
+          <!-- Title & Price -->
+          <div class="detail-header">
+            <h1>{{ selectedProduct.title }}</h1>
+            <div class="detail-price-block">
+              <span class="old-price" *ngIf="hasDiscount(selectedProduct)">{{ selectedProduct.price }}€</span>
+              <span class="main-price">{{ selectedProduct.price === 0 ? 'Gratuit' : getEffectivePrice(selectedProduct) + '€' }}</span>
+              <span class="license-tag">{{ getLicenseLabel(selectedProduct.license_type) }}</span>
+            </div>
+          </div>
+
+          <!-- Seller Card -->
+          <div class="seller-card">
+            <div class="seller-avatar">{{ selectedProduct.seller_name?.charAt(0) || '?' }}</div>
+            <div class="seller-info">
+              <strong>{{ selectedProduct.seller_name }}</strong>
+              <span>{{ selectedProduct.seller_products_count || 0 }} produits • ⭐ {{ selectedProduct.seller_rating || 0 }}</span>
+            </div>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-row">
+            <div class="stat"><ion-icon name="eye-outline"></ion-icon><span>{{ selectedProduct.view_count || 0 }}</span><small>Vues</small></div>
+            <div class="stat"><ion-icon name="download-outline"></ion-icon><span>{{ selectedProduct.download_count }}</span><small>Téléchargements</small></div>
+            <div class="stat"><ion-icon name="star-outline"></ion-icon><span>{{ selectedProduct.rating }}</span><small>Note</small></div>
+            <div class="stat"><ion-icon name="cart-outline"></ion-icon><span>{{ selectedProduct.sales_count }}</span><small>Ventes</small></div>
+          </div>
+
+          <!-- Description -->
+          <div class="detail-section">
+            <h3>Description</h3>
+            <p>{{ selectedProduct.description }}</p>
+          </div>
+
+          <!-- What's Included -->
+          <div class="detail-section" *ngIf="selectedProduct.whats_included?.length">
+            <h3>Ce qui est inclus</h3>
+            <ul class="included-list">
+              <li *ngFor="let item of selectedProduct.whats_included">
+                <ion-icon name="checkmark-circle-outline"></ion-icon> {{ item }}
+              </li>
+            </ul>
+          </div>
+
+          <!-- Compatibility -->
+          <div class="detail-section" *ngIf="selectedProduct.compatibility?.length">
+            <h3>Compatibilité</h3>
+            <div class="compat-tags">
+              <span *ngFor="let c of selectedProduct.compatibility" class="compat-tag">{{ c }}</span>
+            </div>
+          </div>
+
+          <!-- Tech Info -->
+          <div class="tech-info">
+            <div class="tech-item" *ngIf="selectedProduct.file_type"><strong>Format:</strong> {{ selectedProduct.file_type }}</div>
+            <div class="tech-item" *ngIf="selectedProduct.file_size !== '0'"><strong>Taille:</strong> {{ formatFileSize(selectedProduct.file_size) }}</div>
+            <div class="tech-item" *ngIf="selectedProduct.version"><strong>Version:</strong> {{ selectedProduct.version }}</div>
+            <div class="tech-item"><strong>Support:</strong> {{ selectedProduct.support_included ? 'Inclus' : 'Non inclus' }}</div>
+            <div class="tech-item" *ngIf="selectedProduct.last_updated"><strong>Mise à jour:</strong> {{ selectedProduct.last_updated | date:'dd/MM/yyyy' }}</div>
+          </div>
+
+          <!-- Reviews -->
+          <div class="detail-section" *ngIf="selectedProduct.reviews?.length">
+            <h3>Avis ({{ selectedProduct.reviews?.length }})</h3>
+            <div class="review-card" *ngFor="let review of selectedProduct.reviews | slice:0:5">
+              <div class="review-header">
+                <div class="review-avatar">{{ review.reviewer_name?.charAt(0) || '?' }}</div>
+                <div>
+                  <strong>{{ review.reviewer_name }}</strong>
+                  <div class="review-stars">
+                    <ion-icon name="star" *ngFor="let s of getStarArray(review.rating)" [class.filled]="s === 1"></ion-icon>
+                  </div>
+                </div>
+                <span class="review-date">{{ review.created_at | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <p class="review-comment">{{ review.comment }}</p>
+            </div>
+          </div>
+
+          <!-- Related Products -->
+          <div class="detail-section" *ngIf="selectedProduct.related_products?.length">
+            <h3>Produits similaires</h3>
+            <div class="related-scroll">
+              <div class="related-card" *ngFor="let rp of selectedProduct.related_products" (click)="openProduct(rp)">
+                <img [src]="rp.image_url || 'assets/placeholder-product.png'" [alt]="rp.title" />
+                <span class="related-title">{{ rp.title }}</span>
+                <span class="related-price">{{ rp.price === 0 ? 'Gratuit' : rp.price + '€' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Buy Footer -->
+        <div class="buy-footer">
+          <button class="demo-btn" *ngIf="selectedProduct.demo_url" (click)="openDemo(selectedProduct.demo_url)" id="try-demo-btn">
+            <ion-icon name="open-outline"></ion-icon> Démo
+          </button>
+          <button class="purchase-btn" (click)="buyProduct(selectedProduct)" [disabled]="isPurchasing" id="purchase-btn">
+            <ion-spinner *ngIf="isPurchasing" name="crescent"></ion-spinner>
+            <ng-container *ngIf="!isPurchasing">
+              <ion-icon name="cart-outline"></ion-icon>
+              {{ selectedProduct.price === 0 ? 'Obtenir gratuitement' : 'Acheter ' + getEffectivePrice(selectedProduct) + '€' }}
+            </ng-container>
+          </button>
+        </div>
+
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- ═══ FILTER MODAL ═══ -->
+  <ion-modal [isOpen]="isFilterModalOpen" (didDismiss)="isFilterModalOpen = false" breakpoints="[0, 0.85]" initialBreakpoint="0.85" id="filter-modal">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar color="dark">
+          <ion-title>Filtres avancés</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="resetFilters()" color="medium">Réinitialiser</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="filter-content">
+        <div class="filter-body">
+
+          <h3>Catégorie</h3>
+          <div class="chip-group">
+            <ion-chip *ngFor="let cat of categories" [class.active]="activeCategory === cat.id" (click)="activeCategory = activeCategory === cat.id ? '' : cat.id">
+              <ion-icon [name]="cat.icon"></ion-icon>
+              <ion-label>{{ cat.label }}</ion-label>
+            </ion-chip>
+          </div>
+
+          <h3>Licence</h3>
+          <div class="chip-group">
+            <ion-chip *ngFor="let l of licenseTypes" [class.active]="activeLicense === l.id" (click)="activeLicense = activeLicense === l.id ? '' : l.id">
+              <ion-label>{{ l.label }}</ion-label>
+            </ion-chip>
+          </div>
+
+          <h3>Prix</h3>
+          <div class="price-toggle">
+            <ion-toggle [(ngModel)]="showFreeOnly" color="success"></ion-toggle>
+            <span>Gratuit uniquement</span>
+          </div>
+          <div class="price-inputs" *ngIf="!showFreeOnly">
+            <div class="price-field">
+              <label>Min (€)</label>
+              <input type="number" [(ngModel)]="priceRange.min" placeholder="0" />
+            </div>
+            <div class="price-field">
+              <label>Max (€)</label>
+              <input type="number" [(ngModel)]="priceRange.max" placeholder="999" />
+            </div>
+          </div>
+
+        </div>
+      </ion-content>
+      <ion-footer class="ion-no-border">
+        <ion-toolbar color="dark">
+          <ion-button expand="block" (click)="applyFilters()" class="apply-btn">
+            Appliquer ({{ activeFilterCount }} actifs)
+          </ion-button>
+        </ion-toolbar>
+      </ion-footer>
+    </ng-template>
+  </ion-modal>
 
 </ion-content>

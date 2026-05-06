@@ -1,4 +1,4 @@
-﻿<ion-content class="profile-content" [fullscreen]="true">
+<ion-content class="profile-content">
   <div class="loading-profile" *ngIf="isLoading">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading profile...</p>
@@ -120,9 +120,12 @@
 
     <div class="tab-content" *ngIf="currentTab === 'projects'">
       <div class="section-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="portfolio-header">
           <h3><ion-icon name="images-outline"></ion-icon>Portfolio Projects</h3>
-          <ion-button size="small" *ngIf="isOwnProfile" (click)="openAddProjectModal()">Add Project</ion-button>
+          <button class="add-project-btn" *ngIf="isOwnProfile" (click)="openAddProjectModal()" id="add-project-btn">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            Add Project
+          </button>
         </div>
         <app-portfolio-grid
           [projects]="profile.profile?.portfolio_projects || []"

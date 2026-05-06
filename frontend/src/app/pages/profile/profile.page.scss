@@ -25,6 +25,8 @@
   background: var(--gradient);
   border-radius: 0 0 32px 32px;
   overflow: hidden;
+  /* Push below the tabs shell top-bar */
+  margin-top: 0;
 }
 
 .hero-bg-shapes {
@@ -65,14 +67,14 @@
 
 .edit-floating-btn {
   position: absolute;
-  top: 16px;
+  top: 14px;
   right: 16px;
   z-index: 10;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #fff;
   display: flex;
   align-items: center;
@@ -80,7 +82,9 @@
   font-size: 20px;
   cursor: pointer;
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 
   &:active {
     transform: scale(0.9);
@@ -461,7 +465,7 @@
 }
 
 .tab-content {
-  padding: 0 16px 40px;
+  padding: 0 16px 100px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -471,6 +475,41 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* ── Portfolio Header ──────────────────────── */
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.add-project-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+  transition: all 0.25s;
+  white-space: nowrap;
+
+  ion-icon {
+    font-size: 16px;
+  }
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.5);
+  }
 }
 
 /* ══════════════════════════════════════════════════

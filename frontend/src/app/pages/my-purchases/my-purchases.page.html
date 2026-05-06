@@ -1,0 +1,80 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home/store"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Mes Achats</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="purchases-content">
+  <ion-refresher slot="fixed" (ionRefresh)="loadPurchases($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="header-banner">
+    <h2>Ma Bibliothèque</h2>
+    <p>Retrouvez tous vos produits numériques et modèles achetés ici.</p>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Chargement de vos achats...</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && purchases.length === 0">
+    <ion-icon name="bag-handle-outline"></ion-icon>
+    <h3>Aucun achat</h3>
+    <p>Vous n'avez pas encore acheté de produit numérique.</p>
+    <ion-button routerLink="/digital-store" color="primary" class="explore-btn">Explorer le store</ion-button>
+  </div>
+
+  <div class="purchases-list" *ngIf="!isLoading && purchases.length > 0">
+    <div class="purchase-card" *ngFor="let p of purchases">
+      <div class="card-header">
+        <div class="status-badge" [ngClass]="getStatusColor(p.status)">
+          {{ getStatusLabel(p.status) }}
+        </div>
+        <span class="date">{{ p.purchase_date | date:'dd MMM yyyy' }}</span>
+      </div>
+
+      <div class="product-info">
+        <img [src]="p.product?.image_url || 'assets/placeholder-product.png'" class="product-img" />
+        <div class="info-text">
+          <h3>{{ p.product?.title || 'Produit indisponible' }}</h3>
+          <span class="seller">par {{ p.seller_name || 'Vendeur inconnu' }}</span>
+          <span class="price">{{ p.amount }}€</span>
+        </div>
+      </div>
+
+      <div class="download-stats">
+        <div class="stat">
+          <strong>{{ p.download_count }} / {{ p.download_limit }}</strong>
+          <span>Téléchargements restants: {{ p.download_limit - p.download_count }}</span>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="action-btn download-btn" 
+                (click)="downloadProduct(p)" 
+                [disabled]="p.download_count >= p.download_limit || p.status !== 'completed'">
+          <ion-icon name="cloud-download-outline"></ion-icon>
+          Télécharger
+        </button>
+        
+        <button class="action-btn review-btn" (click)="leaveReview(p)" *ngIf="p.status === 'completed'">
+          <ion-icon name="star-outline"></ion-icon>
+          Avis
+        </button>
+        
+        <button class="action-btn refund-btn" 
+                (click)="requestRefund(p)" 
+                *ngIf="isRefundEligible(p)">
+          <ion-icon name="arrow-undo-outline"></ion-icon>
+          Remboursement
+        </button>
+      </div>
+    </div>
+  </div>
+
+</ion-content>

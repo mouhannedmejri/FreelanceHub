@@ -1,0 +1,244 @@
+:host {
+  --bg: #0f0a1f;
+  --card-bg: rgba(30, 22, 54, 0.85);
+  --card-border: rgba(124, 58, 237, 0.12);
+  --primary: #7c3aed;
+  --primary-light: #a78bfa;
+  --text: #f1f0f5;
+  --text-muted: #9a93b0;
+  --gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+}
+
+.dashboard-content {
+  --background: var(--bg);
+}
+
+.segment-content {
+  padding: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ═══ STATS GRID ═══ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  ion-icon {
+    font-size: 32px;
+    padding: 10px;
+    border-radius: 12px;
+    
+    &.icon-revenue { color: #10b981; background: rgba(16, 185, 129, 0.1); }
+    &.icon-sales { color: #06b6d4; background: rgba(6, 182, 212, 0.1); }
+    &.icon-views { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+    &.icon-downloads { color: #8b5cf6; background: rgba(139, 92, 246, 0.1); }
+  }
+
+  .stat-info {
+    h3 { margin: 0 0 4px; font-size: 18px; font-weight: 700; color: var(--text); }
+    span { font-size: 11px; color: var(--text-muted); }
+  }
+}
+
+/* ═══ SECTIONS ═══ */
+.section-block {
+  margin-bottom: 24px;
+
+  .section-title {
+    font-size: 16px; font-weight: 700; color: var(--text);
+    margin: 0 0 12px;
+  }
+}
+
+/* ═══ RECENT SALES ═══ */
+.sales-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.sale-item {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+  padding: 12px; border-radius: 12px;
+  
+  .sale-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(16, 185, 129, 0.1); color: #10b981;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  
+  .sale-details {
+    flex: 1;
+    strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+    span { font-size: 11px; color: var(--text-muted); }
+  }
+  
+  .sale-amount {
+    font-weight: 700; color: #10b981; font-size: 14px;
+  }
+}
+
+/* ═══ TOP PRODUCTS ═══ */
+.top-products-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.top-product-item {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+  padding: 8px 12px; border-radius: 12px;
+
+  .rank { font-weight: 700; color: var(--text-muted); font-size: 14px; width: 24px; }
+  img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+  .info {
+    flex: 1;
+    strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+    span { font-size: 11px; color: var(--text-muted); }
+  }
+  .revenue { font-weight: 700; color: var(--primary-light); font-size: 14px; }
+}
+
+/* ═══ PRODUCT LIST (TAB) ═══ */
+.product-list {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.product-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  padding: 12px; border-radius: 16px;
+
+  .product-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
+  
+  .product-info {
+    flex: 1;
+    h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+    p { font-size: 12px; color: var(--primary-light); margin: 0 0 6px; font-weight: 600; }
+    .product-stats {
+      display: flex; gap: 12px;
+      span { 
+        display: flex; align-items: center; gap: 4px;
+        font-size: 11px; color: var(--text-muted);
+        ion-icon { font-size: 12px; }
+      }
+    }
+  }
+
+  .actions {
+    display: flex; flex-direction: column; gap: 8px;
+    button {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      border: none; cursor: pointer;
+      &.edit-btn { background: rgba(255,255,255,0.1); color: #fff; }
+      &.delete-btn { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    }
+  }
+}
+
+/* ═══ ADD FORM ═══ */
+.add-form {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 20px;
+
+  .form-row { display: flex; gap: 12px; }
+
+  .form-group {
+    margin-bottom: 16px; flex: 1;
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text); font-family: inherit; font-size: 14px;
+      &:focus { outline: none; border-color: var(--primary); }
+    }
+    
+    select option { background: var(--bg); color: var(--text); }
+  }
+
+  .checkbox-group {
+    label { display: flex; align-items: center; gap: 8px; color: var(--text); cursor: pointer; }
+    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+  }
+
+  .file-upload-box {
+    position: relative;
+    border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    height: 80px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; cursor: pointer;
+
+    input[type="file"] {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; z-index: 2;
+    }
+
+    .upload-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: var(--text-muted);
+      ion-icon { font-size: 24px; color: var(--primary-light); }
+      span { font-size: 12px; }
+    }
+
+    .file-selected {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--success); font-weight: 600; font-size: 13px;
+      ion-icon { font-size: 20px; }
+    }
+  }
+
+  .preview-images-list {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+    .preview-thumb {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 8px;
+      font-size: 11px; color: var(--text);
+      button { background: none; border: none; color: var(--danger); display: flex; padding: 0; font-size: 14px; cursor: pointer; }
+    }
+  }
+
+  .submit-btn {
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: var(--gradient); color: #fff;
+    font-weight: 700; font-size: 15px; border: none;
+    margin-top: 10px; cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+    &:disabled { opacity: 0.6; }
+  }
+}
+
+.empty-state {
+  text-align: center; padding: 40px 20px;
+  ion-icon { font-size: 48px; color: var(--text-muted); opacity: 0.5; margin-bottom: 12px; }
+  h3 { color: var(--text); margin: 0 0 8px; }
+  p { color: var(--text-muted); font-size: 14px; margin: 0 0 20px; }
+  .add-btn {
+    background: var(--gradient); color: #fff; border: none;
+    padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer;
+  }
+}
+
+.loading-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; color: var(--text-muted);
+  ion-spinner { margin-bottom: 12px; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
