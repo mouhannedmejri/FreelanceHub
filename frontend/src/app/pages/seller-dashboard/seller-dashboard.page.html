@@ -1,0 +1,208 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home/store"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Dashboard Vendeur</ion-title>
+  </ion-toolbar>
+  <ion-toolbar color="dark">
+    <ion-segment [(ngModel)]="activeSegment" (ionChange)="segmentChanged($event)" color="primary">
+      <ion-segment-button value="overview">Aperçu</ion-segment-button>
+      <ion-segment-button value="products">Produits</ion-segment-button>
+      <ion-segment-button value="add">Ajouter</ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="dashboard-content">
+  <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="loading-state" *ngIf="isLoading && !analytics">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Chargement des données...</p>
+  </div>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <div *ngIf="activeSegment === 'overview' && analytics" class="segment-content">
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <ion-icon name="cash-outline" class="icon-revenue"></ion-icon>
+        <div class="stat-info">
+          <h3>{{ analytics.total_revenue }}€</h3>
+          <span>Revenus totaux</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="cart-outline" class="icon-sales"></ion-icon>
+        <div class="stat-info">
+          <h3>{{ analytics.total_sales }}</h3>
+          <span>Ventes</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="eye-outline" class="icon-views"></ion-icon>
+        <div class="stat-info">
+          <h3>{{ analytics.total_views }}</h3>
+          <span>Vues</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <ion-icon name="download-outline" class="icon-downloads"></ion-icon>
+        <div class="stat-info">
+          <h3>{{ analytics.total_downloads }}</h3>
+          <span>Téléchargements</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" *ngIf="analytics.recent_sales?.length">
+      <h2 class="section-title">Ventes récentes</h2>
+      <div class="sales-list">
+        <div class="sale-item" *ngFor="let sale of analytics.recent_sales">
+          <div class="sale-icon"><ion-icon name="bag-check-outline"></ion-icon></div>
+          <div class="sale-details">
+            <strong>{{ sale.product_title }}</strong>
+            <span>Acheté par {{ sale.buyer_name }}</span>
+          </div>
+          <div class="sale-amount">+{{ sale.amount }}€</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-block" *ngIf="analytics.top_products?.length">
+      <h2 class="section-title">Top Produits</h2>
+      <div class="top-products-list">
+        <div class="top-product-item" *ngFor="let p of analytics.top_products; let i = index">
+          <div class="rank">#{{ i + 1 }}</div>
+          <img [src]="p.image_url || 'assets/placeholder-product.png'" />
+          <div class="info">
+            <strong>{{ p.title }}</strong>
+            <span>{{ p.sales_count }} ventes</span>
+          </div>
+          <div class="revenue">{{ p.price * p.sales_count }}€</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ PRODUCTS ═══ -->
+  <div *ngIf="activeSegment === 'products'" class="segment-content">
+    
+    <div class="empty-state" *ngIf="products.length === 0">
+      <ion-icon name="cube-outline"></ion-icon>
+      <h3>Aucun produit</h3>
+      <p>Vous n'avez pas encore ajouté de produit à votre boutique.</p>
+      <button class="add-btn" (click)="activeSegment = 'add'">Ajouter un produit</button>
+    </div>
+
+    <div class="product-list" *ngIf="products.length > 0">
+      <div class="product-item" *ngFor="let p of products">
+        <img [src]="p.image_url || 'assets/placeholder-product.png'" class="product-img" />
+        <div class="product-info">
+          <h3>{{ p.title }}</h3>
+          <p>{{ p.price === 0 ? 'Gratuit' : p.price + '€' }} • {{ p.sales_count }} ventes</p>
+          <div class="product-stats">
+            <span><ion-icon name="eye-outline"></ion-icon> {{ p.view_count || 0 }}</span>
+            <span><ion-icon name="download-outline"></ion-icon> {{ p.download_count || 0 }}</span>
+            <span><ion-icon name="star-outline"></ion-icon> {{ p.rating || 0 }}</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="edit-btn"><ion-icon name="create-outline"></ion-icon></button>
+          <button class="delete-btn" (click)="deleteProduct(p)"><ion-icon name="trash-outline"></ion-icon></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ ADD PRODUCT ═══ -->
+  <div *ngIf="activeSegment === 'add'" class="segment-content">
+    <div class="add-form">
+      <div class="form-group">
+        <label>Titre du produit *</label>
+        <input type="text" [(ngModel)]="newProduct.title" placeholder="Ex: Template E-commerce React" />
+      </div>
+
+      <div class="form-group">
+        <label>Catégorie *</label>
+        <select [(ngModel)]="newProduct.main_category">
+          <option value="">Sélectionner une catégorie</option>
+          <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Description *</label>
+        <textarea [(ngModel)]="newProduct.description" rows="4" placeholder="Décrivez votre produit en détail..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prix (€) *</label>
+          <input type="number" [(ngModel)]="newProduct.price" placeholder="0 pour gratuit" />
+        </div>
+        <div class="form-group">
+          <label>Licence</label>
+          <select [(ngModel)]="newProduct.license_type">
+            <option value="single">Unique</option>
+            <option value="multiple">Multiple</option>
+            <option value="unlimited">Illimitée</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label>
+          <input type="checkbox" [(ngModel)]="newProduct.support_included" />
+          Support technique inclus
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Fichier du produit (ZIP, PDF, etc.) *</label>
+        <div class="file-upload-box">
+          <input type="file" (change)="onFileSelected($event, 'product')" id="productFile" accept=".zip,.pdf,.fig,.sketch,.rar" />
+          <div class="upload-placeholder" *ngIf="!productFile">
+            <ion-icon name="cloud-upload-outline"></ion-icon>
+            <span>Cliquez pour sélectionner le fichier à vendre</span>
+          </div>
+          <div class="file-selected" *ngIf="productFile">
+            <ion-icon name="document-outline"></ion-icon>
+            <span>{{ productFile.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Images de présentation</label>
+        <div class="file-upload-box">
+          <input type="file" (change)="onFileSelected($event, 'preview')" multiple accept="image/*" />
+          <div class="upload-placeholder">
+            <ion-icon name="images-outline"></ion-icon>
+            <span>Ajouter des images</span>
+          </div>
+        </div>
+        
+        <div class="preview-images-list" *ngIf="previewImages.length > 0">
+          <div class="preview-thumb" *ngFor="let img of previewImages; let i = index">
+            <ion-icon name="image-outline"></ion-icon>
+            <span>Image {{ i + 1 }}</span>
+            <button (click)="removePreviewImage(i)"><ion-icon name="close-circle"></ion-icon></button>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" (click)="submitProduct()" [disabled]="isLoading">
+        <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+        <span *ngIf="!isLoading">Publier le produit</span>
+      </button>
+
+    </div>
+  </div>
+
+</ion-content>

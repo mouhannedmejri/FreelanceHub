@@ -1,0 +1,124 @@
+:host {
+  --bg: #0f0a1f;
+  --card-bg: rgba(30, 22, 54, 0.85);
+  --card-border: rgba(124, 58, 237, 0.12);
+  --primary: #7c3aed;
+  --primary-light: #a78bfa;
+  --text: #f1f0f5;
+  --text-muted: #9a93b0;
+  --gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+.purchases-content {
+  --background: var(--bg);
+}
+
+.header-banner {
+  padding: 24px 20px;
+  background: linear-gradient(160deg, rgba(124,58,237,0.15) 0%, rgba(6,182,212,0.05) 100%);
+  border-bottom: 1px solid var(--card-border);
+  
+  h2 { font-size: 24px; font-weight: 800; color: var(--text); margin: 0 0 8px; }
+  p { font-size: 14px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+}
+
+.loading-state, .empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; text-align: center; color: var(--text-muted);
+}
+
+.empty-state {
+  ion-icon { font-size: 56px; opacity: 0.3; margin-bottom: 16px; }
+  h3 { color: var(--text); font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+  p { font-size: 14px; margin: 0 0 24px; }
+  .explore-btn { --border-radius: 12px; font-weight: 600; }
+}
+
+.purchases-list {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 20px;
+}
+
+.purchase-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+
+  .card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+
+    .status-badge {
+      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px;
+      &.success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+      &.warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+      &.danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+      &.medium { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
+    }
+    
+    .date { font-size: 12px; color: var(--text-muted); }
+  }
+
+  .product-info {
+    display: flex; gap: 14px; margin-bottom: 16px;
+    
+    .product-img {
+      width: 80px; height: 80px; border-radius: 12px; object-fit: cover;
+      background: rgba(0,0,0,0.2);
+    }
+    
+    .info-text {
+      flex: 1;
+      h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 4px; line-height: 1.3; }
+      .seller { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+      .price { display: block; font-size: 14px; font-weight: 800; color: var(--primary-light); }
+    }
+  }
+
+  .download-stats {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 16px;
+    
+    .stat {
+      display: flex; justify-content: space-between; align-items: center;
+      strong { font-size: 14px; color: var(--text); }
+      span { font-size: 12px; color: var(--text-muted); }
+    }
+  }
+
+  .card-actions {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    
+    .action-btn {
+      flex: 1; min-width: 120px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px; border-radius: 10px; border: none;
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      
+      ion-icon { font-size: 16px; }
+      
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+      
+      &.download-btn {
+        background: var(--gradient); color: #fff;
+      }
+      
+      &.review-btn {
+        background: rgba(124, 58, 237, 0.15); color: var(--primary-light);
+        border: 1px solid rgba(124, 58, 237, 0.25);
+      }
+      
+      &.refund-btn {
+        background: rgba(255, 255, 255, 0.05); color: var(--text-muted);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        &:hover:not(:disabled) { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
+      }
+    }
+  }
+}
