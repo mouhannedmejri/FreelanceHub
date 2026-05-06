@@ -5,6 +5,9 @@ import { GuestAccessService } from '../../services/guest-access.service';
 import { ToastController, AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 
+type PlanFeatureKey = keyof SubscriptionPlan['features'];
+type PlanFeatureValue = SubscriptionPlan['features'][PlanFeatureKey];
+
 @Component({
   selector: 'app-pricing',
   templateUrl: './pricing.page.html',
@@ -20,6 +23,18 @@ export class PricingPage implements OnInit {
   isSubscribing = false;
   billingToggle: 'monthly' | 'yearly' = 'monthly';
   activeSection = 'plans'; // plans, features, boosts
+  comparisonFeatureKeys: PlanFeatureKey[] = [
+    'proposals_per_month',
+    'offers_per_month',
+    'commission_rate',
+    'store_listings',
+    'featured_listing',
+    'priority_support',
+    'analytics',
+    'verified_badge',
+    'dedicated_manager',
+    'api_access'
+  ];
 
   constructor(
     private paymentService: PaymentService,
@@ -83,15 +98,15 @@ export class PricingPage implements OnInit {
     return 'Changer de plan';
   }
 
-  getFeatureDisplay(value: any): string {
+  getFeatureDisplay(value: PlanFeatureValue): string {
     if (value === true) return '✓';
     if (value === false) return '✗';
     if (value === 'unlimited') return '∞';
     return String(value);
   }
 
-  getFeatureLabel(key: string): string {
-    const labels: Record<string, string> = {
+  getFeatureLabel(key: PlanFeatureKey): string {
+    const labels: Record<PlanFeatureKey, string> = {
       proposals_per_month: 'Propositions/mois',
       offers_per_month: 'Offres/mois',
       commission_rate: 'Commission',
@@ -103,11 +118,22 @@ export class PricingPage implements OnInit {
       dedicated_manager: 'Manager dédié',
       api_access: 'Accès API'
     };
-    return labels[key] || key;
+    return labels[key];
   }
 
-  getCommissionDisplay(rate: number): string {
-    return `${(rate * 100).toFixed(0)}%`;
+  getFeatureLabelFromString(key: string): string {
+    return this.getFeatureLabel(key as PlanFeatureKey);
+  }
+
+  getCommissionDisplay(rate: PlanFeatureValue): string {
+    if (typeof rate === 'number') {
+      return `${(rate * 100).toFixed(0)}%`;
+    }
+    return String(rate);
+  }
+
+  getPlanFeature(plan: SubscriptionPlan, key: PlanFeatureKey): PlanFeatureValue {
+    return plan.features[key];
   }
 
   getSavingsDisplay(planId: string): string {

@@ -71,7 +71,7 @@
               {{ getFeatureDisplay(entry.value) }}
             </ng-template>
           </span>
-          <span class="feature-label">{{ getFeatureLabel(entry.key) }}</span>
+          <span class="feature-label">{{ getFeatureLabelFromString(entry.key) }}</span>
         </div>
       </div>
 
@@ -101,15 +101,15 @@
           <div class="col label-col">Fonctionnalité</div>
           <div class="col" *ngFor="let plan of plans">{{ plan.name }}</div>
         </div>
-        <div class="table-row" *ngFor="let key of ['proposals_per_month', 'offers_per_month', 'commission_rate', 'store_listings', 'featured_listing', 'priority_support', 'analytics', 'verified_badge', 'dedicated_manager', 'api_access']">
+        <div class="table-row" *ngFor="let key of comparisonFeatureKeys">
           <div class="col label-col">{{ getFeatureLabel(key) }}</div>
           <div class="col" *ngFor="let plan of plans">
-            <span [class.check]="plan.features[key] === true" [class.cross]="plan.features[key] === false">
+            <span [class.check]="getPlanFeature(plan, key) === true" [class.cross]="getPlanFeature(plan, key) === false">
               <ng-container *ngIf="key === 'commission_rate'; else normalCompare">
-                {{ getCommissionDisplay(plan.features[key]) }}
+                {{ getCommissionDisplay(getPlanFeature(plan, key)) }}
               </ng-container>
               <ng-template #normalCompare>
-                {{ getFeatureDisplay(plan.features[key]) }}
+                {{ getFeatureDisplay(getPlanFeature(plan, key)) }}
               </ng-template>
             </span>
           </div>

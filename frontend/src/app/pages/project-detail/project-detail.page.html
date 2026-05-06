@@ -106,7 +106,7 @@
     <ng-container *ngIf="currentTab === 'milestones'">
       <div class="section-top-bar">
         <h2 class="section-heading">Milestones</h2>
-        <ion-button size="small" fill="outline" color="primary" (click)="addMilestone()" id="btn-add-milestone">
+        <ion-button *ngIf="isClient" size="small" fill="outline" color="primary" (click)="addMilestone()" id="btn-add-milestone">
           <ion-icon name="add-outline" slot="start"></ion-icon> Ajouter
         </ion-button>
       </div>
@@ -159,12 +159,12 @@
             <div class="milestone-tasks" *ngIf="isMilestoneExpanded(m.id)">
               <div class="milestone-actions">
                 <ion-button size="small" fill="clear" color="warning"
-                            *ngIf="m.status !== 'in_progress'"
+                            *ngIf="isClient && m.status !== 'in_progress'"
                             (click)="updateMilestoneStatus(m.id, 'in_progress'); $event.stopPropagation()">
                   <ion-icon name="play-outline" slot="start"></ion-icon> Démarrer
                 </ion-button>
                 <ion-button size="small" fill="clear" color="success"
-                            *ngIf="m.status !== 'done'"
+                            *ngIf="isClient && m.status !== 'done'"
                             (click)="updateMilestoneStatus(m.id, 'done'); $event.stopPropagation()">
                   <ion-icon name="checkmark-outline" slot="start"></ion-icon> Terminer
                 </ion-button>
@@ -194,7 +194,7 @@
     <ng-container *ngIf="currentTab === 'tasks'">
       <div class="section-top-bar">
         <h2 class="section-heading">Tableau Kanban</h2>
-        <ion-button size="small" fill="outline" color="primary" (click)="addTask()" id="btn-add-task">
+        <ion-button *ngIf="isClient" size="small" fill="outline" color="primary" (click)="addTask()" id="btn-add-task">
           <ion-icon name="add-outline" slot="start"></ion-icon> Nouvelle tâche
         </ion-button>
       </div>
@@ -215,13 +215,13 @@
 
           <div class="task-card"
                *ngFor="let task of col.tasks"
-               draggable="true"
+               [attr.draggable]="isClient ? 'true' : null"
                (dragstart)="onDragStart(task)">
             <div class="task-card-top">
               <span class="priority-badge" [ngStyle]="{'background': getPriorityColor(task.priority) + '22', 'color': getPriorityColor(task.priority), 'border-color': getPriorityColor(task.priority) + '44'}">
                 {{ getPriorityLabel(task.priority) }}
               </span>
-              <ion-button fill="clear" size="small" color="danger" (click)="deleteTask(task)" class="task-delete-btn">
+              <ion-button *ngIf="isClient" fill="clear" size="small" color="danger" (click)="deleteTask(task)" class="task-delete-btn">
                 <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
               </ion-button>
             </div>
@@ -283,6 +283,15 @@
     <ng-container *ngIf="currentTab === 'overview'">
       <div class="section-top-bar">
         <h2 class="section-heading">Activité récente</h2>
+        <ion-button *ngIf="canManageProjectStatus" size="small" fill="outline" color="danger" (click)="cancelProject()">
+          <ion-icon name="close-circle-outline" slot="start"></ion-icon> Annuler
+        </ion-button>
+        <ion-button *ngIf="canManageProjectStatus" size="small" fill="outline" color="warning" (click)="markProjectDisputed()">
+          <ion-icon name="alert-circle-outline" slot="start"></ion-icon> En litige
+        </ion-button>
+        <ion-button *ngIf="canManageProjectStatus" size="small" fill="solid" color="success" (click)="completeAndPayProject()">
+          <ion-icon name="checkmark-done-outline" slot="start"></ion-icon> Finaliser et payer
+        </ion-button>
       </div>
 
       <div *ngIf="activityFeed.length === 0" class="empty-card">
