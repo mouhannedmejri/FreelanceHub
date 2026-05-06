@@ -44,12 +44,23 @@ def _recompute_progress(project_id):
     return progress
 
 
+def _require_client(project, user_id, action="perform this action"):
+    """Guard to ensure only the project client can mutate planning/payment data."""
+    if project.get("client_id") != user_id:
+        return jsonify({"error": f"Only the client can {action}"}), 403
+    return None
+
+
 # ─── MILESTONES ──────────────────────────────────────────────────────
 
 @projects_bp.route('/<project_id>/milestones', methods=['POST'])
 @_auth_project_access
 def create_milestone(project, user_id):
     """Create a new milestone on the project."""
+    client_only_error = _require_client(project, user_id, "manage milestones")
+    if client_only_error:
+        return client_only_error
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -79,6 +90,10 @@ def create_milestone(project, user_id):
 @_auth_project_access
 def update_milestone(project, user_id, mid):
     """Update a milestone (status, title, due_date, etc.)."""
+    client_only_error = _require_client(project, user_id, "manage milestones")
+    if client_only_error:
+        return client_only_error
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -118,6 +133,10 @@ def update_milestone(project, user_id, mid):
 @_auth_project_access
 def create_task(project, user_id):
     """Create a new task on the project."""
+    client_only_error = _require_client(project, user_id, "manage tasks")
+    if client_only_error:
+        return client_only_error
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -154,6 +173,10 @@ def create_task(project, user_id):
 @_auth_project_access
 def update_task(project, user_id, tid):
     """Update a task (status, priority, assignee, etc.)."""
+    client_only_error = _require_client(project, user_id, "manage tasks")
+    if client_only_error:
+        return client_only_error
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
@@ -196,6 +219,10 @@ def update_task(project, user_id, tid):
 @_auth_project_access
 def delete_task(project, user_id, tid):
     """Delete a task from the project."""
+    client_only_error = _require_client(project, user_id, "manage tasks")
+    if client_only_error:
+        return client_only_error
+
     tasks = project.get("tasks", [])
     new_tasks = [t for t in tasks if t.get("id") != tid]
 
@@ -409,8 +436,9 @@ def upcoming_milestones():
 @_auth_project_access
 def update_budget(project, user_id, ):
     """Update total_budget or paid_amount."""
-    if project.get("client_id") != user_id:
-        return jsonify({"error": "Only the client can update budget"}), 403
+    client_only_error = _require_client(project, user_id, "update budget")
+    if client_only_error:
+        return client_only_error
 
     data = request.get_json()
     if not data:
@@ -426,3 +454,117 @@ def update_budget(project, user_id, ):
         mongo.db.projects.update_one({"_id": project["_id"]}, {"$set": update})
 
     return jsonify({"message": "Budget updated", **update}), 200
+
+
+@projects_bp.route('/<project_id>/complete', methods=['PATCH'])
+@_auth_project_access
+def complete_project(project, user_id):
+    """Mark project as completed and require a client review note + rating."""
+    client_only_error = _require_client(project, user_id, "complete and pay for the project")
+    if client_only_error:
+        return client_only_error
+
+    data = request.get_json(silent=True) or {}
+    paid_amount = data.get("paid_amount")
+    rating = data.get("rating")
+    comment = (data.get("comment") or "").strip()
+    total_budget = float(project.get("total_budget", 0) or 0)
+
+    if paid_amount is None:
+        paid_amount = total_budget
+    else:
+        paid_amount = float(paid_amount)
+
+    try:
+        rating_int = int(rating)
+    except (TypeError, ValueError):
+        return jsonify({"error": "rating is required and must be an integer between 1 and 5"}), 400
+
+    if rating_int < 1 or rating_int > 5:
+        return jsonify({"error": "rating must be between 1 and 5"}), 400
+    if not comment:
+        return jsonify({"error": "review comment is required"}), 400
+
+    if paid_amount < 0:
+        return jsonify({"error": "paid_amount cannot be negative"}), 400
+    if total_budget > 0 and paid_amount > total_budget:
+        return jsonify({"error": "paid_amount cannot exceed total budget"}), 400
+
+    existing_review = mongo.db.reviews.find_one({
+        "project_id": str(project["_id"]),
+        "reviewer_id": user_id
+    })
+    if existing_review:
+        return jsonify({"error": "Review already submitted for this project"}), 400
+
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    mongo.db.projects.update_one(
+        {"_id": project["_id"]},
+        {"$set": {
+            "status": "completed",
+            "completed_at": now,
+            "paid_amount": paid_amount,
+            "freelancer_rating": rating_int,
+            "freelancer_review": comment
+        }}
+    )
+
+    review_doc = {
+        "project_id": str(project["_id"]),
+        "reviewer_id": user_id,
+        "target_id": project.get("freelancer_id"),
+        "rating": rating_int,
+        "comment": comment,
+        "created_at": datetime.datetime.now(datetime.timezone.utc)
+    }
+    mongo.db.reviews.insert_one(review_doc)
+
+    return jsonify({
+        "message": "Project marked as completed and review submitted",
+        "status": "completed",
+        "completed_at": now,
+        "paid_amount": paid_amount,
+        "rating": rating_int,
+        "comment": comment
+    }), 200
+
+
+@projects_bp.route('/<project_id>/status', methods=['PATCH'])
+@_auth_project_access
+def update_project_status(project, user_id):
+    """Client can move project to cancelled or disputed with optional reason."""
+    client_only_error = _require_client(project, user_id, "change project status")
+    if client_only_error:
+        return client_only_error
+
+    current_status = (project.get("status") or "").lower()
+    if current_status in ("completed", "cancelled"):
+        return jsonify({"error": f"Cannot change status from {current_status}"}), 400
+
+    data = request.get_json(silent=True) or {}
+    new_status = (data.get("status") or "").strip().lower()
+    reason = (data.get("reason") or "").strip()
+
+    if new_status not in ("cancelled", "disputed"):
+        return jsonify({"error": "status must be 'cancelled' or 'disputed'"}), 400
+    if new_status == "disputed" and not reason:
+        return jsonify({"error": "reason is required when setting disputed status"}), 400
+
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    update = {"status": new_status}
+
+    if new_status == "cancelled":
+        update["cancelled_at"] = now
+        if reason:
+            update["cancellation_reason"] = reason
+    if new_status == "disputed":
+        update["disputed_at"] = now
+        update["dispute_reason"] = reason
+
+    mongo.db.projects.update_one({"_id": project["_id"]}, {"$set": update})
+    return jsonify({
+        "message": f"Project marked as {new_status}",
+        "status": new_status,
+        "reason": reason,
+        "updated_at": now
+    }), 200

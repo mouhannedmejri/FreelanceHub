@@ -66,6 +66,14 @@ export class ProjectService {
     return this.http.patch<any>(`${this.base}/${projectId}/budget`, payload);
   }
 
+  completeProject(projectId: string, payload?: { paid_amount?: number; rating?: number; comment?: string }): Observable<any> {
+    return this.http.patch<any>(`${this.base}/${projectId}/complete`, payload || {});
+  }
+
+  updateProjectStatus(projectId: string, payload: { status: 'cancelled' | 'disputed'; reason?: string }): Observable<any> {
+    return this.http.patch<any>(`${this.base}/${projectId}/status`, payload);
+  }
+
   // ── Upcoming milestones (home widget) ───────
   getUpcomingMilestones(): Observable<{ milestones: UpcomingMilestone[] }> {
     return this.http.get<{ milestones: UpcomingMilestone[] }>(`${this.base}/upcoming-milestones`);

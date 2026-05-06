@@ -137,6 +137,7 @@ export class ProjectDetailPage implements OnInit {
   }
 
   async addMilestone() {
+    if (!this.isClient) return;
     const alert = await this.alertController.create({
       header: 'Nouveau Milestone',
       cssClass: 'dark-alert',
@@ -170,6 +171,7 @@ export class ProjectDetailPage implements OnInit {
   }
 
   updateMilestoneStatus(mid: string, newStatus: string) {
+    if (!this.isClient) return;
     this.projectService.updateMilestone(this.projectId, mid, { status: newStatus as any }).subscribe({
       next: (res) => {
         const m = this.project?.milestones.find(x => x.id === mid);
@@ -219,6 +221,10 @@ export class ProjectDetailPage implements OnInit {
 
   onDrop(event: DragEvent, targetStatus: string) {
     event.preventDefault();
+    if (!this.isClient) {
+      this.draggedTask = null;
+      return;
+    }
     if (!this.draggedTask || this.draggedTask.status === targetStatus) {
       this.draggedTask = null;
       return;
@@ -228,6 +234,7 @@ export class ProjectDetailPage implements OnInit {
   }
 
   moveTask(task: Task, newStatus: string) {
+    if (!this.isClient) return;
     this.projectService.updateTask(this.projectId, task.id, { status: newStatus as any }).subscribe({
       next: (res) => {
         task.status = res.task.status;
@@ -242,6 +249,7 @@ export class ProjectDetailPage implements OnInit {
   }
 
   async addTask() {
+    if (!this.isClient) return;
     const milestoneOptions = (this.project?.milestones || []).map(m => ({
       name: 'milestone_id',
       type: 'radio' as const,
@@ -306,6 +314,7 @@ export class ProjectDetailPage implements OnInit {
   }
 
   async deleteTask(task: Task) {
+    if (!this.isClient) return;
     const alert = await this.alertController.create({
       header: 'Supprimer la tâche ?',
       message: `Êtes-vous sûr de vouloir supprimer "${task.title}" ?`,
@@ -378,6 +387,162 @@ export class ProjectDetailPage implements OnInit {
 
   get isClient(): boolean {
     return this.project?.client_id === this.authService.currentUser?.id;
+  }
+
+  get canManageProjectStatus(): boolean {
+    const s = (this.project?.status || '').toLowerCase();
+    return this.isClient && s !== 'completed' && s !== 'cancelled';
+  }
+
+  async completeAndPayProject() {
+    if (!this.isClient || !this.project) return;
+
+    const alert = await this.alertController.create({
+      header: 'Finaliser le projet',
+      message: 'Confirmez le paiement puis ajoutez une note de review avant de terminer.',
+      cssClass: 'dark-alert',
+      inputs: [
+        {
+          name: 'paid_amount',
+          type: 'number',
+          min: 0,
+          value: this.project.total_budget || this.project.budget || 0,
+          placeholder: 'Montant payé'
+        },
+        {
+          name: 'rating',
+          type: 'number',
+          min: 1,
+          max: 5,
+          value: 5,
+          placeholder: 'Note (1-5)'
+        },
+        {
+          name: 'comment',
+          type: 'textarea',
+          placeholder: 'Votre avis sur le freelancer'
+        }
+      ],
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Finaliser et payer',
+          handler: (data) => {
+            const paidAmount = parseFloat(data?.paid_amount);
+            const rating = parseInt(data?.rating, 10);
+            const comment = (data?.comment || '').trim();
+            if (Number.isNaN(paidAmount) || paidAmount < 0) {
+              this.showToast('Montant invalide', 'danger');
+              return false;
+            }
+            if (Number.isNaN(rating) || rating < 1 || rating > 5) {
+              this.showToast('La note doit être entre 1 et 5', 'danger');
+              return false;
+            }
+            if (!comment) {
+              this.showToast('Le commentaire de review est obligatoire', 'danger');
+              return false;
+            }
+
+            this.projectService.completeProject(this.projectId, {
+              paid_amount: paidAmount,
+              rating,
+              comment
+            }).subscribe({
+              next: () => {
+                if (this.project) {
+                  this.project.status = 'completed';
+                  this.project.paid_amount = paidAmount;
+                  this.project.completed_at = new Date().toISOString();
+                }
+                this.showToast('Projet finalisé, paiement et review enregistrés', 'success');
+              },
+              error: () => this.showToast('Erreur lors de la finalisation', 'danger')
+            });
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async cancelProject() {
+    if (!this.canManageProjectStatus || !this.project) return;
+
+    const alert = await this.alertController.create({
+      header: 'Annuler le projet',
+      message: 'Confirmez l’annulation du projet.',
+      cssClass: 'dark-alert',
+      inputs: [
+        {
+          name: 'reason',
+          type: 'textarea',
+          placeholder: 'Raison (optionnelle)'
+        }
+      ],
+      buttons: [
+        { text: 'Retour', role: 'cancel' },
+        {
+          text: 'Annuler projet',
+          role: 'destructive',
+          handler: (data) => {
+            const reason = (data?.reason || '').trim();
+            this.projectService.updateProjectStatus(this.projectId, { status: 'cancelled', reason }).subscribe({
+              next: () => {
+                if (this.project) this.project.status = 'cancelled';
+                this.showToast('Projet annulé', 'warning');
+              },
+              error: () => this.showToast('Erreur lors de l’annulation', 'danger')
+            });
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async markProjectDisputed() {
+    if (!this.canManageProjectStatus || !this.project) return;
+
+    const alert = await this.alertController.create({
+      header: 'Mettre en litige',
+      message: 'Ajoutez la raison du litige.',
+      cssClass: 'dark-alert',
+      inputs: [
+        {
+          name: 'reason',
+          type: 'textarea',
+          placeholder: 'Raison du litige'
+        }
+      ],
+      buttons: [
+        { text: 'Retour', role: 'cancel' },
+        {
+          text: 'Déclarer litige',
+          handler: (data) => {
+            const reason = (data?.reason || '').trim();
+            if (!reason) {
+              this.showToast('La raison du litige est obligatoire', 'danger');
+              return false;
+            }
+            this.projectService.updateProjectStatus(this.projectId, { status: 'disputed', reason }).subscribe({
+              next: () => {
+                if (this.project) this.project.status = 'disputed';
+                this.showToast('Projet mis en litige', 'warning');
+              },
+              error: () => this.showToast('Erreur lors du litige', 'danger')
+            });
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
   // ── ACTIVITY FEED ─────────────────────────────
