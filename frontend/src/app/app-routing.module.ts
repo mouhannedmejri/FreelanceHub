@@ -93,7 +93,17 @@ const routes: Routes = [
   },
   {
     path: 'search',
-    loadChildren: () => import('./pages/search/search.module').then( m => m.SearchPageModule),
+    loadChildren: () => import('./pages/freelancer-search/freelancer-search.module').then( m => m.FreelancerSearchPageModule),
+    canActivate: [GuestAllowedGuard]
+  },
+  {
+    path: 'freelancer-search',
+    loadChildren: () => import('./pages/freelancer-search/freelancer-search.module').then( m => m.FreelancerSearchPageModule),
+    canActivate: [GuestAllowedGuard]
+  },
+  {
+    path: 'freelancer/:username',
+    loadChildren: () => import('./pages/profile/profile.module').then( m => m.ProfilePageModule),
     canActivate: [GuestAllowedGuard]
   }
 

@@ -8,18 +8,8 @@ import { GuestAccessService } from '../services/guest-access.service';
 import { User } from '../models/user.model';
 import { UpcomingMilestone } from '../models/project.model';
 import { Subscription } from 'rxjs';
-
-export interface RecommendedJob {
-  id: number;
-  title: string;
-  client: string;
-  description: string;
-  skills: string[];
-  budget: string;
-  duration: string;
-  location: string;
-  propositions: number;
-}
+import { RecommendationService } from '../services/recommendation.service';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -33,75 +23,49 @@ export class HomePage implements OnInit, OnDestroy {
   searchQuery = '';
   upcomingMilestones: UpcomingMilestone[] = [];
   followingFeed: any[] = [];
+  recommendedFreelancers: any[] = [];
+  recommendedOffers: any[] = [];
   private sub!: Subscription;
-
-  recommendedJobs: RecommendedJob[] = [
-    {
-      id: 1,
-      title: 'Développement Application Mobile React Native',
-      client: 'TechStartup SAS',
-      description:
-        'Nous recherchons un développeur React Native expérimenté pour créer une application mobile cross-platform pour notre plateforme e-commerce.',
-      skills: ['React Native', 'TypeScript', 'Redux', 'REST API'],
-      budget: '2 500 – 4 000 €',
-      duration: '2 mois',
-      location: 'Remote',
-      propositions: 7,
-    },
-    {
-      id: 2,
-      title: 'Refonte UI/UX Site E-commerce',
-      client: 'ModeShop France',
-      description:
-        'Refonte complète de l\'interface utilisateur de notre boutique en ligne. Amélioration de l\'expérience d\'achat et du tunnel de conversion.',
-      skills: ['Figma', 'UI Design', 'UX Research', 'Prototypage'],
-      budget: '1 800 – 3 000 €',
-      duration: '6 semaines',
-      location: 'Paris ou Remote',
-      propositions: 12,
-    },
-    {
-      id: 3,
-      title: 'Stratégie SEO & Content Marketing',
-      client: 'AgenceGrowth',
-      description:
-        'Mission de conseil et exécution SEO pour booster la visibilité organique de nos clients. Audit, stratégie de contenu, netlinking.',
-      skills: ['SEO', 'Content Marketing', 'Google Analytics', 'Ahrefs'],
-      budget: '1 200 – 2 000 €',
-      duration: '3 mois',
-      location: 'Lyon ou Remote',
-      propositions: 4,
-    },
-  ];
 
   constructor(
     private authService: AuthService,
     private homeService: HomeService,
     private projectService: ProjectService,
     private profileService: ProfileService,
+    private recommendationService: RecommendationService,
     private guestAccessService: GuestAccessService,
-    private router: Router
-  ) { }
+    private router: Router,
+    private toastController: ToastController
+  ) {}
 
   ngOnInit() {
     this.sub = this.authService.currentUser$.subscribe((user) => {
       this.user = user;
+      if (this.authService.isAuthenticated && user?.role === 'client') {
+        this.recommendationService.getFreelancerRecommendations(8).subscribe({
+          next: (res) => (this.recommendedFreelancers = res.data || []),
+          error: () => (this.recommendedFreelancers = []),
+        });
+      }
+      if (this.authService.isAuthenticated && user?.role === 'freelancer') {
+        this.recommendationService.getOpportunityRecommendations(10).subscribe({
+          next: (res) => (this.recommendedOffers = res.data || []),
+          error: () => (this.recommendedOffers = []),
+        });
+      }
     });
 
     this.homeService.getStats().subscribe({
       next: (s) => (this.stats = s),
-      error: () =>
-        (this.stats = { freelancers: 15000, projects: 50000, clients: 12000 }),
+      error: () => (this.stats = { freelancers: 15000, projects: 50000, clients: 12000 }),
     });
 
-    // Load upcoming milestones if authenticated
     if (this.authService.isAuthenticated) {
       this.projectService.getUpcomingMilestones().subscribe({
         next: (res) => (this.upcomingMilestones = res.milestones),
         error: () => (this.upcomingMilestones = []),
       });
 
-      // Load following feed
       this.profileService.getFollowingFeed(5).subscribe({
         next: (res) => (this.followingFeed = res.feed),
         error: () => (this.followingFeed = []),
@@ -116,9 +80,11 @@ export class HomePage implements OnInit, OnDestroy {
   get formattedFreelancers(): string {
     return this.stats ? this.formatNum(this.stats.freelancers) : '...';
   }
+
   get formattedProjects(): string {
     return this.stats ? this.formatNum(this.stats.projects) : '...';
   }
+
   get formattedClients(): string {
     return this.stats ? this.formatNum(this.stats.clients) : '...';
   }
@@ -128,13 +94,13 @@ export class HomePage implements OnInit, OnDestroy {
     return n.toString();
   }
 
-  get filteredJobs(): RecommendedJob[] {
-    if (!this.searchQuery.trim()) return this.recommendedJobs;
+  get filteredJobs(): any[] {
+    if (!this.searchQuery.trim()) return this.recommendedOffers;
     const q = this.searchQuery.toLowerCase();
-    return this.recommendedJobs.filter(
+    return this.recommendedOffers.filter(
       (j) =>
-        j.title.toLowerCase().includes(q) ||
-        j.skills.some((s) => s.toLowerCase().includes(q))
+        (j.title || '').toLowerCase().includes(q) ||
+        (j.skills || []).some((s: string) => s.toLowerCase().includes(q))
     );
   }
 
@@ -151,40 +117,79 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   goToFreelancerProfile(userId: string) {
+    this.recommendationService.trackInteraction({
+      item_id: userId,
+      item_type: 'freelancer',
+      recommendation_type: 'freelancers',
+      action: 'click',
+    }).subscribe({ error: () => {} });
     this.router.navigate(['/home/profile'], {
-      queryParams: { userId }
+      queryParams: { userId },
+    });
+  }
+
+  async showWhyRecommended(reason?: string) {
+    const toast = await this.toastController.create({
+      message: reason || 'Recommended based on your interests and recent activity.',
+      duration: 2200,
+      color: 'medium',
+      position: 'top',
+    });
+    await toast.present();
+  }
+
+  dismissFreelancerRecommendation(item: any) {
+    const id = String(item?.id || '');
+    if (!id) return;
+    this.recommendationService.notInterested(id, 'freelancer').subscribe({
+      next: () => {
+        this.recommendedFreelancers = this.recommendedFreelancers.filter((f) => String(f.id) !== id);
+      },
+      error: () => {},
     });
   }
 
   getFeedIcon(type: string): string {
     switch (type) {
-      case 'project': return 'briefcase-outline';
-      case 'service': return 'pricetag-outline';
-      default: return 'pulse-outline';
+      case 'project':
+        return 'briefcase-outline';
+      case 'service':
+        return 'pricetag-outline';
+      default:
+        return 'pulse-outline';
     }
   }
 
   getFeedColor(type: string): string {
     switch (type) {
-      case 'project': return '#7c3aed';
-      case 'service': return '#10b981';
-      default: return '#3b82f6';
+      case 'project':
+        return '#7c3aed';
+      case 'service':
+        return '#10b981';
+      default:
+        return '#3b82f6';
     }
   }
 
-  async handleApply(job: RecommendedJob) {
+  async handleApply(job: any) {
     if (!this.authService.isAuthenticated) {
-      const authed = await this.guestAccessService.showAuthModal(
-        'Sign in to apply for this offer',
-        {
-          type: 'apply_to_offer',
-          targetId: String(job.id),
-          route: `/project-detail/${job.id}`,
-        }
-      );
+      const authed = await this.guestAccessService.showAuthModal('Sign in to apply for this offer', {
+        type: 'apply_to_offer',
+        targetId: String(job.id),
+        route: `/home/store`,
+      });
       if (!authed) return;
     }
-    // Navigate to project detail or trigger proposal flow
-    this.router.navigate(['/project-detail', job.id]);
+
+    this.recommendationService.trackInteraction({
+      item_id: job.id,
+      item_type: 'offer',
+      recommendation_type: 'opportunities',
+      action: 'click',
+      score: job?.recommendation?.score,
+      reason: job?.recommendation?.why_recommended,
+    }).subscribe({ error: () => {} });
+
+    this.router.navigate(['/home/store'], { queryParams: { applyOfferId: job.id } });
   }
 }

@@ -76,6 +76,10 @@
 
     <!-- ═══ QUICK ACTIONS ═══ -->
     <div class="quick-actions">
+      <button class="qa-btn" (click)="navigateTo('/home/profile')">
+        <div class="qa-icon teal"><ion-icon name="person-circle-outline"></ion-icon></div>
+        <span>Profile</span>
+      </button>
       <button class="qa-btn" (click)="navigateTo('/home/services')">
         <div class="qa-icon purple"><ion-icon name="paper-plane-outline"></ion-icon></div>
         <span>Propositions</span>
@@ -104,6 +108,27 @@
 
     <!-- ═══════════════════════ TAB: OVERVIEW ═══════════════════════ -->
     <ng-container *ngIf="currentTab === 'overview'">
+      <div class="section" *ngIf="recommendedOpportunities.length > 0">
+        <h3 class="section-title">
+          <ion-icon name="sparkles-outline"></ion-icon>
+          Perfect for Your Skills
+        </h3>
+        <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;">
+          <div *ngFor="let offer of recommendedOpportunities" style="min-width:260px; background:#2a2342; border-radius:12px; padding:12px;">
+            <div style="display:flex; justify-content:space-between; gap:8px;">
+              <div (click)="goToOpportunity(offer)" style="cursor:pointer;">
+                <strong style="color:#fff;">{{ offer.title }}</strong>
+                <p style="color:#a78bfa; margin:6px 0; font-size:12px;">{{ offer.client_name }}</p>
+              </div>
+              <button (click)="dismissOpportunity(offer)" style="background:none;border:none;color:#a78bfa;font-size:11px;">Not interested</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#fff;">{{ offer.budget_min }}€ - {{ offer.budget_max }}€</span>
+              <ion-button size="small" fill="clear" (click)="showOpportunityReason(offer.recommendation?.why_recommended)">Why recommended?</ion-button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Upcoming Milestones -->
       <div class="section" *ngIf="upcomingMilestones.length > 0">

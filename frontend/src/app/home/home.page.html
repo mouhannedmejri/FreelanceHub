@@ -154,7 +154,30 @@
   </div>
 
   <!-- Recommended Jobs -->
-  <div class="section">
+  <div class="section" *ngIf="user?.role === 'client' && recommendedFreelancers.length > 0">
+    <div class="section-header">
+      <h2 class="section-title">Recommended Freelancers</h2>
+      <span class="section-count">{{ recommendedFreelancers.length }} profiles</span>
+    </div>
+    <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;">
+      <div *ngFor="let f of recommendedFreelancers" style="min-width:240px; background:#2a2342; border-radius:12px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div (click)="goToFreelancerProfile(f.id)" style="cursor:pointer;">
+            <strong style="color:#fff;">{{ f.full_name }}</strong>
+            <p style="margin:4px 0; color:#a78bfa; font-size:12px;">{{ f.profile?.title || 'Freelancer' }}</p>
+          </div>
+          <button (click)="dismissFreelancerRecommendation(f)" style="background:none;border:none;color:#a78bfa;">Not interested</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <ion-chip color="tertiary">{{ f.avg_rating | number:'1.1-1' }} ★</ion-chip>
+          <ion-button size="small" fill="clear" (click)="showWhyRecommended(f.recommendation?.why_recommended)">Why recommended?</ion-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommended Jobs -->
+  <div class="section" *ngIf="user?.role === 'freelancer'">
     <div class="section-header">
       <h2 class="section-title">Recommandé pour vous</h2>
       <span class="section-count">{{ filteredJobs.length }} offres</span>
@@ -172,13 +195,13 @@
             <ion-icon name="sparkles-outline"></ion-icon>
             Recommandé
           </span>
-          <span class="job-propositions">{{ job.propositions }} propositions</span>
+          <span class="job-propositions">{{ job.proposals_count || 0 }} propositions</span>
         </div>
 
         <h3 class="job-title">{{ job.title }}</h3>
         <span class="job-client">
           <ion-icon name="person-circle-outline"></ion-icon>
-          {{ job.client }}
+          {{ job.client_name || 'Client' }}
         </span>
 
         <p class="job-desc">{{ job.description }}</p>
@@ -192,15 +215,15 @@
         <div class="job-meta">
           <span class="meta-chip">
             <ion-icon name="cash-outline"></ion-icon>
-            {{ job.budget }}
+            {{ job.budget_min }}€ - {{ job.budget_max }}€
           </span>
           <span class="meta-chip">
             <ion-icon name="time-outline"></ion-icon>
-            {{ job.duration }}
+            {{ job.duration || 'Flexible' }}
           </span>
           <span class="meta-chip">
             <ion-icon name="location-outline"></ion-icon>
-            {{ job.location }}
+            {{ job.location || 'Remote' }}
           </span>
         </div>
 

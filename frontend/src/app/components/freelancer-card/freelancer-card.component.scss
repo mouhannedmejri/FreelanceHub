@@ -1,0 +1,129 @@
+.freelancer-card {
+  background: #1a1528;
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.identity {
+  display: flex;
+  gap: 10px;
+}
+
+.avatar-wrap {
+  position: relative;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #7c3aed;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status {
+  position: absolute;
+  bottom: 2px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #b0b7bf;
+  border: 2px solid #fff;
+}
+
+.status.online {
+  background: #1fbf75;
+}
+
+.details h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #f1f0f5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.verified {
+  color: #1c8df0;
+  font-size: 14px;
+}
+
+.title, .rating {
+  margin: 0;
+  font-size: 12px;
+  color: #a09ab5;
+}
+
+.star {
+  color: #f6b800;
+  vertical-align: middle;
+}
+
+.pricing {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: #a09ab5;
+}
+
+.pricing strong {
+  color: #f1f0f5;
+  font-size: 14px;
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skills span {
+  background: rgba(124, 58, 237, 0.15);
+  color: #c4b5fd;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.portfolio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.portfolio img {
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.actions ion-button {
+  flex: 1;
+}

@@ -1,0 +1,74 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Find Freelancers</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="search-page">
+  <section class="search-panel">
+    <ion-searchbar
+      [(ngModel)]="searchTerm"
+      (ionInput)="onSearchInput()"
+      placeholder="Search by name, title, bio, or skill"
+      animated="true"
+    ></ion-searchbar>
+
+    <div class="suggestions" *ngIf="suggestions.length">
+      <button *ngFor="let suggestion of suggestions" (click)="searchTerm = suggestion; onSearchInput()">{{ suggestion }}</button>
+    </div>
+
+    <div class="categories">
+      <button *ngFor="let category of categories" [class.active]="selectedCategory === category" (click)="selectCategory(category)">
+        {{ category }}
+      </button>
+    </div>
+
+    <div class="chips">
+      <button [class.active]="minRating === 4" (click)="setRating(4)">Rating 4+</button>
+      <button [class.active]="minRating === 3" (click)="setRating(3)">Rating 3+</button>
+      <button [class.active]="availability === 'online'" (click)="setAvailability('online')">Available now</button>
+      <ion-select interface="popover" placeholder="Max price" (ionChange)="applyPriceFilter($event.detail.value)">
+        <ion-select-option value="30">Up to $30/hr</ion-select-option>
+        <ion-select-option value="60">Up to $60/hr</ion-select-option>
+        <ion-select-option value="100">Up to $100/hr</ion-select-option>
+      </ion-select>
+      <ion-input [(ngModel)]="location" placeholder="Location" (ionBlur)="applyLocation()"></ion-input>
+    </div>
+
+    <div class="skills-row">
+      <button *ngFor="let skill of availableSkills" [class.active]="selectedSkills.includes(skill)" (click)="toggleSkill(skill)">
+        {{ skill }}
+      </button>
+    </div>
+
+    <div class="sort-row">
+      <span>Sort by</span>
+      <ion-select [(ngModel)]="sortBy" interface="popover" (ionChange)="changeSort()">
+        <ion-select-option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</ion-select-option>
+      </ion-select>
+    </div>
+  </section>
+
+  <section class="results">
+    <ion-spinner *ngIf="loading"></ion-spinner>
+
+    <div class="empty" *ngIf="!loading && isEmpty">
+      <ion-icon name="search-outline"></ion-icon>
+      <h3>No freelancers found</h3>
+      <p>Try broadening your filters or search term.</p>
+    </div>
+
+    <div class="grid" *ngIf="!loading && freelancers.length">
+      <app-freelancer-card
+        *ngFor="let freelancer of freelancers"
+        [freelancer]="freelancer"
+        (viewProfile)="onViewProfile($event)"
+        (contact)="onContact($event)"
+      ></app-freelancer-card>
+    </div>
+
+    <ion-infinite-scroll [disabled]="freelancers.length >= total" (ionInfinite)="loadMore($event)">
+      <ion-infinite-scroll-content loadingSpinner="dots" loadingText="Loading more freelancers"></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </section>
+</ion-content>

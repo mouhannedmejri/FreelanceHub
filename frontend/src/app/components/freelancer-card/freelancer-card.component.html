@@ -1,0 +1,46 @@
+<article class="freelancer-card">
+  <div class="top-row">
+    <div class="identity">
+      <div class="avatar-wrap">
+        <div class="avatar">
+          {{ freelancer?.full_name?.charAt(0) || 'F' }}
+        </div>
+        <span class="status" [class.online]="freelancer?.is_online"></span>
+      </div>
+
+      <div class="details">
+        <h3>
+          {{ freelancer?.full_name }}
+          <ion-icon *ngIf="freelancer?.is_verified" name="checkmark-circle" class="verified"></ion-icon>
+        </h3>
+        <p class="title">{{ freelancer?.profile?.title }}</p>
+        <p class="rating">
+          <ion-icon name="star" class="star"></ion-icon>
+          {{ freelancer?.avg_rating | number:'1.1-1' }} ({{ freelancer?.total_reviews || 0 }} reviews)
+        </p>
+      </div>
+    </div>
+
+    <div class="pricing">
+      <strong>${{ freelancer?.profile?.hourly_rate || 0 }}/hr</strong>
+      <span>{{ freelancer?.profile?.location || 'Remote' }}</span>
+    </div>
+  </div>
+
+  <div class="skills">
+    <span *ngFor="let skill of (freelancer?.profile?.skills || []).slice(0, 3)">{{ skill }}</span>
+  </div>
+
+  <div class="portfolio" *ngIf="freelancer?.profile?.portfolio?.length">
+    <img
+      *ngFor="let thumb of freelancer.profile.portfolio.slice(0, 3); trackBy: trackByThumb"
+      [src]="thumb"
+      alt="Portfolio preview"
+    />
+  </div>
+
+  <div class="actions">
+    <ion-button fill="outline" size="small" (click)="onViewProfile()">View Profile</ion-button>
+    <ion-button size="small" (click)="onContact()">Contact</ion-button>
+  </div>
+</article>

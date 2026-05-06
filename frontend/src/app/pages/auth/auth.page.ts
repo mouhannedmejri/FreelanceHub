@@ -23,6 +23,7 @@ export class AuthPage implements OnInit {
   registerPassword = '';
   registerConfirmPassword = '';
   registerRole: 'freelancer' | 'client' = 'freelancer';
+  registerInterests: string[] = [];
 
   constructor(
     private authService: AuthService,
@@ -112,6 +113,7 @@ export class AuthPage implements OnInit {
         email: this.registerEmail,
         password: this.registerPassword,
         role: this.registerRole,
+        interests: this.registerRole === 'client' ? this.registerInterests : [],
       })
       .subscribe({
         next: (res) => {

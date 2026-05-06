@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { OfferService } from '../../services/offer.service';
 import { Offer } from '../../models/offer.model';
@@ -41,6 +42,7 @@ export class StorePage implements OnInit, OnDestroy {
   page = 1;
   pageSize = 10;
   hasMore = true;
+  pendingApplyOfferId: string | null = null;
 
   constructor(
     private authService: AuthService,
@@ -49,6 +51,7 @@ export class StorePage implements OnInit, OnDestroy {
     private toastController: ToastController,
     private alertController: AlertController,
     private guestAccessService: GuestAccessService,
+    private route: ActivatedRoute,
     private router: Router
   ) {}
 
@@ -57,6 +60,12 @@ export class StorePage implements OnInit, OnDestroy {
       this.authService.currentUser$.subscribe((user) => {
         this.user = user;
         this.loadOffers();
+      })
+    );
+    this.subs.push(
+      this.route.queryParamMap.subscribe((params) => {
+        const offerId = params.get('applyOfferId');
+        this.pendingApplyOfferId = offerId && /^[a-fA-F0-9]{24}$/.test(offerId) ? offerId : null;
       })
     );
     
@@ -111,6 +120,7 @@ export class StorePage implements OnInit, OnDestroy {
         this.allOffers = data.offers;
         this.totalOffers = data.total;
         this.updateDisplayedOffers();
+        this.tryAutoOpenApply();
         this.isLoading = false;
         if (event) event.target.complete();
       },
@@ -235,6 +245,15 @@ export class StorePage implements OnInit, OnDestroy {
     this.selectedOffer = offer;
     this.proposalData = { cover_letter: '', proposed_price: offer.budget_min || 0, estimated_duration: '1 à 2 semaines' };
     this.isApplyModalOpen = true;
+  }
+
+  private tryAutoOpenApply() {
+    if (!this.pendingApplyOfferId || this.isClient) return;
+    const match = this.allOffers.find((o: any) => String(o.id) === String(this.pendingApplyOfferId));
+    if (match) {
+      this.pendingApplyOfferId = null;
+      this.applyForOffer(match);
+    }
   }
 
   submitProposal() {

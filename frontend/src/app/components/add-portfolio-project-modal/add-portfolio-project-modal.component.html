@@ -1,0 +1,38 @@
+﻿<ion-modal [isOpen]="isOpen" (didDismiss)="dismissed.emit()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ initialData ? 'Edit Project' : 'Add Portfolio Project' }}</ion-title>
+        <ion-buttons slot="end"><ion-button (click)="dismissed.emit()">Close</ion-button></ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-item><ion-label position="stacked">Title</ion-label><ion-input [(ngModel)]="form.title"></ion-input></ion-item>
+      <ion-item><ion-label position="stacked">Description</ion-label><ion-textarea rows="4" [(ngModel)]="form.description"></ion-textarea></ion-item>
+      <ion-item><ion-label position="stacked">Category</ion-label><ion-input [(ngModel)]="form.category"></ion-input></ion-item>
+      <ion-item><ion-label position="stacked">Technologies (comma separated)</ion-label><ion-input [(ngModel)]="form.technologiesText"></ion-input></ion-item>
+      <ion-item><ion-label position="stacked">Live URL</ion-label><ion-input [(ngModel)]="form.project_url"></ion-input></ion-item>
+      <ion-item><ion-label position="stacked">GitHub URL</ion-label><ion-input [(ngModel)]="form.github_url"></ion-input></ion-item>
+      <ion-item><ion-label position="stacked">Client Name</ion-label><ion-input [(ngModel)]="form.client_name"></ion-input></ion-item>
+      <ion-item><ion-label position="stacked">Completed Date</ion-label><ion-datetime presentation="date" [(ngModel)]="form.completed_date"></ion-datetime></ion-item>
+      <ion-item lines="none"><ion-label>Feature this project</ion-label><ion-toggle [(ngModel)]="form.is_featured"></ion-toggle></ion-item>
+
+      <div class="images">
+        <label>Project Images (max 10)</label>
+        <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple (change)="onFilesSelected($event)" />
+        <div class="preview-list">
+          <div class="preview" *ngFor="let preview of previews; let i = index">
+            <img [src]="preview" alt="preview" />
+            <div class="reorder">
+              <button (click)="moveImage(i,-1)">?</button>
+              <button (click)="moveImage(i,1)">?</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ion-button expand="block" (click)="submit()">Save Project</ion-button>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+

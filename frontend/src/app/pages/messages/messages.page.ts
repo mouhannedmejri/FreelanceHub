@@ -6,6 +6,7 @@ import { User } from '../../models/user.model';
 import { Subscription } from 'rxjs';
 import { GuestAccessService } from '../../services/guest-access.service';
 import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { SocketService } from '../../services/socket.service';
 import { ToastController } from '@ionic/angular';
 
@@ -42,12 +43,14 @@ export class MessagesPage implements OnInit, OnDestroy {
 
   private subs: Subscription[] = [];
   private searchTimeout: any;
+  private pendingConversationId: string | null = null;
 
   constructor(
     private conversationService: ConversationService,
     private authService: AuthService,
     private guestAccessService: GuestAccessService,
     private router: Router,
+    private route: ActivatedRoute,
     private socketService: SocketService,
     private toastController: ToastController,
     private actionSheetCtrl: ActionSheetController
@@ -59,6 +62,13 @@ export class MessagesPage implements OnInit, OnDestroy {
       this.router.navigate(['/home/services']);
       return;
     }
+    this.subs.push(
+      this.route.queryParamMap.subscribe((params) => {
+        const convId = params.get('conversationId');
+        this.pendingConversationId = convId && /^[a-fA-F0-9]{24}$/.test(convId) ? convId : null;
+      })
+    );
+
     this.subs.push(
       this.authService.currentUser$.subscribe(user => {
         this.currentUser = user;
@@ -135,6 +145,14 @@ export class MessagesPage implements OnInit, OnDestroy {
         this.conversations = res.conversations;
         this.isLoadingConversations = false;
         if (event) event.target.complete();
+
+        if (this.pendingConversationId) {
+          const target = this.conversations.find((c) => String(c.id) === this.pendingConversationId);
+          if (target) {
+            this.pendingConversationId = null;
+            this.selectConversation(target);
+          }
+        }
         
         // If a conversation is selected, update it from the list if new data came
         if (this.selectedConversation) {
@@ -398,7 +416,7 @@ export class MessagesPage implements OnInit, OnDestroy {
   }
 
   viewProfile(userId: any) {
-    if(userId) this.router.navigate(['/home/profile'], { queryParams: { id: userId }});
+    if (userId) this.router.navigate(['/home/profile'], { queryParams: { userId }});
   }
 
   clearReply() {

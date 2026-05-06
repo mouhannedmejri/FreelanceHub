@@ -3,6 +3,7 @@ import { ClientService } from '../../services/client.service';
 import { ToastController, AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { RecommendationService } from '../../services/recommendation.service';
 
 @Component({
   selector: 'app-client-dashboard',
@@ -20,6 +21,7 @@ export class ClientDashboardPage implements OnInit {
   recentOffers: any[] = [];
   pendingProposals: any[] = [];
   recentActivity: any[] = [];
+  recommendedOffers: any[] = [];
   isLoadingDashboard = false;
 
   // Active Projects Tab
@@ -40,11 +42,13 @@ export class ClientDashboardPage implements OnInit {
     private clientService: ClientService,
     private toastController: ToastController,
     private alertController: AlertController,
-    private router: Router
+    private router: Router,
+    private recommendationService: RecommendationService
   ) {}
 
   ngOnInit() {
     this.loadDashboard();
+    this.loadRecommendations();
   }
 
   doRefresh(event: any) {
@@ -88,6 +92,13 @@ export class ClientDashboardPage implements OnInit {
         this.isLoadingDashboard = false;
         if (event) event.target.complete();
       }
+    });
+  }
+
+  loadRecommendations() {
+    this.recommendationService.getOfferRecommendations(10).subscribe({
+      next: (res) => (this.recommendedOffers = res.data || []),
+      error: () => (this.recommendedOffers = []),
     });
   }
 
@@ -181,6 +192,37 @@ export class ClientDashboardPage implements OnInit {
 
   goToProjectDetails(projectId: string) {
     this.router.navigate(['/project-detail', projectId]);
+  }
+
+  goToRecommendedOffer(offer: any) {
+    this.recommendationService.trackInteraction({
+      item_id: offer.id,
+      item_type: 'offer',
+      recommendation_type: 'offers',
+      action: 'click',
+      score: offer?.recommendation?.score,
+      reason: offer?.recommendation?.why_recommended,
+    }).subscribe({ error: () => {} });
+    this.router.navigate(['/project-detail', offer.id]);
+  }
+
+  hideRecommendedOffer(offer: any) {
+    this.recommendationService.notInterested(String(offer.id), 'offer').subscribe({
+      next: () => {
+        this.recommendedOffers = this.recommendedOffers.filter((o) => String(o.id) !== String(offer.id));
+      },
+      error: () => {},
+    });
+  }
+
+  async showRecommendationReason(reason: string) {
+    const toast = await this.toastController.create({
+      message: reason || 'Recommended using your interests, budget fit, recency and competition.',
+      duration: 2200,
+      color: 'medium',
+      position: 'top',
+    });
+    await toast.present();
   }
 
   sendMessage(freelancerId: string) {
