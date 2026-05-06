@@ -96,6 +96,11 @@ def create_app():
     from routes.follow import follow_bp
     from routes.search import search_bp
     from routes.earnings import earnings_bp
+    from routes.freelancers import freelancers_bp
+    from routes.recommendations import recommendations_bp
+    from routes.time_tracking import time_bp
+    from routes.analytics import analytics_bp
+    from routes.support import support_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)
@@ -114,6 +119,11 @@ def create_app():
     app.register_blueprint(follow_bp)
     app.register_blueprint(search_bp)
     app.register_blueprint(earnings_bp)
+    app.register_blueprint(freelancers_bp)
+    app.register_blueprint(recommendations_bp)
+    app.register_blueprint(time_bp)
+    app.register_blueprint(analytics_bp)
+    app.register_blueprint(support_bp)
 
     # Health check
     @app.route('/api/health')
