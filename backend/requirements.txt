@@ -5,5 +5,7 @@ flask-jwt-extended
 flask-cors
 python-dotenv
 bcrypt
+flask-bcrypt
 flask-socketio
 eventlet
+stripe

@@ -101,6 +101,8 @@ def create_app():
     from routes.time_tracking import time_bp
     from routes.analytics import analytics_bp
     from routes.support import support_bp
+    from routes.payments import payments_bp
+    from routes.subscriptions import subscriptions_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(home_bp)
@@ -124,6 +126,8 @@ def create_app():
     app.register_blueprint(time_bp)
     app.register_blueprint(analytics_bp)
     app.register_blueprint(support_bp)
+    app.register_blueprint(payments_bp)
+    app.register_blueprint(subscriptions_bp)
 
     # Health check
     @app.route('/api/health')

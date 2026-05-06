@@ -1,0 +1,180 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="dark">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Tarification</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="pricing-content">
+
+  <!-- ═══ HERO ═══ -->
+  <div class="pricing-hero">
+    <div class="hero-glow left"></div>
+    <div class="hero-glow right"></div>
+    <div class="hero-text">
+      <h1>Choisissez votre plan</h1>
+      <p>Débloquez plus de fonctionnalités et réduisez vos commissions</p>
+    </div>
+
+    <!-- Section Tabs -->
+    <div class="section-tabs">
+      <button [class.active]="activeSection === 'plans'" (click)="activeSection = 'plans'">
+        <ion-icon name="ribbon-outline"></ion-icon> Plans
+      </button>
+      <button [class.active]="activeSection === 'features'" (click)="activeSection = 'features'">
+        <ion-icon name="diamond-outline"></ion-icon> Extras
+      </button>
+      <button [class.active]="activeSection === 'boosts'" (click)="activeSection = 'boosts'">
+        <ion-icon name="rocket-outline"></ion-icon> Boosts
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ LOADING ═══ -->
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <!-- ═══ SUBSCRIPTION PLANS ═══ -->
+  <div class="plans-section" *ngIf="activeSection === 'plans' && !isLoading">
+
+    <div class="plan-card" *ngFor="let plan of plans" [class.featured]="plan.id === 'pro'" [class.current]="isCurrentPlan(plan.id)">
+
+      <!-- Popular Badge -->
+      <div class="popular-badge" *ngIf="plan.id === 'pro'">
+        <ion-icon name="trending-up"></ion-icon> Le plus populaire
+      </div>
+
+      <!-- Current Badge -->
+      <div class="current-badge" *ngIf="isCurrentPlan(plan.id)">
+        <ion-icon name="checkmark-circle"></ion-icon> Plan actuel
+      </div>
+
+      <div class="plan-header">
+        <h2>{{ plan.name }}</h2>
+        <div class="plan-price">
+          <span class="amount">{{ plan.price === 0 ? 'Gratuit' : plan.price + '€' }}</span>
+          <span class="period" *ngIf="plan.price > 0">/mois</span>
+        </div>
+        <p class="savings" *ngIf="getSavingsDisplay(plan.id)">{{ getSavingsDisplay(plan.id) }}</p>
+      </div>
+
+      <div class="plan-features">
+        <div class="feature-item" *ngFor="let entry of plan.features | keyvalue">
+          <span class="feature-value" [class.check]="entry.value === true" [class.cross]="entry.value === false">
+            <ng-container *ngIf="entry.key === 'commission_rate'; else normalValue">
+              {{ getCommissionDisplay(entry.value) }}
+            </ng-container>
+            <ng-template #normalValue>
+              {{ getFeatureDisplay(entry.value) }}
+            </ng-template>
+          </span>
+          <span class="feature-label">{{ getFeatureLabel(entry.key) }}</span>
+        </div>
+      </div>
+
+      <button class="plan-btn"
+              [class.active-btn]="!isCurrentPlan(plan.id) && plan.id !== 'free'"
+              [class.current-btn]="isCurrentPlan(plan.id)"
+              [disabled]="isCurrentPlan(plan.id) || isSubscribing"
+              (click)="subscribe(plan.id)">
+        <ion-spinner *ngIf="isSubscribing" name="crescent"></ion-spinner>
+        <span *ngIf="!isSubscribing">{{ getPlanButtonText(plan.id) }}</span>
+      </button>
+    </div>
+
+    <!-- Cancel Subscription -->
+    <div class="cancel-section" *ngIf="currentPlan !== 'free'">
+      <button class="cancel-btn" (click)="cancelSubscription()">
+        <ion-icon name="close-circle-outline"></ion-icon>
+        Annuler mon abonnement
+      </button>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="comparison-section">
+      <h2>Comparaison détaillée</h2>
+      <div class="comparison-table">
+        <div class="table-header">
+          <div class="col label-col">Fonctionnalité</div>
+          <div class="col" *ngFor="let plan of plans">{{ plan.name }}</div>
+        </div>
+        <div class="table-row" *ngFor="let key of ['proposals_per_month', 'offers_per_month', 'commission_rate', 'store_listings', 'featured_listing', 'priority_support', 'analytics', 'verified_badge', 'dedicated_manager', 'api_access']">
+          <div class="col label-col">{{ getFeatureLabel(key) }}</div>
+          <div class="col" *ngFor="let plan of plans">
+            <span [class.check]="plan.features[key] === true" [class.cross]="plan.features[key] === false">
+              <ng-container *ngIf="key === 'commission_rate'; else normalCompare">
+                {{ getCommissionDisplay(plan.features[key]) }}
+              </ng-container>
+              <ng-template #normalCompare>
+                {{ getFeatureDisplay(plan.features[key]) }}
+              </ng-template>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PREMIUM FEATURES (À LA CARTE) ═══ -->
+  <div class="features-section" *ngIf="activeSection === 'features'">
+    <h2 class="section-title">Fonctionnalités Premium</h2>
+    <p class="section-subtitle">Achetez des extras à la carte pour booster votre profil</p>
+
+    <div class="feature-card" *ngFor="let feature of premiumFeatures">
+      <div class="feature-icon">
+        <ion-icon [name]="feature.icon"></ion-icon>
+      </div>
+      <div class="feature-info">
+        <h3>{{ feature.description }}</h3>
+        <span class="feature-duration">{{ feature.duration_days }} jours</span>
+      </div>
+      <div class="feature-action">
+        <span class="feature-price">{{ feature.price }}€</span>
+        <button class="buy-feature-btn" (click)="purchaseFeature(feature)">
+          Acheter
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BOOSTS ═══ -->
+  <div class="boosts-section" *ngIf="activeSection === 'boosts'">
+    <h2 class="section-title">Booster vos annonces</h2>
+    <p class="section-subtitle">Mettez en avant vos offres et produits pour plus de visibilité</p>
+
+    <div class="boost-card" *ngFor="let boost of boostOptions">
+      <div class="boost-icon">
+        <ion-icon name="rocket-outline"></ion-icon>
+      </div>
+      <div class="boost-info">
+        <h3>{{ boost.label }}</h3>
+        <span class="boost-target">Cible : {{ boost.target }}</span>
+      </div>
+      <div class="boost-action">
+        <span class="boost-price">{{ boost.price }}€</span>
+        <span class="boost-duration">{{ boost.duration_days }}j</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FAQ ═══ -->
+  <div class="faq-section">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-item">
+      <h3>Puis-je changer de plan à tout moment ?</h3>
+      <p>Oui, vous pouvez passer à un plan supérieur ou inférieur à tout moment. Les changements prennent effet immédiatement.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Comment fonctionne la commission ?</h3>
+      <p>La commission est prélevée sur chaque transaction. Les plans supérieurs bénéficient de taux réduits, vous permettant de garder plus de revenus.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Puis-je annuler mon abonnement ?</h3>
+      <p>Oui, vous pouvez annuler à tout moment. Votre plan restera actif jusqu'à la fin de la période de facturation en cours.</p>
+    </div>
+  </div>
+
+</ion-content>
