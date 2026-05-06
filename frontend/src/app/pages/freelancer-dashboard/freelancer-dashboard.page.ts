@@ -5,6 +5,7 @@ import { ProjectService } from '../../services/project.service';
 import { ToastController, AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { RecommendationService } from '../../services/recommendation.service';
 
 @Component({
   selector: 'app-freelancer-dashboard',
@@ -49,6 +50,7 @@ export class FreelancerDashboardPage implements OnInit, OnDestroy {
 
   // Sparkline data for earnings mini-chart
   sparklinePoints = '';
+  recommendedOpportunities: any[] = [];
 
   constructor(
     private freelancerService: FreelancerService,
@@ -56,7 +58,8 @@ export class FreelancerDashboardPage implements OnInit, OnDestroy {
     private projectService: ProjectService,
     private toastController: ToastController,
     private alertController: AlertController,
-    private router: Router
+    private router: Router,
+    private recommendationService: RecommendationService
   ) {}
 
   ngOnInit() {
@@ -65,6 +68,7 @@ export class FreelancerDashboardPage implements OnInit, OnDestroy {
     });
     this.loadDashboard();
     this.loadUpcomingMilestones();
+    this.loadOpportunities();
   }
 
   ngOnDestroy() {
@@ -134,6 +138,13 @@ export class FreelancerDashboardPage implements OnInit, OnDestroy {
           this.generateSparkline(data.by_month.map((m: any) => m.amount));
         }
       }
+    });
+  }
+
+  loadOpportunities() {
+    this.recommendationService.getOpportunityRecommendations(10).subscribe({
+      next: (res) => (this.recommendedOpportunities = res.data || []),
+      error: () => (this.recommendedOpportunities = []),
     });
   }
 
@@ -270,6 +281,37 @@ export class FreelancerDashboardPage implements OnInit, OnDestroy {
   // --- ACTIONS ---
   goToProjectDetails(projectId: string) {
     this.router.navigate(['/project-detail', projectId]);
+  }
+
+  goToOpportunity(offer: any) {
+    this.recommendationService.trackInteraction({
+      item_id: offer.id,
+      item_type: 'offer',
+      recommendation_type: 'opportunities',
+      action: 'click',
+      score: offer?.recommendation?.score,
+      reason: offer?.recommendation?.why_recommended,
+    }).subscribe({ error: () => {} });
+    this.router.navigate(['/project-detail', offer.id]);
+  }
+
+  dismissOpportunity(offer: any) {
+    this.recommendationService.notInterested(String(offer.id), 'opportunity').subscribe({
+      next: () => {
+        this.recommendedOpportunities = this.recommendedOpportunities.filter((o) => String(o.id) !== String(offer.id));
+      },
+      error: () => {},
+    });
+  }
+
+  async showOpportunityReason(reason: string) {
+    const toast = await this.toastController.create({
+      message: reason || 'Recommended based on your skills and market fit.',
+      duration: 2200,
+      color: 'medium',
+      position: 'top',
+    });
+    await toast.present();
   }
 
   sendMessage(clientId: string) {

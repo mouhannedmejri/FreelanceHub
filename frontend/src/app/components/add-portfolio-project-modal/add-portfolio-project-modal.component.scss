@@ -1,0 +1,8 @@
+﻿.images { margin: 12px 0; }
+.images label { display:block; margin-bottom:6px; color:#a09ab5; }
+.preview-list { display:flex; gap:8px; overflow:auto; padding-bottom:6px; }
+.preview { min-width:92px; }
+.preview img { width:92px; height:92px; object-fit:cover; border-radius:8px; border:1px solid rgba(124,58,237,.2); }
+.reorder { display:flex; gap:4px; margin-top:4px; }
+.reorder button { border:1px solid rgba(124,58,237,.3); background:rgba(30,22,54,.8); color:#fff; border-radius:6px; padding:2px 8px; }
+

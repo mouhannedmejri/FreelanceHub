@@ -176,6 +176,11 @@
           </div>
         </div>
 
+        <div class="form-group" *ngIf="registerRole === 'client'">
+          <label class="form-label">What are you looking for?</label>
+          <app-interest-selector [(selectedInterests)]="registerInterests" [compact]="true"></app-interest-selector>
+        </div>
+
         <button
           class="primary-btn"
           (click)="onRegister()"

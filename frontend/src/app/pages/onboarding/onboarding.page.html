@@ -27,16 +27,10 @@
     </div>
 
     <div class="interests-grid" *ngIf="step === 2">
-      <button
-        *ngFor="let interest of interests"
-        class="interest-chip"
-        [class.selected]="interest.selected"
-        (click)="toggleInterest(interest)"
-      >
-        <ion-icon [name]="interest.icon"></ion-icon>
-        <span>{{ interest.name }}</span>
-      </button>
-      <p class="step-help">Pick 3 to 5 items</p>
+      <h3 *ngIf="roleGoal === 'client'">What are you looking for?</h3>
+      <h3 *ngIf="roleGoal === 'freelancer'">Select your core service areas</h3>
+      <app-interest-selector [(selectedInterests)]="interests"></app-interest-selector>
+      <p class="step-help">Pick at least 3 interests</p>
     </div>
 
     <div class="selected-info" *ngIf="step === 2 && selectedCount > 0">
@@ -73,7 +67,7 @@
     </div>
 
     <div class="actions">
-      <button class="primary-btn" (click)="continue()" [disabled]="step === 2 && selectedCount < 3" id="onboarding-continue-btn">
+      <button class="primary-btn" (click)="continue()" [disabled]="step === 2 && roleGoal === 'client' && selectedCount < 3" id="onboarding-continue-btn">
         {{ continueLabel }}
         <ion-icon name="arrow-forward-outline"></ion-icon>
       </button>

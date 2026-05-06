@@ -1,0 +1,36 @@
+.interest-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.group h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #a09ab5;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chips button {
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 999px;
+  background: rgba(30, 22, 54, 0.85);
+  color: #f1f0f5;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.chips button.active {
+  background: rgba(124, 58, 237, 0.35);
+  border-color: rgba(167, 139, 250, 0.8);
+}
+
+.interest-selector.compact .chips button {
+  padding: 5px 8px;
+  font-size: 11px;
+}

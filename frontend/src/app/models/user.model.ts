@@ -3,9 +3,11 @@ export interface User {
   full_name: string;
   email: string;
   role: 'freelancer' | 'client' | 'admin';
+  username?: string;
   created_at: string;
   is_approved: boolean;
   onboarding_complete?: boolean;
+  interests?: string[];
   preferences?: {
     role_goal?: 'client' | 'freelancer';
     skills_or_interests?: string[];
@@ -34,4 +36,5 @@ export interface RegisterRequest {
   email: string;
   password: string;
   role: 'freelancer' | 'client';
+  interests?: string[];
 }

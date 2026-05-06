@@ -348,6 +348,12 @@
   color: #f87171;
   padding: 10px 14px;
 
+  &.active {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.65);
+    color: #fb7185;
+  }
+
   &:active {
     background: rgba(239, 68, 68, 0.1);
   }

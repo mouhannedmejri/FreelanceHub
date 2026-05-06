@@ -25,6 +25,25 @@
     <ion-spinner name="crescent"></ion-spinner>
   </div>
 
+  <div *ngIf="recommendedOffers.length > 0" style="margin-bottom: 16px;">
+    <h3 style="color:#fff; margin:0 0 10px;">Recommended for You</h3>
+    <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:6px;">
+      <div *ngFor="let offer of recommendedOffers" style="min-width:280px; background:#2a2342; border-radius:12px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; gap:8px;">
+          <div (click)="goToRecommendedOffer(offer)" style="cursor:pointer;">
+            <strong style="color:#fff;">{{ offer.title }}</strong>
+            <p style="color:#a78bfa; margin:6px 0; font-size:12px;">{{ offer.category }}</p>
+          </div>
+          <button (click)="hideRecommendedOffer(offer)" style="background:none;border:none;color:#a78bfa;font-size:11px;">Not interested</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#fff;">{{ offer.budget_min }}€ - {{ offer.budget_max }}€</span>
+          <ion-button size="small" fill="clear" (click)="showRecommendationReason(offer.recommendation?.why_recommended)">Why recommended?</ion-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- STATS ROW (Horizontal Scroll) -->
   <div class="stats-scroll-container" *ngIf="stats" style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 16px; margin-bottom: 16px;">
     <div class="stat-card" style="background: #2a2342; padding: 16px; border-radius: 12px; min-width: 140px; flex-shrink: 0;">

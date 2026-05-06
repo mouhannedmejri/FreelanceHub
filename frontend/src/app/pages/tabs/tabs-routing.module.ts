@@ -18,8 +18,8 @@ const routes: Routes = [
       {
         path: 'search',
         loadChildren: () =>
-          import('../search/search.module').then(
-            (m) => m.SearchPageModule
+          import('../freelancer-search/freelancer-search.module').then(
+            (m) => m.FreelancerSearchPageModule
           ),
         canActivate: [GuestAllowedGuard],
       },

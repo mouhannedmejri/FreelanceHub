@@ -4,12 +4,6 @@ import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
 import { ToastController } from '@ionic/angular';
 
-interface Interest {
-  name: string;
-  icon: string;
-  selected: boolean;
-}
-
 @Component({
   selector: 'app-onboarding',
   templateUrl: './onboarding.page.html',
@@ -20,21 +14,7 @@ export class OnboardingPage {
   step = 1;
   readonly totalSteps = 4;
 
-  interests: Interest[] = [
-    { name: 'Développement Web', icon: 'code-slash-outline', selected: false },
-    { name: 'Design UI/UX', icon: 'color-palette-outline', selected: false },
-    { name: 'Mobile App', icon: 'phone-portrait-outline', selected: false },
-    { name: 'Data Science', icon: 'analytics-outline', selected: false },
-    { name: 'Marketing Digital', icon: 'megaphone-outline', selected: false },
-    { name: 'Rédaction', icon: 'document-text-outline', selected: false },
-    { name: 'Vidéo & Animation', icon: 'videocam-outline', selected: false },
-    { name: 'DevOps & Cloud', icon: 'cloud-outline', selected: false },
-    { name: 'Cybersécurité', icon: 'shield-checkmark-outline', selected: false },
-    { name: 'IA & Machine Learning', icon: 'hardware-chip-outline', selected: false },
-    { name: 'Blockchain', icon: 'link-outline', selected: false },
-    { name: 'Consulting', icon: 'people-outline', selected: false },
-  ];
-
+  interests: string[] = [];
   roleGoal: 'client' | 'freelancer' = 'freelancer';
   budgetOrRate = 60;
   notificationPreferences = {
@@ -52,14 +32,7 @@ export class OnboardingPage {
   ) {}
 
   get selectedCount(): number {
-    return this.interests.filter((i) => i.selected).length;
-  }
-
-  toggleInterest(interest: Interest) {
-    if (!interest.selected && this.selectedCount >= 5) {
-      return;
-    }
-    interest.selected = !interest.selected;
+    return this.interests.length;
   }
 
   selectRole(role: 'client' | 'freelancer') {
@@ -75,8 +48,8 @@ export class OnboardingPage {
   }
 
   continue() {
-    if (this.step === 2 && (this.selectedCount < 3 || this.selectedCount > 5)) {
-      this.showToast('Select between 3 and 5 skills/interests');
+    if (this.step === 2 && this.roleGoal === 'client' && (this.selectedCount < 3 || this.selectedCount > 8)) {
+      this.showToast('Select between 3 and 8 interests');
       return;
     }
     if (this.step < this.totalSteps) {
@@ -89,7 +62,7 @@ export class OnboardingPage {
   private finishOnboarding() {
     const preferences = {
       role_goal: this.roleGoal,
-      skills_or_interests: this.interests.filter((i) => i.selected).map((i) => i.name),
+      skills_or_interests: this.interests,
       budget_or_rate: this.budgetOrRate,
       notifications: this.notificationPreferences,
     };
@@ -97,6 +70,7 @@ export class OnboardingPage {
     this.profileService
       .updateOnboardingPreferences({
         preferences,
+        interests: this.roleGoal === 'client' ? this.interests : [],
         onboarding_complete: true,
       })
       .subscribe({
@@ -125,8 +99,8 @@ export class OnboardingPage {
 
   get rateLabel(): string {
     return this.roleGoal === 'client'
-      ? `Budget preference: ${this.budgetOrRate}€/h`
-      : `Rate preference: ${this.budgetOrRate}€/h`;
+      ? `Budget preference: ${this.budgetOrRate}�/h`
+      : `Rate preference: ${this.budgetOrRate}�/h`;
   }
 
   private async showToast(message: string) {

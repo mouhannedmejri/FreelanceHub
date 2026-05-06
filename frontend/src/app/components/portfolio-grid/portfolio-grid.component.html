@@ -1,0 +1,52 @@
+﻿<div class="portfolio-controls" *ngIf="categories.length > 1">
+  <button *ngFor="let category of categories" [class.active]="selectedCategory === category" (click)="selectedCategory = category">
+    {{ category }}
+  </button>
+</div>
+
+<div class="portfolio-grid">
+  <article class="project-card" *ngFor="let project of visibleProjects">
+    <div class="thumb" (click)="openProject(project)">
+      <img *ngIf="project.images?.length" [src]="resolveImage(project.images[0])" alt="Project image" />
+      <div class="no-image" *ngIf="!project.images?.length">No Image</div>
+      <span class="featured" *ngIf="project.is_featured">Featured</span>
+      <span class="category">{{ project.category || 'Other' }}</span>
+    </div>
+    <div class="body">
+      <h4>{{ project.title }}</h4>
+      <p>{{ project.description }}</p>
+      <div class="tech">
+        <span *ngFor="let t of (project.technologies || []).slice(0, 4)">{{ t }}</span>
+      </div>
+      <div class="actions" *ngIf="editable">
+        <ion-button fill="clear" size="small" (click)="toggleFeatured.emit(project)">Feature</ion-button>
+        <ion-button fill="clear" size="small" (click)="editProject.emit(project)">Edit</ion-button>
+        <ion-button fill="clear" size="small" color="danger" (click)="deleteProject.emit(project)">Delete</ion-button>
+      </div>
+    </div>
+  </article>
+</div>
+
+<ion-modal [isOpen]="!!openedProject" (didDismiss)="closeProject()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ openedProject?.title }}</ion-title>
+        <ion-buttons slot="end"><ion-button (click)="closeProject()">Close</ion-button></ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-slides *ngIf="openedProject?.images?.length" pager="true">
+        <ion-slide *ngFor="let image of openedProject.images">
+          <img [src]="resolveImage(image)" style="width:100%;border-radius:10px;" alt="Project image" />
+        </ion-slide>
+      </ion-slides>
+      <p style="margin-top:12px;">{{ openedProject?.description }}</p>
+      <p><strong>Technologies:</strong> {{ (openedProject?.technologies || []).join(', ') }}</p>
+      <p *ngIf="openedProject?.project_url"><a [href]="openedProject.project_url" target="_blank">Live Project</a></p>
+      <p *ngIf="openedProject?.github_url"><a [href]="openedProject.github_url" target="_blank">GitHub</a></p>
+      <p *ngIf="openedProject?.client_name"><strong>Client:</strong> {{ openedProject.client_name }}</p>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
