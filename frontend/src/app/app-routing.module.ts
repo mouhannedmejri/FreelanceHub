@@ -105,7 +105,8 @@ const routes: Routes = [
     path: 'freelancer/:username',
     loadChildren: () => import('./pages/profile/profile.module').then( m => m.ProfilePageModule),
     canActivate: [GuestAllowedGuard]
-  },  {
+  },
+  {
     path: 'seller-dashboard',
     loadChildren: () => import('./pages/seller-dashboard/seller-dashboard.module').then( m => m.SellerDashboardPageModule),
     canActivate: [AuthRequiredGuard, RoleGuard],
@@ -115,6 +116,11 @@ const routes: Routes = [
     path: 'my-purchases',
     loadChildren: () => import('./pages/my-purchases/my-purchases.module').then( m => m.MyPurchasesPageModule),
     canActivate: [AuthRequiredGuard]
+  },
+  {
+    path: 'digital-store',
+    loadChildren: () => import('./pages/digital-store/digital-store.module').then( m => m.DigitalStorePageModule),
+    canActivate: [GuestAllowedGuard]
   }
 
 
