@@ -41,6 +41,10 @@
       <span>Notifications</span>
       <span class="drawer-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
     </div>
+    <div class="drawer-item" (click)="navigateFromDrawer('/home/digital-store')">
+      <ion-icon name="storefront-outline"></ion-icon>
+      <span>Store</span>
+    </div>
   </div>
 
   <div class="drawer-footer">
